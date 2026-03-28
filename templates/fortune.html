@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>今日運勢抽籤機</h1>
+    <p>點擊按鈕，看看今天的運氣如何？</p>
+    
+    <button onclick="fetchData('/api/get_fortune')">開始抽籤</button>
+    <div id="display-result" class="result-box"></div>
+
+    <script>
+        // 共用的呼叫 API 函式
+        function fetchData(apiUrl) {
+            document.getElementById("display-result").innerText = "運算中...";
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("display-result").innerText = data.result;
+                });
+        }
+    </script>
+{% endblock %}
