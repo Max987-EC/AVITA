@@ -45,7 +45,10 @@ body {
     letter-spacing: 4px;
     background: linear-gradient(90deg, #ff0055, #00ff99, #00aaff, #ff0055);
     background-size: 300% 300%;
+    /* 1. 保留給舊版或特定瀏覽器的前綴寫法 */
     -webkit-background-clip: text;
+    /* 2. 👇 加上這行標準寫法，黃色虛線就會消失了！ */
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: rgb-flow 5s linear infinite;
 }
