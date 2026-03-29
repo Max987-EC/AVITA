@@ -4,17 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>影像縮放 | AVITA</title>
-    <!-- 同時引入優雅的 Playfair (給大標) 與科技感的 Orbitron (給副標) -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* 針對表單的微調樣式 */
+        /* 👇 新增：解除外部 style.css 的高度限制，允許網頁上下滑動 */
+        html, body {
+            height: auto !important;
+            min-height: 100vh;
+            overflow-y: auto !important;
+        }
+        
+        /* 調整容器，讓內容從上方開始排，並在底部留白 */
+        .container {
+            height: auto !important;
+            min-height: 100vh;
+            padding-bottom: 60px; 
+            justify-content: flex-start !important; 
+            padding-top: 40px;
+        }
+        /* 👆 新增結束 */
+
         .tool-box {
             background-color: #1a1d24;
             padding: 40px;
             border-radius: 15px;
             border: 1px solid #2c313a;
             margin-top: 30px;
+            width: 100%;
+            max-width: 800px; /* 加寬一點以容納左右預覽 */
         }
         input[type="file"], input[type="number"] {
             display: block;
@@ -34,9 +51,17 @@
             cursor: pointer;
             width: 100%;
             margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            transition: 0.3s;
         }
         .submit-btn:hover {
             box-shadow: 0 0 15px rgba(123, 136, 255, 0.5);
+        }
+        .submit-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            box-shadow: none;
         }
         .back-link {
             display: inline-block;
@@ -47,17 +72,49 @@
         .back-link:hover {
             color: #fff;
         }
+
+        /* 預覽區塊樣式 */
+        .preview-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .preview-box {
+            flex: 1;
+            background-color: #0b0c10;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px dashed #444;
+            text-align: center;
+        }
+        .preview-box h3 {
+            color: #888;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+        .preview-img {
+            max-width: 100%;
+            border-radius: 5px;
+            display: none; /* 預設隱藏 */
+        }
+        
+        /* 手機版改為上下排列 */
+        @media (max-width: 768px) {
+            .preview-container {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center;">
         <h1 class="logo" style="font-size: 3rem;">Image Resizer</h1>
         <p class="subtitle">影像縮放工具</p>
         
         <div class="tool-box">
-            <form action="/tool/image-resizer" method="POST" enctype="multipart/form-data">
+            <form id="resizeForm">
                 <label>選擇圖片：</label>
-                <input type="file" name="image" accept="image/*" required>
+                <input type="file" name="image" id="imageInput" accept="image/*" required>
                 
                 <label>目標寬度 (px)：</label>
                 <input type="number" name="width" value="800" required>
@@ -65,11 +122,105 @@
                 <label>目標高度 (px)：</label>
                 <input type="number" name="height" value="600" required>
                 
-                <button type="submit" class="btn submit-btn">開始縮放並下載</button>
+                <button type="submit" id="submitBtn" class="submit-btn">開始縮放並預覽</button>
             </form>
+
+            <!-- 預覽區塊：左邊原圖，右邊結果 -->
+            <div class="preview-container" id="previewContainer">
+                <div class="preview-box">
+                    <h3>🖼️ 原始圖片</h3>
+                    <img id="inputPreview" class="preview-img" alt="原圖預覽">
+                </div>
+                <div class="preview-box">
+                    <h3>✨ 縮放結果</h3>
+                    <img id="outputPreview" class="preview-img" alt="結果預覽">
+                    <!-- 隱藏的下載按鈕，處理完才會出現 -->
+                    <a id="downloadBtn" class="submit-btn" style="display: none; text-decoration: none; box-sizing: border-box; margin-top: 15px; background: linear-gradient(90deg, #00ff99, #00aaff);">⬇️ 下載處理後的圖片</a>
+                </div>
+            </div>
         </div>
         
         <a href="/" class="back-link">← 回到 AVITA 大廳</a>
     </div>
+
+    <!-- 負責處理預覽與背景傳輸的 JavaScript 魔法 -->
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const inputPreview = document.getElementById('inputPreview');
+        const resizeForm = document.getElementById('resizeForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const outputPreview = document.getElementById('outputPreview');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const previewContainer = document.getElementById('previewContainer');
+
+        // 1. 選擇檔案時，即時顯示左側原圖預覽
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                inputPreview.src = URL.createObjectURL(file);
+                inputPreview.style.display = 'inline-block';
+                
+                // 重新選擇圖片時，清空右側的舊結果
+                outputPreview.style.display = 'none';
+                downloadBtn.style.display = 'none';
+
+                // 👇 新增：自動平滑滾動到預覽區塊
+                setTimeout(() => {
+                    previewContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        });
+
+        // 2. 攔截表單送出，改用 Fetch API 在背景處理
+        resizeForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // 阻止網頁重新整理
+            
+            // 改變按鈕狀態，防止重複點擊
+            submitBtn.textContent = '⏳ 處理中...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(this);
+
+            try {
+                // 將資料送到 Flask 後端
+                const response = await fetch('/tool/image-resizer', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // 將後端回傳的圖片檔案轉換為 Blob
+                    const blob = await response.blob();
+                    
+                    // 為這個 Blob 建立一個瀏覽器暫存網址
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    // 顯示右側結果圖片
+                    outputPreview.src = imageUrl;
+                    outputPreview.style.display = 'inline-block';
+                    
+                    // 設定下載按鈕的連結與檔名，並顯示按鈕
+                    downloadBtn.href = imageUrl;
+                    downloadBtn.download = 'avita_resized.jpg';
+                    downloadBtn.style.display = 'block';
+
+                    // 👇 新增：處理完成後，確保畫面滑動到底部讓使用者看到下載按鈕
+                    setTimeout(() => {
+                        downloadBtn.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }, 100);
+
+                } else {
+                    alert('❌ 處理失敗，請確認圖片格式是否正確。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ 發生網路錯誤。');
+            } finally {
+                // 恢復按鈕狀態
+                submitBtn.textContent = '開始縮放並預覽';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
