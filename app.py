@@ -1,34 +1,51 @@
-from flask import Flask, render_template, jsonify
-import random
-import string
+from flask import Flask, render_template, request, send_file
+import cv2
+import numpy as np
+import io
 
 app = Flask(__name__)
 
-# ====== 畫面路由 (負責切換頁面) ======
-@app.route("/")
+# 首頁：AVITA 大廳
+@app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@app.route("/fortune")
-def fortune_page():
-    return render_template("fortune.html")
+# 工具一：影像縮放 (OpenCV 版)
+@app.route('/tool/image-resizer', methods=['GET', 'POST'])
+def image_resizer():
+    if request.method == 'POST':
+        # 接收使用者上傳的圖片與設定的長寬
+        file = request.files['image']
+        width = int(request.form['width'])
+        height = int(request.form['height'])
 
-@app.route("/password")
-def password_page():
-    return render_template("password.html")
+        if file:
+            # 1. 將上傳的檔案讀取為位元組 (Bytes)
+            in_memory_file = file.read()
+            
+            # 2. 將位元組轉換為 Numpy 陣列 (OpenCV 的專屬語言)
+            np_img = np.frombuffer(in_memory_file, np.uint8)
+            
+            # 3. 解碼成 OpenCV 影像格式
+            img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+            
+            # 4. 使用 OpenCV 進行縮放 (INTER_AREA 適合用來縮小圖片，畫質較好)
+            resized_img = cv2.resize(img, (width, height), interpolation=cv2.INTER_AREA)
+            
+            # 5. 將處理完的矩陣，重新編碼成 JPG 圖片的位元組
+            is_success, buffer = cv2.imencode(".jpg", resized_img)
+            io_buf = io.BytesIO(buffer)
+            
+            # 6. 回傳給使用者下載
+            return send_file(
+                io_buf, 
+                mimetype='image/jpeg', 
+                as_attachment=True, 
+                download_name='avita_resized.jpg'
+            )
 
-# ====== API 路由 (負責背後運算) ======
-@app.route("/api/get_fortune")
-def api_fortune():
-    fortunes = ["大吉 🌟", "中吉 ⭐", "小吉 ✨", "凶 🌧️"]
-    return jsonify({"result": random.choice(fortunes)})
+    # 如果是 GET 請求，就顯示網頁畫面
+    return render_template('image_resizer.html')
 
-@app.route("/api/get_password")
-def api_password():
-    # 產生一組 8 碼的隨機英數密碼
-    chars = string.ascii_letters + string.digits
-    pwd = ''.join(random.choice(chars) for _ in range(8))
-    return jsonify({"result": pwd})
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)

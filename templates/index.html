@@ -1,7 +1,31 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVITA | 視覺影像工具</title>
+    <!-- 同時引入優雅的 Playfair (給大標) 與科技感的 Orbitron (給副標) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <!-- 連結 CSS 檔案 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- 原本的 container 裡面現在只剩下標題與副標題 -->
+    <div class="container">
+        <h1 class="logo">AVITA</h1>
+        <p class="subtitle">全用途視覺影像工具應用</p>
+    </div>
 
-{% block content %}
-    <h1>歡迎來到我的工具箱！ 🛠️</h1>
-    <p>這是一個使用 Python + Flask 打造的多功能網頁。</p>
-    <p>請點選上方的選單，選擇你想要使用的功能吧！</p>
-{% endblock %}
+    <!-- 全新的底部上拉抽屜 (獨立於 container 之外) -->
+    <div class="bottom-drawer">
+        <!-- 抽屜上方的視覺把手，暗示使用者這裡可以互動 -->
+        <div class="drawer-handle"></div>
+
+        <!-- 這是你原本的按鈕群組，原封不動放進來 -->
+        <div class="button-group">
+            <a href="/tool/image-resizer" class="btn">🖼️ 影像縮放</a>
+            <a href="#" class="btn disabled">即將推出</a>
+        </div>
+    </div>
+</body>
+</html>

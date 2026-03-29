@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影像縮放 | AVITA</title>
+    <!-- 同時引入優雅的 Playfair (給大標) 與科技感的 Orbitron (給副標) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* 針對表單的微調樣式 */
+        .tool-box {
+            background-color: #1a1d24;
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid #2c313a;
+            margin-top: 30px;
+        }
+        input[type="file"], input[type="number"] {
+            display: block;
+            width: 100%;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #0b0c10;
+            color: white;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+        .submit-btn {
+            background: linear-gradient(90deg, #7b88ff, #a0aab5);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            box-shadow: 0 0 15px rgba(123, 136, 255, 0.5);
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #888;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="logo" style="font-size: 3rem;">Image Resizer</h1>
+        <p class="subtitle">影像縮放工具</p>
+        
+        <div class="tool-box">
+            <form action="/tool/image-resizer" method="POST" enctype="multipart/form-data">
+                <label>選擇圖片：</label>
+                <input type="file" name="image" accept="image/*" required>
+                
+                <label>目標寬度 (px)：</label>
+                <input type="number" name="width" value="800" required>
+                
+                <label>目標高度 (px)：</label>
+                <input type="number" name="height" value="600" required>
+                
+                <button type="submit" class="btn submit-btn">開始縮放並下載</button>
+            </form>
+        </div>
+        
+        <a href="/" class="back-link">← 回到 AVITA 大廳</a>
+    </div>
+</body>
+</html>
