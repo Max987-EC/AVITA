@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>車道線偵測 | AVITA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        html, body { height: auto !important; min-height: 100vh; overflow-y: auto !important; }
+        .container { height: auto !important; min-height: 100vh; padding-bottom: 60px; justify-content: flex-start !important; padding-top: 40px; }
+        
+        .tool-box {
+            background-color: #1a1d24; padding: 40px; border-radius: 15px;
+            border: 1px solid #2c313a; margin-top: 30px; width: 100%; max-width: 900px;
+        }
+        input[type="file"] {
+            display: block; width: 100%; margin: 15px 0; padding: 10px;
+            background-color: #0b0c10; color: white; border: 1px solid #444; border-radius: 8px;
+        }
+        .submit-btn {
+            background: linear-gradient(90deg, #ff7b7b, #b5a0a0); color: #000;
+            font-weight: bold; border: none; cursor: pointer; width: 100%;
+            margin-top: 20px; padding: 12px; border-radius: 8px; transition: 0.3s;
+        }
+        .submit-btn:hover { box-shadow: 0 0 15px rgba(255, 123, 123, 0.5); }
+        .submit-btn:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+        
+        .preview-container { display: flex; flex-direction: column; gap: 20px; margin-top: 30px; }
+        .preview-box {
+            background-color: #0b0c10; padding: 15px; border-radius: 10px;
+            border: 1px dashed #444; text-align: center;
+        }
+        .preview-box h3 { color: #888; font-size: 1rem; margin-bottom: 15px; }
+        video { max-width: 100%; border-radius: 5px; display: none; background: #000; }
+        
+        .loading-text { color: #ff7b7b; font-size: 0.9rem; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container" style="display: flex; flex-direction: column; align-items: center;">
+        <h1 class="logo" style="font-size: 3rem;">Lane Detection</h1>
+        <p class="subtitle">AI 車道線追蹤系統</p>
+        
+        <div class="tool-box">
+            <form id="videoForm">
+                <label>選擇行車紀錄器影片 (MP4)：</label>
+                <input type="file" name="video" id="videoInput" accept="video/mp4,video/x-m4v,video/*" required>
+                <button type="submit" id="submitBtn" class="submit-btn">開始 AI 運算</button>
+                <p id="loadingText" class="loading-text">⏳ 影片逐幀處理中，這可能需要幾分鐘的時間，請勿關閉網頁...</p>
+            </form>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="preview-box">
+                    <h3>🎬 原始影片預覽</h3>
+                    <video id="inputPreview" controls></video>
+                </div>
+                <div class="preview-box">
+                    <h3>✨ 偵測結果</h3>
+                    <video id="outputPreview" controls></video>
+                    <a id="downloadBtn" class="submit-btn" style="display: none; text-decoration: none; box-sizing: border-box; margin-top: 15px; background: linear-gradient(90deg, #00ff99, #00aaff);">⬇️ 下載分析結果</a>
+                </div>
+            </div>
+        </div>
+        <a href="/" style="display: inline-block; margin-top: 20px; color: #888; text-decoration: none;">← 回到 AVITA 大廳</a>
+    </div>
+
+    <script>
+        const videoInput = document.getElementById('videoInput');
+        const inputPreview = document.getElementById('inputPreview');
+        const videoForm = document.getElementById('videoForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const outputPreview = document.getElementById('outputPreview');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loadingText = document.getElementById('loadingText');
+
+        // 選擇影片時預覽
+        videoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                inputPreview.src = URL.createObjectURL(file);
+                inputPreview.style.display = 'block';
+                outputPreview.style.display = 'none';
+                downloadBtn.style.display = 'none';
+            }
+        });
+
+        // 攔截表單送出，背景處理影片
+        videoForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            submitBtn.textContent = '⚙️ 伺服器運算中...';
+            submitBtn.disabled = true;
+            loadingText.style.display = 'block';
+
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/tool/lane-detection', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const videoUrl = URL.createObjectURL(blob);
+                    
+                    outputPreview.src = videoUrl;
+                    outputPreview.style.display = 'block';
+                    
+                    downloadBtn.href = videoUrl;
+                    downloadBtn.download = 'lane_detected_result.mp4';
+                    downloadBtn.style.display = 'block';
+
+                    setTimeout(() => { downloadBtn.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 100);
+                } else {
+                    alert('❌ 處理失敗，請確認影片格式。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ 發生網路錯誤或伺服器超時。');
+            } finally {
+                submitBtn.textContent = '開始 AI 運算';
+                submitBtn.disabled = false;
+                loadingText.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
