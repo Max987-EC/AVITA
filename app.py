@@ -6,6 +6,9 @@ from flask import Flask, request, send_file, render_template
 # 👇 引入我們剛剛寫好的車道線偵測類別
 from lane_detector import LaneDetector
 
+# 👇 新增：引入 MoviePy 來處理影片轉碼，讓網頁能直接播放
+from moviepy import VideoFileClip
+
 # 初始化 Flask 應用程式
 app = Flask(__name__)
 
@@ -48,7 +51,8 @@ def lane_detection():
     # 產生隨機檔名，避免檔案覆蓋
     temp_id = uuid.uuid4().hex
     input_path = f"temp_in_{temp_id}.mp4"
-    output_path = f"temp_out_{temp_id}.mp4"
+    opencv_output_path = f"temp_cv2_{temp_id}.mp4"  # OpenCV 處理完的暫存檔
+    web_output_path = f"temp_web_{temp_id}.mp4"     # 轉碼後給網頁播放的最終檔案
     
     video_file.save(input_path)
 
@@ -60,9 +64,9 @@ def lane_detection():
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     
-    # 使用網頁支援度較高的 avc1 (H.264) 編碼
+    # 步驟一：OpenCV 使用 mp4v 快速處理影像
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_path, fourcc, fps, (width * 2, height))
+    out = cv2.VideoWriter(opencv_output_path, fourcc, fps, (width * 2, height))
     
     while cap.isOpened():
         ret, frame = cap.read()
@@ -75,12 +79,23 @@ def lane_detection():
     cap.release()
     out.release()
     
-    # 處理完畢後，刪除原始輸入檔以節省空間
+    # 🌟 步驟二：使用 MoviePy 將 mp4v 轉為網頁支援的 H.264 (libx264)
+    try:
+        clip = VideoFileClip(opencv_output_path)
+        # codec="libx264" 是網頁播放的關鍵，audio=False 可以加速處理
+        clip.write_videofile(web_output_path, codec="libx264", audio=False, logger=None)
+        clip.close()
+    except Exception as e:
+        return f"影片轉碼失敗: {str(e)}", 500
+
+    # 處理完畢後，刪除原始輸入檔與 OpenCV 暫存檔以節省空間
     if os.path.exists(input_path):
         os.remove(input_path)
+    if os.path.exists(opencv_output_path):
+        os.remove(opencv_output_path)
 
-    # 將處理好的影片傳回給前端
-    return send_file(output_path, as_attachment=True, download_name="lane_detected.mp4")
+    # 將處理好的影片傳回給前端，設定 mimetype 讓瀏覽器知道這是可以直接播放的影片
+    return send_file(web_output_path, mimetype='video/mp4')
 
 # ==========================================
 # 啟動伺服器
