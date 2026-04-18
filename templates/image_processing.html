@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>綜合影像處理 | AVITA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <style>
+        /* 基礎面板與表單樣式 */
+        .tool-panel {
+            background: rgba(10, 15, 25, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            width: 95vw;
+            max-width: 900px; 
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.05);
+            z-index: 10;
+            position: relative;
+        }
+        .tool-panel::-webkit-scrollbar { width: 6px; }
+        .tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .tool-panel::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
+        
+        h2 { font-family: 'Orbitron', sans-serif; color: #00f0ff; text-align: center; margin-top: 0; margin-bottom: 20px; text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        label { display: block; margin-bottom: 8px; color: #8892b0; font-size: 0.9rem; }
+        input[type="file"], select { width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 1px solid #1e2d3d; border-radius: 6px; color: #ffffff; outline: none; box-sizing: border-box; }
+        input[type="file"]::file-selector-button { background: #1e2d3d; color: #00f0ff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: 'Orbitron', sans-serif; }
+        .submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; }
+        .back-nav { position: absolute; top: 30px; left: 30px; z-index: 100; }
+
+        /* =========================================
+           雙欄對比網格 (影像與直方圖共用)
+           ========================================= */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            display: none; /* 預設隱藏 */
+        }
+        .image-box {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed rgba(0, 240, 255, 0.2);
+        }
+        .image-box h4 {
+            color: #00f0ff;
+            font-family: 'Orbitron', sans-serif;
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .image-box img {
+            max-width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* 直方圖專屬微調 */
+        .histogram-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0, 240, 255, 0.2);
+            display: none;
+        }
+        .histogram-section h4 {
+            color: #ff0055; /* 直方圖標題改用粉紅色點綴 */
+        }
+
+        .loading { display: none; text-align: center; color: #00f0ff; font-family: 'Orbitron', sans-serif; animation: pulse-glow 1.5s infinite; margin-bottom: 20px; }
+        @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; text-shadow: 0 0 15px rgba(0,240,255,0.8); } }
+    </style>
+</head>
+<body>
+
+    <div class="back-nav"><a href="/" class="btn">◀ 返回大廳</a></div>
+
+    <div class="tool-panel">
+        <h2>🎨 綜合影像處理</h2>
+        
+        <form id="processForm">
+            <div class="form-group">
+                <label for="imageInput">01 // 選擇目標影像 (IMAGE INPUT)</label>
+                <input type="file" id="imageInput" name="image" accept="image/*" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="processType">02 // 選擇處理模組 (PROCESSING MODULE)</label>
+                <select id="processType" name="process_type">
+                    <optgroup label="[ 強度與色彩轉換 ]">
+                        <option value="negative">負轉換 (Negative)</option>
+                        <option value="equalization">直方圖等化 (Histogram Equalization)</option>
+                    </optgroup>
+                    <optgroup label="[ 空間域濾波 ]">
+                        <option value="sobel">Sobel 邊緣偵測</option>
+                        <option value="laplacian">Laplacian 銳化</option>
+                    </optgroup>
+                    <optgroup label="[ 頻率域濾波 ]">
+                        <option value="freq_gaussian_low">高斯低通濾波 (模糊去噪)</option>
+                        <option value="freq_gaussian_high">高斯高通濾波 (強化邊緣)</option>
+                    </optgroup>
+                </select>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="btn submit-btn">啟動處理程序 (EXECUTE)</button>
+        </form>
+
+        <div class="loading" id="loadingIndicator">[ PROCESSING DATA... ]</div>
+
+        <!-- 🌟 影像對比網格 -->
+        <div class="comparison-grid" id="imageGrid">
+            <div class="image-box">
+                <h4>[ ORIGINAL IMAGE ]</h4>
+                <img id="originalImage" src="" alt="原圖預覽">
+            </div>
+            <div class="image-box">
+                <h4>[ PROCESSED IMAGE ]</h4>
+                <img id="processedImage" src="" alt="處理結果">
+            </div>
+        </div>
+
+        <!-- 🌟 直方圖對比網格 (套用相同的雙欄佈局) -->
+        <div class="histogram-section" id="histogramSection">
+            <div class="comparison-grid" style="display: grid; margin-top: 0;">
+                <div class="image-box">
+                    <h4>[ ORIGINAL HISTOGRAM ]</h4>
+                    <img id="originalHistogram" src="" alt="原圖直方圖">
+                </div>
+                <div class="image-box">
+                    <h4>[ PROCESSED HISTOGRAM ]</h4>
+                    <img id="processedHistogram" src="" alt="處理後直方圖">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. 選擇檔案時，立刻在左側顯示原圖預覽
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('originalImage').src = e.target.result;
+                    // 清空右側與下方資料，等待處理
+                    document.getElementById('processedImage').src = "";
+                    document.getElementById('originalHistogram').src = "";
+                    document.getElementById('processedHistogram').src = "";
+                    
+                    document.getElementById('imageGrid').style.display = 'grid';
+                    document.getElementById('histogramSection').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 2. 提交表單處理影像
+        document.getElementById('processForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loadingIndicator');
+
+            submitBtn.classList.add('disabled');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "處理中 (PROCESSING...)";
+            loading.style.display = 'block';
+
+            try {
+                const response = await fetch('/tool/image-processing', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "伺服器錯誤");
+
+                // 填入處理後的影像
+                document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
+                
+                // 🌟 同時填入左右兩張直方圖
+                document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
+                document.getElementById('processedHistogram').src = "data:image/png;base64," + data.processed_histogram;
+                
+                // 顯示直方圖區塊
+                document.getElementById('histogramSection').style.display = 'block';
+
+                // 平滑滾動到底部
+                setTimeout(() => {
+                    document.querySelector('.tool-panel').scrollTo({
+                        top: document.querySelector('.tool-panel').scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+
+            } catch (error) {
+                alert('處理失敗：' + error.message);
+            } finally {
+                submitBtn.classList.remove('disabled');
+                submitBtn.disabled = false;
+                submitBtn.innerText = "啟動處理程序 (EXECUTE)";
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+</html>

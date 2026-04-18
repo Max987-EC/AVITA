@@ -1,13 +1,19 @@
 import os
+import io
 import uuid
 import cv2
-from flask import Flask, request, send_file, render_template
+import numpy as np
+import base64 # 🌟 新增：用於影像與直方圖的 Base64 編碼
+from flask import Flask, request, send_file, render_template, jsonify # 🌟 新增 jsonify
 
-# 👇 引入我們剛剛寫好的車道線偵測類別
+# 👇 引入車道線偵測類別
 from lane_detector import LaneDetector
 
-# 👇 新增：引入 MoviePy 來處理影片轉碼，讓網頁能直接播放
+# 👇 引入 MoviePy 來處理影片轉碼
 from moviepy import VideoFileClip
+
+# 🌟 新增：引入我們剛剛寫好的影像處理類別
+from image_processor import ImageProcessor
 
 # 初始化 Flask 應用程式
 app = Flask(__name__)
@@ -17,7 +23,6 @@ app = Flask(__name__)
 # ==========================================
 @app.route('/')
 def index():
-    # 這裡回傳你的大廳頁面 (假設叫做 index.html)
     return render_template('index.html')
 
 # ==========================================
@@ -29,8 +34,6 @@ def image_resizer():
         return render_template('image_resizer.html')
         
     if request.method == 'POST':
-        # 這裡放你原本處理影像縮放的 Python 邏輯
-        # (接收圖片、讀取寬高、cv2.resize、儲存暫存檔、send_file...)
         pass # 請替換成你原本的程式碼
 
 # ==========================================
@@ -38,25 +41,21 @@ def image_resizer():
 # ==========================================
 @app.route('/tool/lane-detection', methods=['GET', 'POST'])
 def lane_detection():
-    # 如果是 GET 請求，回傳網頁畫面
     if request.method == 'GET':
         return render_template('lane_detection.html')
 
-    # 如果是 POST 請求，開始處理上傳的影片
     if 'video' not in request.files:
         return "沒有上傳影片", 400
 
     video_file = request.files['video']
     
-    # 產生隨機檔名，避免檔案覆蓋
     temp_id = uuid.uuid4().hex
     input_path = f"temp_in_{temp_id}.mp4"
-    opencv_output_path = f"temp_cv2_{temp_id}.mp4"  # OpenCV 處理完的暫存檔
-    web_output_path = f"temp_web_{temp_id}.mp4"     # 轉碼後給網頁播放的最終檔案
+    opencv_output_path = f"temp_cv2_{temp_id}.mp4"  
+    web_output_path = f"temp_web_{temp_id}.mp4"     
     
     video_file.save(input_path)
 
-    # 🌟 建立專屬的偵測器實體，避免多人同時使用時記憶體打架
     detector = LaneDetector()
 
     cap = cv2.VideoCapture(input_path)
@@ -64,7 +63,6 @@ def lane_detection():
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     
-    # 步驟一：OpenCV 使用 mp4v 快速處理影像
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(opencv_output_path, fourcc, fps, (width * 2, height))
     
@@ -72,34 +70,87 @@ def lane_detection():
         ret, frame = cap.read()
         if not ret: break 
         
-        # 使用專屬偵測器來處理每一幀
         processed_frame = detector.process_frame(frame)
         out.write(processed_frame)
 
     cap.release()
     out.release()
     
-    # 🌟 步驟二：使用 MoviePy 將 mp4v 轉為網頁支援的 H.264 (libx264)
     try:
         clip = VideoFileClip(opencv_output_path)
-        # codec="libx264" 是網頁播放的關鍵，audio=False 可以加速處理
         clip.write_videofile(web_output_path, codec="libx264", audio=False, logger=None)
         clip.close()
     except Exception as e:
         return f"影片轉碼失敗: {str(e)}", 500
 
-    # 處理完畢後，刪除原始輸入檔與 OpenCV 暫存檔以節省空間
     if os.path.exists(input_path):
         os.remove(input_path)
     if os.path.exists(opencv_output_path):
         os.remove(opencv_output_path)
 
-    # 將處理好的影片傳回給前端，設定 mimetype 讓瀏覽器知道這是可以直接播放的影片
     return send_file(web_output_path, mimetype='video/mp4')
+
+# ==========================================
+# 🎨 工具 3：綜合影像處理 (Image Processing)
+# ==========================================
+@app.route('/tool/image-processing', methods=['GET', 'POST'])
+def image_processing():
+    if request.method == 'GET':
+        return render_template('image_processing.html')
+
+    if request.method == 'POST':
+        if 'image' not in request.files:
+            return jsonify({"error": "沒有上傳圖片"}), 400
+            
+        file = request.files['image']
+        process_type = request.form.get('process_type', 'negative') 
+        
+        # 1. 從記憶體中直接讀取圖片為 NumPy 陣列
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        
+        if img_array is None:
+            return jsonify({"error": "圖片讀取失敗"}), 400
+
+        # 2. 初始化處理器
+        processor = ImageProcessor(img_array)
+        
+        # 3. 根據前端傳來的 process_type 執行對應的處理
+        if process_type == 'negative':
+            result_img = processor.negative_transform()
+        elif process_type == 'equalization':
+            result_img = processor.histogram_equalization()
+        elif process_type == 'sobel':
+            result_img = processor.sobel_filter()
+        elif process_type == 'laplacian':
+            result_img = processor.laplacian_filter()
+        elif process_type == 'freq_gaussian_low':
+            result_img = processor.frequency_filter('gaussian', 'low', D0=30)
+        elif process_type == 'freq_gaussian_high':
+            result_img = processor.frequency_filter('gaussian', 'high', D0=30)
+        else:
+            result_img = processor.img
+
+        # 4. 將處理後的影像轉為 Base64
+        success, encoded_img = cv2.imencode('.jpg', result_img)
+        if not success:
+            return jsonify({"error": "影像編碼失敗"}), 500
+        processed_b64 = base64.b64encode(encoded_img).decode('utf-8')
+
+        # 5. 呼叫 ImageProcessor 的靜態方法產生直方圖 Base64
+        # 原圖傳入彩色的 img_array，處理後的圖傳入 result_img
+        orig_hist_b64 = ImageProcessor.generate_histogram_base64(img_array)
+        proc_hist_b64 = ImageProcessor.generate_histogram_base64(result_img)
+
+        # 6. 將所有資料打包成 JSON 回傳給前端
+        return jsonify({
+            "processed_image": processed_b64,
+            "original_histogram": orig_hist_b64,
+            "processed_histogram": proc_hist_b64
+        })
 
 # ==========================================
 # 啟動伺服器
 # ==========================================
 if __name__ == '__main__':
-    # debug=True 可以在你修改程式碼時自動重新啟動伺服器
     app.run(debug=True)
