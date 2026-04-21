@@ -45,9 +45,7 @@ body {
     letter-spacing: 4px;
     background: linear-gradient(90deg, #ff0055, #00ff99, #00aaff, #ff0055);
     background-size: 300% 300%;
-    /* 1. 保留給舊版或特定瀏覽器的前綴寫法 */
     -webkit-background-clip: text;
-    /* 2. 👇 加上這行標準寫法，黃色虛線就會消失了！ */
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: rgb-flow 5s linear infinite;
@@ -65,7 +63,7 @@ body {
     letter-spacing: 8px;
     font-size: 1.2rem;
     margin-top: 25px;
-    margin-bottom: 0; /* 移除底部 margin，因為按鈕已經移到底部了 */
+    margin-bottom: 0; 
     text-shadow: 
         0 0 15px rgba(157, 128, 255, 0.4), 
         0 0 35px rgba(157, 128, 255, 0.15); 
@@ -78,34 +76,24 @@ body {
     position: fixed;
     bottom: 0;
     left: 50%;
-    
-    /* 核心魔法：將整個抽屜往下推，只露出頂部 40px 的把手區域 */
     transform: translate(-50%, calc(100% - 40px));
-    
-    /* 科技感毛玻璃面板 */
     background: rgba(10, 15, 25, 0.5);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: none;
     border-radius: 24px 24px 0 0;
-    
     padding: 15px 50px 40px;
     width: max-content;
     max-width: 90vw;
     z-index: 100;
-    
-    /* 順滑的物理彈性動畫 */
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* 滑鼠移入時，將抽屜完整拉出 (Y軸歸零) */
 .bottom-drawer:hover {
     transform: translate(-50%, 0);
 }
 
-/* 抽屜頂部的視覺把手 */
 .drawer-handle {
     width: 50px;
     height: 4px;
@@ -115,14 +103,13 @@ body {
     transition: all 0.3s ease;
 }
 
-/* 懸停時把手會發出青藍色科技光 */
 .bottom-drawer:hover .drawer-handle {
     background: rgba(0, 240, 255, 0.8);
     box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
 }
 
 /* =========================================
-   4. 科技感按鈕 (保留你原本的完美設定)
+   4. 科技感按鈕
    ========================================= */
 .button-group {
     display: flex;
@@ -165,4 +152,70 @@ body {
     border-color: #1e2d3d;
     background-color: transparent;
     color: #8892b0;
+}
+
+/* =========================================
+   5. 自訂 Range 滑桿 (科技感升級版)
+   ========================================= */
+input[type="range"] { 
+    -webkit-appearance: none; 
+    appearance: none; /* 🌟 補上標準寫法，消除黃色虛線 */
+    width: 100%; 
+    background: transparent; 
+}
+
+input[type="range"]:focus { 
+    outline: none; 
+}
+
+/* WebKit 核心 (Chrome, Safari, Edge) 的軌道 */
+input[type="range"]::-webkit-slider-runnable-track { 
+    width: 100%; 
+    height: 4px; 
+    cursor: pointer; 
+    background: #1e2d3d; /* 配合你按鈕的科技暗色系 */
+    border-radius: 2px;
+}
+
+/* WebKit 核心的滑塊 */
+input[type="range"]::-webkit-slider-thumb { 
+    height: 16px; 
+    width: 16px; 
+    border-radius: 50%; 
+    background: #00f0ff; /* 科技感青藍色 */
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -6px; /* 讓滑塊垂直置中於軌道 */
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { 
+    transform: scale(1.2); 
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.6); /* 增加懸停發光效果 */
+}
+
+/* Firefox 的軌道 (確保跨瀏覽器一致性) */
+input[type="range"]::-moz-range-track {
+    width: 100%; 
+    height: 4px; 
+    cursor: pointer; 
+    background: #1e2d3d;
+    border-radius: 2px;
+}
+
+/* Firefox 的滑塊 */
+input[type="range"]::-moz-range-thumb {
+    height: 16px; 
+    width: 16px; 
+    border-radius: 50%; 
+    background: #00f0ff;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
 }
