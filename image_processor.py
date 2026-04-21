@@ -1,33 +1,36 @@
 import cv2
 import numpy as np
-import base64 # 🌟 新增：用於直方圖的 Base64 編碼
+import base64
 
 class ImageProcessor:
     def __init__(self, img_array):
-        # 網頁上傳的圖片通常是彩色 (BGR)，我們在這裡統一轉為灰階處理
         if len(img_array.shape) == 3:
             self.img = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
         else:
             self.img = img_array
 
     # ==========================================
-    # 🌟 新增：直方圖生成 (封裝在類別內)
+    # 🌟 升級：直方圖生成 (主副刻度高密度版)
     # ==========================================
     @staticmethod
     def generate_histogram_base64(img):
         h, w = 300, 400
-        # 建立深色背景畫布，對應前端的 #0a0f19
-        hist_img = np.zeros((h, w, 3), dtype=np.uint8)
-        hist_img[:] = (25, 15, 10) # BGR 格式
+        pad_bottom = 30 # 預留底部空間畫座標軸
+        
+        hist_img = np.zeros((h + pad_bottom, w, 3), dtype=np.uint8)
+        hist_img[:] = (25, 15, 10) 
 
-        # 判斷是灰階還是彩色影像
+        # 畫一條 X 軸底線
+        cv2.line(hist_img, (0, h), (w, h), (100, 100, 100), 1)
+
+        # 繪製直方圖曲線
         if len(img.shape) == 2 or img.shape[2] == 1:
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])
             cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
             for x in range(256):
                 cv2.line(hist_img, (int(x * w / 256), h), (int(x * w / 256), h - int(hist[x])), (200, 200, 200), 1)
         else:
-            colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] # B, G, R
+            colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] 
             for i, col in enumerate(colors):
                 hist = cv2.calcHist([img], [i], None, [256], [0, 256])
                 cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
@@ -37,8 +40,66 @@ class ImageProcessor:
                              (int(x * w / 256), h - int(hist[x])), 
                              col, 2)
         
-        # 將直方圖轉為 Base64
+        # 🌟 繪製高密度 X 軸刻度與文字 (主副刻度設計)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.35
+        thickness = 1
+        
+        # 每隔 16 畫一個刻度，總共會有 17 個刻度點
+        for val in range(0, 257, 16):
+            # 處理最後一個邊界值 255
+            if val == 256:
+                val = 255
+                
+            x_pos = int(val * (w - 1) / 255)
+            
+            # 每隔 32 畫「主刻度」(長線 + 數字)，其餘畫「副刻度」(短線)
+            if val % 32 == 0 or val == 255:
+                # 主刻度：線條較長 (向下 8px)、顏色較亮
+                cv2.line(hist_img, (x_pos, h), (x_pos, h + 8), (180, 180, 180), 1)
+                
+                text = str(val)
+                (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, thickness)
+                text_x = x_pos - (text_width // 2)
+                
+                # 邊界防呆：確保左右邊緣的數字不會被裁切
+                if text_x < 0:
+                    text_x = 2
+                elif text_x + text_width > w:
+                    text_x = w - text_width - 2
+                    
+                cv2.putText(hist_img, text, (text_x, h + 22), font, font_scale, (180, 180, 180), thickness, cv2.LINE_AA)
+            else:
+                # 副刻度：線條較短 (向下 4px)、顏色較暗，且不標示文字以免擁擠
+                cv2.line(hist_img, (x_pos, h), (x_pos, h + 4), (100, 100, 100), 1)
+
         _, buffer = cv2.imencode('.png', hist_img)
+        return base64.b64encode(buffer).decode('utf-8')
+
+    # ==========================================
+    # 🌟 升級：頻譜圖生成 (純灰階專業版)
+    # ==========================================
+    @staticmethod
+    def generate_spectrum_base64(img):
+        # 1. 確保影像是單通道灰階，以確保傅立葉轉換的準確性
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
+
+        # 2. 執行二維快速傅立葉轉換 (FFT)
+        f = np.fft.fft2(gray)
+        # 將零頻率 (DC 分量) 移到頻譜中心
+        fshift = np.fft.fftshift(f)
+        
+        # 3. 計算強度頻譜 (取對數以壓縮極大的動態範圍，讓細節可見)
+        magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1)
+        
+        # 4. 正規化到 0~255 的 8-bit 灰階影像
+        spectrum_img = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+        
+        # 💡 移除了偽色彩 (applyColorMap) 的渲染，直接輸出純灰階影像
+        _, buffer = cv2.imencode('.jpg', spectrum_img)
         return base64.b64encode(buffer).decode('utf-8')
 
     # ==========================================

@@ -8,26 +8,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     
     <style>
-        /* 基礎面板與表單樣式 */
-        .tool-panel {
-            background: rgba(10, 15, 25, 0.65);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 240, 255, 0.2);
-            border-radius: 16px;
-            padding: 30px;
-            width: 95vw;
-            max-width: 900px; 
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 0 30px rgba(0, 240, 255, 0.05);
-            z-index: 10;
-            position: relative;
-        }
+        /* 基礎面板與表單樣式保留 */
+        .tool-panel { background: rgba(10, 15, 25, 0.65); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 16px; padding: 30px; width: 95vw; max-width: 900px; max-height: 85vh; overflow-y: auto; box-shadow: 0 0 30px rgba(0, 240, 255, 0.05); z-index: 10; position: relative; }
         .tool-panel::-webkit-scrollbar { width: 6px; }
         .tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         .tool-panel::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
-        
         h2 { font-family: 'Orbitron', sans-serif; color: #00f0ff; text-align: center; margin-top: 0; margin-bottom: 20px; text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
         .form-group { margin-bottom: 20px; text-align: left; }
         label { display: block; margin-bottom: 8px; color: #8892b0; font-size: 0.9rem; }
@@ -37,46 +22,36 @@
         .back-nav { position: absolute; top: 30px; left: 30px; z-index: 100; }
 
         /* =========================================
-           雙欄對比網格 (影像與直方圖共用)
+           🌟 科技感參數滑桿樣式
            ========================================= */
-        .comparison-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 20px;
-            display: none; /* 預設隱藏 */
-        }
-        .image-box {
-            text-align: center;
+        .param-panel {
             background: rgba(0, 0, 0, 0.3);
-            padding: 15px;
+            border: 1px dashed rgba(0, 240, 255, 0.3);
             border-radius: 8px;
-            border: 1px dashed rgba(0, 240, 255, 0.2);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            display: none; /* 預設隱藏，靠 JS 判斷顯示 */
         }
-        .image-box h4 {
-            color: #00f0ff;
-            font-family: 'Orbitron', sans-serif;
-            margin: 0 0 10px 0;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
+        .param-panel h4 {
+            color: #00f0ff; font-family: 'Orbitron', sans-serif; margin: 0 0 15px 0; font-size: 0.9rem;
         }
-        .image-box img {
-            max-width: 100%;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+        .param-group { margin-bottom: 15px; display: none; }
+        .param-group label span { color: #00f0ff; font-weight: bold; font-family: 'Orbitron', sans-serif; }
+        
+        /* 自訂 Range 滑桿 */
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type="range"]:focus { outline: none; }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #1e2d3d; border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { height: 16px; width: 16px; border-radius: 50%; background: #00f0ff; cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px rgba(0, 240, 255, 0.6); transition: transform 0.1s; }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
-        /* 直方圖專屬微調 */
-        .histogram-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0, 240, 255, 0.2);
-            display: none;
-        }
-        .histogram-section h4 {
-            color: #ff0055; /* 直方圖標題改用粉紅色點綴 */
-        }
-
+        /* 雙欄對比網格 */
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; display: none; }
+        .image-box { text-align: center; background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 8px; border: 1px dashed rgba(0, 240, 255, 0.2); }
+        .image-box h4 { color: #00f0ff; font-family: 'Orbitron', sans-serif; margin: 0 0 10px 0; font-size: 0.9rem; letter-spacing: 1px; }
+        .image-box img { max-width: 100%; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .histogram-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0, 240, 255, 0.2); display: none; }
+        .histogram-section h4 { color: #ff0055; }
         .loading { display: none; text-align: center; color: #00f0ff; font-family: 'Orbitron', sans-serif; animation: pulse-glow 1.5s infinite; margin-bottom: 20px; }
         @keyframes pulse-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; text-shadow: 0 0 15px rgba(0,240,255,0.8); } }
     </style>
@@ -97,19 +72,68 @@
             <div class="form-group">
                 <label for="processType">02 // 選擇處理模組 (PROCESSING MODULE)</label>
                 <select id="processType" name="process_type">
-                    <optgroup label="[ 強度與色彩轉換 ]">
+                    <optgroup label="[ 基本強度轉換 ]">
                         <option value="negative">負轉換 (Negative)</option>
+                        <option value="binarize">二值化 (Binarization)</option>
+                        <option value="log">對數轉換 (Log Transform)</option>
+                        <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
                         <option value="equalization">直方圖等化 (Histogram Equalization)</option>
                     </optgroup>
                     <optgroup label="[ 空間域濾波 ]">
+                        <option value="mean">均值濾波 (Mean Filter)</option>
+                        <option value="gaussian">高斯濾波 (Gaussian Filter)</option>
+                        <option value="median">中值濾波 (Median Filter)</option>
                         <option value="sobel">Sobel 邊緣偵測</option>
                         <option value="laplacian">Laplacian 銳化</option>
                     </optgroup>
                     <optgroup label="[ 頻率域濾波 ]">
-                        <option value="freq_gaussian_low">高斯低通濾波 (模糊去噪)</option>
-                        <option value="freq_gaussian_high">高斯高通濾波 (強化邊緣)</option>
+                        <option value="freq_ideal_low">理想低通濾波 (Ideal Lowpass)</option>
+                        <option value="freq_butterworth_low">巴特沃斯低通濾波 (Butterworth Lowpass)</option>
+                        <option value="freq_gaussian_low">高斯低通濾波 (Gaussian Lowpass)</option>
+                        <option value="freq_butterworth_high">巴特沃斯高通濾波 (Butterworth Highpass)</option>
+                        <option value="freq_gaussian_high">高斯高通濾波 (Gaussian Highpass)</option>
                     </optgroup>
                 </select>
+            </div>
+
+            <!-- 🌟 參數設定面板 (動態顯示) -->
+            <div class="param-panel" id="paramPanel">
+                <h4>[ 參數設定 PARAMETERS ]</h4>
+                
+                <div class="param-group" data-types="binarize">
+                    <label>門檻值 (Threshold): <span id="val_threshold">127</span></label>
+                    <input type="range" name="threshold" min="0" max="255" value="127" oninput="document.getElementById('val_threshold').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="log,power_law">
+                    <label>常數 C (Constant): <span id="val_c">1.0</span></label>
+                    <input type="range" name="c" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_c').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="power_law">
+                    <label>Gamma (γ): <span id="val_gamma">1.0</span></label>
+                    <input type="range" name="gamma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_gamma').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="mean,gaussian,median">
+                    <label>卷積核大小 (Kernel Size): <span id="val_kernel">3</span></label>
+                    <input type="range" name="kernel_size" min="3" max="15" step="2" value="3" oninput="document.getElementById('val_kernel').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="gaussian">
+                    <label>標準差 (Sigma): <span id="val_sigma">1.0</span></label>
+                    <input type="range" name="sigma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sigma').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="freq_ideal_low,freq_butterworth_low,freq_gaussian_low,freq_butterworth_high,freq_gaussian_high">
+                    <label>截斷頻率 (D0): <span id="val_d0">30</span></label>
+                    <input type="range" name="D0" min="5" max="200" step="5" value="30" oninput="document.getElementById('val_d0').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="freq_butterworth_low,freq_butterworth_high">
+                    <label>階數 (n): <span id="val_n">2</span></label>
+                    <input type="range" name="n" min="1" max="5" step="1" value="2" oninput="document.getElementById('val_n').innerText=this.value">
+                </div>
             </div>
             
             <button type="submit" id="submitBtn" class="btn submit-btn">啟動處理程序 (EXECUTE)</button>
@@ -117,27 +141,43 @@
 
         <div class="loading" id="loadingIndicator">[ PROCESSING DATA... ]</div>
 
-        <!-- 🌟 影像對比網格 -->
+        <!-- 🌟 影像對比網格 (空間域) -->
         <div class="comparison-grid" id="imageGrid">
             <div class="image-box">
-                <h4>[ ORIGINAL IMAGE ]</h4>
+                <h4>[ SPATIAL: ORIGINAL ]</h4>
                 <img id="originalImage" src="" alt="原圖預覽">
             </div>
             <div class="image-box">
-                <h4>[ PROCESSED IMAGE ]</h4>
+                <h4>[ SPATIAL: PROCESSED ]</h4>
                 <img id="processedImage" src="" alt="處理結果">
             </div>
         </div>
 
-        <!-- 🌟 直方圖對比網格 (套用相同的雙欄佈局) -->
+        <!-- 🌟 頻譜對比網格 (頻率域) -->
+        <div class="histogram-section" id="spectrumSection">
+            <h3 style="color: #b366ff; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// FREQUENCY SPECTRUM //</h3>
+            <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+                <div class="image-box" style="border-color: rgba(179, 102, 255, 0.3);">
+                    <h4 style="color: #b366ff;">[ SPECTRUM: ORIGINAL ]</h4>
+                    <img id="originalSpectrum" src="" alt="原圖頻譜">
+                </div>
+                <div class="image-box" style="border-color: rgba(179, 102, 255, 0.3);">
+                    <h4 style="color: #b366ff;">[ SPECTRUM: PROCESSED ]</h4>
+                    <img id="processedSpectrum" src="" alt="處理後頻譜">
+                </div>
+            </div>
+        </div>
+
+        <!-- 🌟 直方圖對比網格 (強度分佈) -->
         <div class="histogram-section" id="histogramSection">
-            <div class="comparison-grid" style="display: grid; margin-top: 0;">
-                <div class="image-box">
-                    <h4>[ ORIGINAL HISTOGRAM ]</h4>
+            <h3 style="color: #ff0055; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// INTENSITY HISTOGRAM //</h3>
+            <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+                <div class="image-box" style="border-color: rgba(255, 0, 85, 0.3);">
+                    <h4 style="color: #ff0055;">[ HISTOGRAM: ORIGINAL ]</h4>
                     <img id="originalHistogram" src="" alt="原圖直方圖">
                 </div>
-                <div class="image-box">
-                    <h4>[ PROCESSED HISTOGRAM ]</h4>
+                <div class="image-box" style="border-color: rgba(255, 0, 85, 0.3);">
+                    <h4 style="color: #ff0055;">[ HISTOGRAM: PROCESSED ]</h4>
                     <img id="processedHistogram" src="" alt="處理後直方圖">
                 </div>
             </div>
@@ -145,26 +185,55 @@
     </div>
 
     <script>
-        // 1. 選擇檔案時，立刻在左側顯示原圖預覽
+        // 🌟 動態顯示參數面板的邏輯
+        const processTypeSelect = document.getElementById('processType');
+        const paramPanel = document.getElementById('paramPanel');
+        const paramGroups = document.querySelectorAll('.param-group');
+
+        function updateParams() {
+            const selectedType = processTypeSelect.value;
+            let hasVisibleParams = false;
+
+            paramGroups.forEach(group => {
+                const types = group.getAttribute('data-types').split(',');
+                if (types.includes(selectedType)) {
+                    group.style.display = 'block';
+                    hasVisibleParams = true;
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+
+            // 如果有任何參數需要顯示，就顯示整個面板框
+            paramPanel.style.display = hasVisibleParams ? 'block' : 'none';
+        }
+
+        // 監聽下拉選單改變與初始載入
+        processTypeSelect.addEventListener('change', updateParams);
+        updateParams(); // 網頁載入時執行一次
+
+        // 圖片預覽邏輯
         document.getElementById('imageInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('originalImage').src = e.target.result;
-                    // 清空右側與下方資料，等待處理
                     document.getElementById('processedImage').src = "";
                     document.getElementById('originalHistogram').src = "";
                     document.getElementById('processedHistogram').src = "";
+                    document.getElementById('originalSpectrum').src = ""; // 🌟 清空頻譜
+                    document.getElementById('processedSpectrum').src = ""; // 🌟 清空頻譜
                     
                     document.getElementById('imageGrid').style.display = 'grid';
                     document.getElementById('histogramSection').style.display = 'none';
+                    document.getElementById('spectrumSection').style.display = 'none'; // 🌟 隱藏頻譜區塊
                 }
                 reader.readAsDataURL(file);
             }
         });
 
-        // 2. 提交表單處理影像
+        // 表單送出邏輯
         document.getElementById('processForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             
@@ -187,15 +256,18 @@
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "伺服器錯誤");
 
-                // 填入處理後的影像
+                // 填入所有圖片資料
                 document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
-                
-                // 🌟 同時填入左右兩張直方圖
                 document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
                 document.getElementById('processedHistogram').src = "data:image/png;base64," + data.processed_histogram;
                 
-                // 顯示直方圖區塊
+                // 🌟 填入頻譜圖資料
+                document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + data.original_spectrum;
+                document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + data.processed_spectrum;
+                
+                // 顯示所有分析區塊
                 document.getElementById('histogramSection').style.display = 'block';
+                document.getElementById('spectrumSection').style.display = 'block'; // 🌟 顯示頻譜區塊
 
                 // 平滑滾動到底部
                 setTimeout(() => {

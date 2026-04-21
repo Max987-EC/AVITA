@@ -105,48 +105,73 @@ def image_processing():
         file = request.files['image']
         process_type = request.form.get('process_type', 'negative') 
         
-        # 1. 從記憶體中直接讀取圖片為 NumPy 陣列
+        # 🌟 擷取前端傳來的動態參數 (並設定預設值以防萬一)
+        threshold = int(request.form.get('threshold', 127))
+        c_val = float(request.form.get('c', 1.0))
+        gamma = float(request.form.get('gamma', 1.0))
+        kernel_size = int(request.form.get('kernel_size', 3))
+        sigma = float(request.form.get('sigma', 1.0))
+        D0 = float(request.form.get('D0', 30.0))
+        n_order = int(request.form.get('n', 2))
+        
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
         if img_array is None:
             return jsonify({"error": "圖片讀取失敗"}), 400
 
-        # 2. 初始化處理器
         processor = ImageProcessor(img_array)
         
-        # 3. 根據前端傳來的 process_type 執行對應的處理
-        if process_type == 'negative':
+        # 🌟 根據選擇的模式，傳入對應的參數
+        if process_type == 'binarize':
+            result_img = processor.binarize(threshold)
+        elif process_type == 'negative':
             result_img = processor.negative_transform()
+        elif process_type == 'log':
+            result_img = processor.log_transform(c_val)
+        elif process_type == 'power_law':
+            result_img = processor.power_law_transform(gamma, c_val)
         elif process_type == 'equalization':
             result_img = processor.histogram_equalization()
+        elif process_type == 'mean':
+            result_img = processor.mean_filter(kernel_size)
+        elif process_type == 'gaussian':
+            result_img = processor.gaussian_filter(kernel_size, sigma)
+        elif process_type == 'median':
+            result_img = processor.median_filter(kernel_size)
         elif process_type == 'sobel':
             result_img = processor.sobel_filter()
         elif process_type == 'laplacian':
             result_img = processor.laplacian_filter()
-        elif process_type == 'freq_gaussian_low':
-            result_img = processor.frequency_filter('gaussian', 'low', D0=30)
-        elif process_type == 'freq_gaussian_high':
-            result_img = processor.frequency_filter('gaussian', 'high', D0=30)
+        elif process_type.startswith('freq_'):
+            # 巧妙解析頻率域的字串 (例如 'freq_butterworth_low')
+            parts = process_type.split('_')
+            f_type = parts[1] # ideal, butterworth, gaussian
+            p_type = parts[2] # low, high
+            result_img = processor.frequency_filter(f_type, p_type, D0, n_order)
         else:
             result_img = processor.img
 
-        # 4. 將處理後的影像轉為 Base64
         success, encoded_img = cv2.imencode('.jpg', result_img)
         if not success:
             return jsonify({"error": "影像編碼失敗"}), 500
         processed_b64 = base64.b64encode(encoded_img).decode('utf-8')
 
-        # 5. 呼叫 ImageProcessor 的靜態方法產生直方圖 Base64
-        # 原圖傳入彩色的 img_array，處理後的圖傳入 result_img
+        # 產生直方圖
         orig_hist_b64 = ImageProcessor.generate_histogram_base64(img_array)
         proc_hist_b64 = ImageProcessor.generate_histogram_base64(result_img)
 
-        # 6. 將所有資料打包成 JSON 回傳給前端
+        # 🌟 產生傅立葉頻譜圖
+        orig_spec_b64 = ImageProcessor.generate_spectrum_base64(img_array)
+        proc_spec_b64 = ImageProcessor.generate_spectrum_base64(result_img)
+
+        # 將所有資料打包成 JSON 回傳
         return jsonify({
             "processed_image": processed_b64,
             "original_histogram": orig_hist_b64,
-            "processed_histogram": proc_hist_b64
+            "processed_histogram": proc_hist_b64,
+            "original_spectrum": orig_spec_b64,  # 🌟 新增
+            "processed_spectrum": proc_spec_b64  # 🌟 新增
         })
 
 # ==========================================
