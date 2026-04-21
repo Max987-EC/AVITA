@@ -28,16 +28,18 @@ class ImageProcessor:
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])
             cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
             for x in range(256):
-                cv2.line(hist_img, (int(x * w / 256), h), (int(x * w / 256), h - int(hist[x])), (200, 200, 200), 1)
+                # 🌟 這裡的 hist[x] 改成 hist[x][0]
+                cv2.line(hist_img, (int(x * w / 256), h), (int(x * w / 256), h - int(hist[x][0])), (200, 200, 200), 1)
         else:
             colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] 
             for i, col in enumerate(colors):
                 hist = cv2.calcHist([img], [i], None, [256], [0, 256])
                 cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
                 for x in range(1, 256):
+                    # 🌟 這裡的 hist[x-1] 與 hist[x] 都加上 [0]
                     cv2.line(hist_img, 
-                             (int((x - 1) * w / 256), h - int(hist[x - 1])),
-                             (int(x * w / 256), h - int(hist[x])), 
+                             (int((x - 1) * w / 256), h - int(hist[x - 1][0])),
+                             (int(x * w / 256), h - int(hist[x][0])), 
                              col, 2)
         
         # 🌟 繪製高密度 X 軸刻度與文字 (主副刻度設計)
