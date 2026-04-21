@@ -127,6 +127,13 @@ class ImageProcessor:
     def histogram_equalization(self):
         return cv2.equalizeHist(self.img)
 
+    # 🌟 新增：CLAHE 處理方法
+    def clahe_equalization(self, clip_limit=2.0, tile_grid_size=8):
+        # 建立 CLAHE 物件，設定對比限制與網格大小
+        clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_size, tile_grid_size))
+        # 套用 CLAHE 到灰階影像上
+        return clahe.apply(self.img)
+
     # ==========================================
     # 2. 影像空間濾波
     # ==========================================

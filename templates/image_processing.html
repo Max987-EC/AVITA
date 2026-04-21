@@ -71,6 +71,7 @@
                         <option value="log">對數轉換 (Log Transform)</option>
                         <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
                         <option value="equalization">直方圖等化 (Histogram Equalization)</option>
+                        <option value="clahe">限制對比自適應直方圖 (CLAHE)</option>
                     </optgroup>
                     <optgroup label="[ 空間域濾波 ]">
                         <option value="mean">均值濾波 (Mean Filter)</option>
@@ -81,10 +82,9 @@
                     </optgroup>
                     <optgroup label="[ 頻率域濾波 ]">
                         <option value="freq_ideal_low">理想低通濾波 (Ideal Lowpass)</option>
-                        <!-- 🌟 新增下面這一行 -->
-                        <option value="freq_ideal_high">理想高通濾波 (Ideal Highpass)</option>
                         <option value="freq_butterworth_low">巴特沃斯低通濾波 (Butterworth Lowpass)</option>
                         <option value="freq_gaussian_low">高斯低通濾波 (Gaussian Lowpass)</option>
+                        <option value="freq_ideal_high">理想高通濾波 (Ideal Highpass)</option>
                         <option value="freq_butterworth_high">巴特沃斯高通濾波 (Butterworth Highpass)</option>
                         <option value="freq_gaussian_high">高斯高通濾波 (Gaussian Highpass)</option>
                     </optgroup>
@@ -108,6 +108,16 @@
                 <div class="param-group" data-types="power_law">
                     <label>Gamma (γ): <span id="val_gamma">1.0</span></label>
                     <input type="range" name="gamma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_gamma').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="clahe">
+                    <label>對比限制 (Clip Limit): <span id="val_clip">2.0</span></label>
+                    <input type="range" name="clip_limit" min="1.0" max="10.0" step="0.1" value="2.0" oninput="document.getElementById('val_clip').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="clahe">
+                    <label>網格大小 (Tile Grid Size): <span id="val_tile">8</span></label>
+                    <input type="range" name="tile_grid_size" min="2" max="16" step="2" value="8" oninput="document.getElementById('val_tile').innerText=this.value">
                 </div>
 
                 <div class="param-group" data-types="mean,gaussian,median">

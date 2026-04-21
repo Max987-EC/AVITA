@@ -113,6 +113,8 @@ def image_processing():
         sigma = float(request.form.get('sigma', 1.0))
         D0 = float(request.form.get('D0', 30.0))
         n_order = int(request.form.get('n', 2))
+        clip_limit = float(request.form.get('clip_limit', 2.0))
+        tile_grid_size = int(request.form.get('tile_grid_size', 8))
         
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
@@ -122,9 +124,11 @@ def image_processing():
 
         processor = ImageProcessor(img_array)
         
-        # 🌟 根據選擇的模式，傳入對應的參數
+        # 🌟 2. 在判斷 process_type 的 if-elif 區塊中，加入 clahe 的條件
         if process_type == 'binarize':
             result_img = processor.binarize(threshold)
+        elif process_type == 'clahe':  # <--- 新增這兩行
+            result_img = processor.clahe_equalization(clip_limit, tile_grid_size)
         elif process_type == 'negative':
             result_img = processor.negative_transform()
         elif process_type == 'log':
