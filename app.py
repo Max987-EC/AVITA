@@ -3,17 +3,15 @@ import io
 import uuid
 import cv2
 import numpy as np
-import base64 # 🌟 新增：用於影像與直方圖的 Base64 編碼
-from flask import Flask, request, send_file, render_template, jsonify # 🌟 新增 jsonify
+import base64
+from flask import Flask, request, send_file, render_template, jsonify
 
-# 👇 引入車道線偵測類別
-from lane_detector import LaneDetector
-
-# 👇 引入 MoviePy 來處理影片轉碼
-from moviepy import VideoFileClip
-
-# 🌟 新增：引入我們剛剛寫好的影像處理類別
-from image_processor import ImageProcessor
+# ==========================================
+# 📦 自定義模組與第三方套件引入
+# ==========================================
+from lane_detector import LaneDetector       # 車道線偵測核心邏輯
+from moviepy import VideoFileClip            # 用於影片轉碼 (確保網頁能播放)
+from image_processor import ImageProcessor   # 綜合影像處理核心邏輯
 
 # 初始化 Flask 應用程式
 app = Flask(__name__)
@@ -23,6 +21,7 @@ app = Flask(__name__)
 # ==========================================
 @app.route('/')
 def index():
+    """渲染系統首頁"""
     return render_template('index.html')
 
 # ==========================================
@@ -30,52 +29,60 @@ def index():
 # ==========================================
 @app.route('/tool/image-resizer', methods=['GET', 'POST'])
 def image_resizer():
+    """處理影像縮放的路由 (目前為保留擴充區塊)"""
     if request.method == 'GET':
         return render_template('image_resizer.html')
         
     if request.method == 'POST':
-        pass # 請替換成你原本的程式碼
+        pass # 待實作：替換成原本的縮放程式碼
 
 # ==========================================
 # 🚗 工具 2：車道線偵測 (Lane Detection)
 # ==========================================
 @app.route('/tool/lane-detection', methods=['GET', 'POST'])
 def lane_detection():
+    """接收使用者上傳的影片，進行車道線偵測後回傳處理後的影片"""
     if request.method == 'GET':
         return render_template('lane_detection.html')
 
+    # 1. 檢查是否有上傳影片
     if 'video' not in request.files:
         return "沒有上傳影片", 400
-
     video_file = request.files['video']
     
+    # 2. 建立唯一的暫存檔案名稱 (避免多人同時使用時檔案覆蓋)
     temp_id = uuid.uuid4().hex
-    input_path = f"temp_in_{temp_id}.mp4"
-    opencv_output_path = f"temp_cv2_{temp_id}.mp4"  
-    web_output_path = f"temp_web_{temp_id}.mp4"     
+    input_path = f"temp_in_{temp_id}.mp4"          # 原始上傳影片
+    opencv_output_path = f"temp_cv2_{temp_id}.mp4" # OpenCV 處理後的影片
+    web_output_path = f"temp_web_{temp_id}.mp4"    # 轉碼後供網頁播放的影片
     
     video_file.save(input_path)
 
+    # 3. 初始化偵測器與影片讀取物件
     detector = LaneDetector()
-
     cap = cv2.VideoCapture(input_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     
+    # 設定 OpenCV 影片寫入器 (預設輸出兩倍寬度，用於並排對比)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(opencv_output_path, fourcc, fps, (width * 2, height))
     
+    # 4. 逐幀處理影片
     while cap.isOpened():
         ret, frame = cap.read()
-        if not ret: break 
+        if not ret: 
+            break 
         
+        # 呼叫車道線偵測邏輯，並寫入新影片
         processed_frame = detector.process_frame(frame)
         out.write(processed_frame)
 
     cap.release()
     out.release()
     
+    # 5. 影片轉碼 (重要：OpenCV 輸出的 mp4v 編碼網頁無法直接播放，需轉為 H.264)
     try:
         clip = VideoFileClip(opencv_output_path)
         clip.write_videofile(web_output_path, codec="libx264", audio=False, logger=None)
@@ -83,11 +90,11 @@ def lane_detection():
     except Exception as e:
         return f"影片轉碼失敗: {str(e)}", 500
 
-    if os.path.exists(input_path):
-        os.remove(input_path)
-    if os.path.exists(opencv_output_path):
-        os.remove(opencv_output_path)
+    # 6. 清理暫存檔案 (釋放伺服器空間)
+    if os.path.exists(input_path): os.remove(input_path)
+    if os.path.exists(opencv_output_path): os.remove(opencv_output_path)
 
+    # 回傳最終影片給前端
     return send_file(web_output_path, mimetype='video/mp4')
 
 # ==========================================
@@ -95,43 +102,49 @@ def lane_detection():
 # ==========================================
 @app.route('/tool/image-processing', methods=['GET', 'POST'])
 def image_processing():
+    """接收圖片與動態參數，執行各種影像濾波與轉換，並回傳 Base64 格式的結果"""
     if request.method == 'GET':
         return render_template('image_processing.html')
 
     if request.method == 'POST':
+        # 1. 檢查圖片是否存在
         if 'image' not in request.files:
             return jsonify({"error": "沒有上傳圖片"}), 400
             
         file = request.files['image']
         process_type = request.form.get('process_type', 'negative') 
         
-        # 🌟 擷取前端傳來的動態參數 (並設定預設值以防萬一)
-        threshold = int(request.form.get('threshold', 127))
-        c_val = float(request.form.get('c', 1.0))
-        gamma = float(request.form.get('gamma', 1.0))
-        kernel_size = int(request.form.get('kernel_size', 3))
-        sigma = float(request.form.get('sigma', 1.0))
-        D0 = float(request.form.get('D0', 30.0))
-        n_order = int(request.form.get('n', 2))
-        clip_limit = float(request.form.get('clip_limit', 2.0))
-        tile_grid_size = int(request.form.get('tile_grid_size', 8))
+        # 2. 安全地擷取前端傳來的動態參數 (設定預設值以防萬一)
+        threshold = int(request.form.get('threshold', 127))              # 二值化門檻
+        c_val = float(request.form.get('c', 1.0))                        # 對數/指數常數
+        gamma = float(request.form.get('gamma', 1.0))                    # Gamma 值
+        kernel_size = int(request.form.get('kernel_size', 3))            # 卷積核大小
+        sigma = float(request.form.get('sigma', 1.0))                    # 高斯標準差
+        D0 = float(request.form.get('D0', 30.0))                         # 頻率域截斷頻率
+        n_order = int(request.form.get('n', 2))                          # 巴特沃斯階數
+        clip_limit = float(request.form.get('clip_limit', 2.0))          # CLAHE 對比限制
+        tile_grid_size = int(request.form.get('tile_grid_size', 8))      # CLAHE 網格大小
+        threshold1 = int(request.form.get('threshold1', 50))             # Canny 低門檻
+        threshold2 = int(request.form.get('threshold2', 150))            # Canny 高門檻
         
-        # 🌟 1. 新增接收 Canny 的兩個參數
-        threshold1 = int(request.form.get('threshold1', 50))
-        threshold2 = int(request.form.get('threshold2', 150))
-        
+        # 3. 將上傳的圖片轉換為 OpenCV 可讀取的 Numpy 陣列
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
         if img_array is None:
             return jsonify({"error": "圖片讀取失敗"}), 400
 
+        # 初始化影像處理器
         processor = ImageProcessor(img_array)
         
-        # 🌟 2. 在 if-elif 判斷式中，加入新的邊緣偵測選項
+        # ==========================================
+        # 4. 根據使用者選擇的模式，執行對應的演算法
+        # ==========================================
+        
+        # [ 基本強度轉換 ]
         if process_type == 'binarize':
             result_img = processor.binarize(threshold)
-        elif process_type == 'clahe':  # <--- 新增這兩行
+        elif process_type == 'clahe':  
             result_img = processor.clahe_equalization(clip_limit, tile_grid_size)
         elif process_type == 'negative':
             result_img = processor.negative_transform()
@@ -141,6 +154,8 @@ def image_processing():
             result_img = processor.power_law_transform(gamma, c_val)
         elif process_type == 'equalization':
             result_img = processor.histogram_equalization()
+            
+        # [ 空間域濾波 ]
         elif process_type == 'mean':
             result_img = processor.mean_filter(kernel_size)
         elif process_type == 'gaussian':
@@ -148,7 +163,7 @@ def image_processing():
         elif process_type == 'median':
             result_img = processor.median_filter(kernel_size)
             
-        # --- 邊緣偵測區塊 ---
+        # [ 邊緣偵測 ]
         elif process_type == 'roberts':
             result_img = processor.roberts_filter()
         elif process_type == 'prewitt':
@@ -161,41 +176,49 @@ def image_processing():
             result_img = processor.log_filter(kernel_size, sigma)
         elif process_type == 'canny':
             result_img = processor.canny_filter(threshold1, threshold2)
-        # -------------------
-        
+            
+        # [ 頻率域濾波 ]
         elif process_type.startswith('freq_'):
-            # 巧妙解析頻率域的字串 (例如 'freq_butterworth_low')
+            # 解析字串以決定濾波器類型與高低通 (例如 'freq_butterworth_low')
             parts = process_type.split('_')
             f_type = parts[1] # ideal, butterworth, gaussian
             p_type = parts[2] # low, high
             result_img = processor.frequency_filter(f_type, p_type, D0, n_order)
+            
+        # 防呆機制：若無符合條件則回傳原圖
         else:
             result_img = processor.img
 
+        # ==========================================
+        # 5. 將所有結果編碼為 Base64 格式準備回傳
+        # ==========================================
+        
+        # 主影像編碼
         success, encoded_img = cv2.imencode('.jpg', result_img)
         if not success:
             return jsonify({"error": "影像編碼失敗"}), 500
         processed_b64 = base64.b64encode(encoded_img).decode('utf-8')
 
-        # 產生直方圖
+        # 產生直方圖 (原圖與處理後)
         orig_hist_b64 = ImageProcessor.generate_histogram_base64(img_array)
         proc_hist_b64 = ImageProcessor.generate_histogram_base64(result_img)
 
-        # 🌟 產生傅立葉頻譜圖
+        # 產生傅立葉頻譜圖 (原圖與處理後)
         orig_spec_b64 = ImageProcessor.generate_spectrum_base64(img_array)
         proc_spec_b64 = ImageProcessor.generate_spectrum_base64(result_img)
 
-        # 將所有資料打包成 JSON 回傳
+        # 6. 打包成 JSON 格式回傳給前端動態渲染
         return jsonify({
             "processed_image": processed_b64,
             "original_histogram": orig_hist_b64,
             "processed_histogram": proc_hist_b64,
-            "original_spectrum": orig_spec_b64,  # 🌟 新增
-            "processed_spectrum": proc_spec_b64  # 🌟 新增
+            "original_spectrum": orig_spec_b64,  
+            "processed_spectrum": proc_spec_b64  
         })
 
 # ==========================================
-# 啟動伺服器
+# 🚀 啟動伺服器
 # ==========================================
 if __name__ == '__main__':
+    # debug=True 允許在修改程式碼後自動重啟伺服器
     app.run(debug=True)

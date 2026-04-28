@@ -3,205 +3,238 @@ import numpy as np
 import base64
 
 class ImageProcessor:
+    """
+    綜合影像處理核心類別
+    負責處理所有與影像相關的演算法，包含：強度轉換、空間濾波、邊緣偵測與頻率域濾波。
+    """
     def __init__(self, img_array):
-        if len(img_array.shape) == 3:
-            self.img = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
-        else:
-            self.img = img_array
+        # 儲存原始影像陣列
+        self.img = img_array
+        # 判斷影像是否為彩色 (若維度長度為 3，代表具有 BGR 三個通道)
+        self.is_color = len(img_array.shape) == 3
 
     # ==========================================
-    # 🌟 升級：直方圖生成 (主副刻度高密度版)
+    # 📊 基礎工具：直方圖與頻譜圖生成
     # ==========================================
     @staticmethod
     def generate_histogram_base64(img):
+        """
+        繪製影像的直方圖，並回傳 Base64 編碼的圖片字串。
+        支援灰階與彩色影像，並帶有精緻的座標軸與刻度標示。
+        """
         h, w = 300, 400
-        pad_bottom = 30 # 預留底部空間畫座標軸
+        pad_bottom = 30 # 預留底部空間繪製 X 軸與刻度文字
         
+        # 建立深色背景的畫布
         hist_img = np.zeros((h + pad_bottom, w, 3), dtype=np.uint8)
         hist_img[:] = (25, 15, 10) 
 
-        # 畫一條 X 軸底線
+        # 繪製 X 軸底線
         cv2.line(hist_img, (0, h), (w, h), (100, 100, 100), 1)
 
-        # 繪製直方圖曲線
+        # 判斷是單通道(灰階)還是多通道(彩色)
         if len(img.shape) == 2 or img.shape[2] == 1:
+            # 灰階直方圖：計算並正規化後畫出白色曲線
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])
             cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
             for x in range(256):
-                # 🌟 這裡的 hist[x] 改成 hist[x][0]
                 cv2.line(hist_img, (int(x * w / 256), h), (int(x * w / 256), h - int(hist[x][0])), (200, 200, 200), 1)
         else:
+            # 彩色直方圖：分別計算 B, G, R 三個通道並畫出對應顏色的曲線
             colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] 
             for i, col in enumerate(colors):
                 hist = cv2.calcHist([img], [i], None, [256], [0, 256])
                 cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
                 for x in range(1, 256):
-                    # 🌟 這裡的 hist[x-1] 與 hist[x] 都加上 [0]
                     cv2.line(hist_img, 
                              (int((x - 1) * w / 256), h - int(hist[x - 1][0])),
                              (int(x * w / 256), h - int(hist[x][0])), 
                              col, 2)
         
-        # 🌟 繪製高密度 X 軸刻度與文字 (主副刻度設計)
+        # 繪製 X 軸的刻度與數值標籤 (每隔 16 畫一個刻度)
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.35
         thickness = 1
         
-        # 每隔 16 畫一個刻度，總共會有 17 個刻度點
         for val in range(0, 257, 16):
-            # 處理最後一個邊界值 255
-            if val == 256:
-                val = 255
-                
+            if val == 256: val = 255
             x_pos = int(val * (w - 1) / 255)
             
-            # 每隔 32 畫「主刻度」(長線 + 數字)，其餘畫「副刻度」(短線)
+            # 每隔 32 畫主刻度並標示數字，其餘畫副刻度
             if val % 32 == 0 or val == 255:
-                # 主刻度：線條較長 (向下 8px)、顏色較亮
                 cv2.line(hist_img, (x_pos, h), (x_pos, h + 8), (180, 180, 180), 1)
-                
                 text = str(val)
-                (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, thickness)
-                text_x = x_pos - (text_width // 2)
+                (text_width, _), _ = cv2.getTextSize(text, font, font_scale, thickness)
                 
-                # 邊界防呆：確保左右邊緣的數字不會被裁切
-                if text_x < 0:
-                    text_x = 2
-                elif text_x + text_width > w:
-                    text_x = w - text_width - 2
-                    
+                # 防呆機制：確保邊緣的數字不會超出畫布被裁切
+                text_x = x_pos - (text_width // 2)
+                if text_x < 0: text_x = 2
+                elif text_x + text_width > w: text_x = w - text_width - 2
+                
                 cv2.putText(hist_img, text, (text_x, h + 22), font, font_scale, (180, 180, 180), thickness, cv2.LINE_AA)
             else:
-                # 副刻度：線條較短 (向下 4px)、顏色較暗，且不標示文字以免擁擠
                 cv2.line(hist_img, (x_pos, h), (x_pos, h + 4), (100, 100, 100), 1)
 
+        # 編碼為 PNG 格式的 Base64 字串
         _, buffer = cv2.imencode('.png', hist_img)
         return base64.b64encode(buffer).decode('utf-8')
 
-    # ==========================================
-    # 🌟 升級：頻譜圖生成 (純灰階專業版)
-    # ==========================================
     @staticmethod
     def generate_spectrum_base64(img):
-        # 1. 確保影像是單通道灰階，以確保傅立葉轉換的準確性
+        """
+        計算影像的二維傅立葉轉換，並回傳視覺化頻譜圖的 Base64 字串。
+        """
+        # 頻譜分析通常在灰階下進行以觀察整體結構
         if len(img.shape) == 3:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         else:
             gray = img
 
-        # 2. 執行二維快速傅立葉轉換 (FFT)
+        # 執行 FFT 並將低頻(DC分量)移至中心
         f = np.fft.fft2(gray)
-        # 將零頻率 (DC 分量) 移到頻譜中心
         fshift = np.fft.fftshift(f)
         
-        # 3. 計算強度頻譜 (取對數以壓縮極大的動態範圍，讓細節可見)
+        # 取對數以壓縮極大的動態範圍，讓頻譜細節可見
         magnitude_spectrum = 20 * np.log(np.abs(fshift) + 1)
         
-        # 4. 正規化到 0~255 的 8-bit 灰階影像
+        # 正規化到 0~255 以便顯示
         spectrum_img = cv2.normalize(magnitude_spectrum, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-        
-        # 💡 移除了偽色彩 (applyColorMap) 的渲染，直接輸出純灰階影像
         _, buffer = cv2.imencode('.jpg', spectrum_img)
         return base64.b64encode(buffer).decode('utf-8')
 
     # ==========================================
-    # 1. 強度轉換函數
+    # ⚙️ 輔助函式
+    # ==========================================
+    def _get_gray(self):
+        """
+        安全獲取灰階影像。
+        許多邊緣偵測演算法(如 Canny, Sobel)僅支援或適合在單通道下運作。
+        """
+        return cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY) if self.is_color else self.img
+
+    # ==========================================
+    # 1️⃣ 基本強度轉換 (Intensity Transformations)
     # ==========================================
     def binarize(self, threshold=127):
-        _, result = cv2.threshold(self.img, threshold, 255, cv2.THRESH_BINARY)
+        """二值化：將影像轉為純黑與純白"""
+        gray = self._get_gray()
+        _, result = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
         return result
 
     def negative_transform(self):
+        """負轉換：像素值反轉 (255 - pixel)"""
         return 255 - self.img
 
     def log_transform(self, c=1.0):
+        """對數轉換：擴展暗部細節，壓縮亮部細節"""
         img_float = np.float32(self.img)
         result = c * np.log(1 + img_float)
         return np.uint8(cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX))
 
     def power_law_transform(self, gamma=1.0, c=1.0):
+        """指數(Gamma)轉換：gamma < 1 提亮暗部，gamma > 1 壓暗亮部"""
         img_float = np.float32(self.img) / 255.0
         result = c * np.power(img_float, gamma)
         return np.uint8(np.clip(result * 255.0, 0, 255))
 
     def histogram_equalization(self):
+        """直方圖等化：全域對比度增強"""
+        if self.is_color:
+            # 彩色影像：轉為 HSV，僅對 V (亮度) 通道進行等化，避免色偏
+            hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
+            hsv[:, :, 2] = cv2.equalizeHist(hsv[:, :, 2])
+            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return cv2.equalizeHist(self.img)
 
-    # 🌟 新增：CLAHE 處理方法
     def clahe_equalization(self, clip_limit=2.0, tile_grid_size=8):
-        # 建立 CLAHE 物件，設定對比限制與網格大小
+        """CLAHE：限制對比自適應直方圖等化 (局部對比度增強，抑制雜訊)"""
         clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_size, tile_grid_size))
-        # 套用 CLAHE 到灰階影像上
+        if self.is_color:
+            # 彩色影像：同樣在 HSV 空間下僅處理 V 通道
+            hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
+            hsv[:, :, 2] = clahe.apply(hsv[:, :, 2])
+            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return clahe.apply(self.img)
 
     # ==========================================
-    # 2. 影像空間濾波與邊緣偵測
+    # 2️⃣ 影像空間濾波與邊緣偵測 (Spatial Filtering)
     # ==========================================
     def mean_filter(self, kernel_size=3):
+        """均值濾波：平滑影像，降低雜訊 (會使邊緣模糊)"""
         return cv2.blur(self.img, (kernel_size, kernel_size))
 
     def gaussian_filter(self, kernel_size=3, sigma=1.0):
+        """高斯濾波：保留較多邊緣細節的平滑化處理"""
         return cv2.GaussianBlur(self.img, (kernel_size, kernel_size), sigma)
 
     def median_filter(self, kernel_size=3):
+        """中值濾波：有效去除胡椒鹽雜訊"""
         return cv2.medianBlur(self.img, kernel_size)
 
-    # 🌟 新增：Roberts 算子 (2x2 交叉微分)
     def roberts_filter(self):
+        """Roberts 算子：利用 2x2 交叉微分偵測邊緣 (對雜訊敏感)"""
+        gray = self._get_gray()
         kernel_x = np.array([[1, 0], [0, -1]], dtype=np.float32)
         kernel_y = np.array([[0, 1], [-1, 0]], dtype=np.float32)
-        x = cv2.filter2D(self.img, cv2.CV_64F, kernel_x)
-        y = cv2.filter2D(self.img, cv2.CV_64F, kernel_y)
+        x = cv2.filter2D(gray, cv2.CV_64F, kernel_x)
+        y = cv2.filter2D(gray, cv2.CV_64F, kernel_y)
         magnitude = cv2.magnitude(x, y)
         return np.uint8(cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX))
 
-    # 🌟 新增：Prewitt 算子 (3x3 平均微分)
     def prewitt_filter(self):
+        """Prewitt 算子：利用 3x3 平均微分偵測邊緣"""
+        gray = self._get_gray()
         kernel_x = np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]], dtype=np.float32)
         kernel_y = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]], dtype=np.float32)
-        x = cv2.filter2D(self.img, cv2.CV_64F, kernel_x)
-        y = cv2.filter2D(self.img, cv2.CV_64F, kernel_y)
+        x = cv2.filter2D(gray, cv2.CV_64F, kernel_x)
+        y = cv2.filter2D(gray, cv2.CV_64F, kernel_y)
         magnitude = cv2.magnitude(x, y)
         return np.uint8(cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX))
 
     def sobel_filter(self):
-        sobel_x = cv2.Sobel(self.img, cv2.CV_64F, 1, 0, ksize=3)
-        sobel_y = cv2.Sobel(self.img, cv2.CV_64F, 0, 1, ksize=3)
+        """Sobel 算子：結合高斯平滑與微分，工業界最常用的邊緣偵測"""
+        gray = self._get_gray()
+        sobel_x = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
         magnitude = cv2.magnitude(sobel_x, sobel_y)
         return np.uint8(cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX))
 
     def laplacian_filter(self):
-        laplacian = cv2.Laplacian(self.img, cv2.CV_64F)
+        """Laplacian 算子：二階微分邊緣偵測 (可抓出更細的邊緣，但極怕雜訊)"""
+        gray = self._get_gray()
+        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
         return cv2.convertScaleAbs(laplacian)
 
-    # 🌟 新增：LoG (Laplacian of Gaussian) 高斯拉普拉斯
     def log_filter(self, kernel_size=3, sigma=1.0):
-        # 先做高斯平滑抑制雜訊
-        blurred = cv2.GaussianBlur(self.img, (kernel_size, kernel_size), sigma)
-        # 再做拉普拉斯二階微分
+        """LoG (Laplacian of Gaussian)：先高斯模糊降噪，再做拉普拉斯邊緣偵測"""
+        gray = self._get_gray()
+        blurred = cv2.GaussianBlur(gray, (kernel_size, kernel_size), sigma)
         laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
         return cv2.convertScaleAbs(laplacian)
 
-    # 🌟 新增：Canny 邊緣偵測 (五步驟最佳化算子)
     def canny_filter(self, threshold1=50, threshold2=150):
-        return cv2.Canny(self.img, threshold1, threshold2)
+        """Canny 算子：五步驟最佳化邊緣偵測，能輸出連續且細緻的邊緣"""
+        gray = self._get_gray()
+        return cv2.Canny(gray, threshold1, threshold2)
 
     # ==========================================
-    # 3. 影像頻率濾波
+    # 3️⃣ 影像頻率域濾波 (Frequency Domain Filtering)
     # ==========================================
-    def _get_frequency_components(self):
-        f_transform = np.fft.fft2(self.img)
+    def _get_frequency_components(self, channel):
+        """輔助函式：執行 FFT 並將低頻移至中心"""
+        f_transform = np.fft.fft2(channel)
         return np.fft.fftshift(f_transform)
 
-    def _apply_frequency_filter(self, mask):
-        f_shift = self._get_frequency_components()
+    def _apply_frequency_filter(self, channel, mask):
+        """輔助函式：套用頻率遮罩，並執行反傅立葉轉換 (IFFT) 轉回空間域"""
+        f_shift = self._get_frequency_components(channel)
         f_shift_filtered = f_shift * mask
         f_ishift = np.fft.ifftshift(f_shift_filtered)
         img_back = np.abs(np.fft.ifft2(f_ishift))
         return np.uint8(cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX))
 
-    def _create_distance_matrix(self):
-        rows, cols = self.img.shape
+    def _create_distance_matrix(self, rows, cols):
+        """輔助函式：建立頻譜中心到各點的距離矩陣 (用於生成圓形遮罩)"""
         crow, ccol = rows // 2, cols // 2
         u = np.arange(rows)
         v = np.arange(cols)
@@ -209,18 +242,32 @@ class ImageProcessor:
         return np.sqrt((U - crow)**2 + (V - ccol)**2)
 
     def frequency_filter(self, filter_type='gaussian', pass_type='low', D0=30, n=2):
-        D = self._create_distance_matrix()
+        """
+        頻率域濾波主函式
+        支援：理想(Ideal)、巴特沃斯(Butterworth)、高斯(Gaussian) 的低通與高通濾波。
+        """
+        rows, cols = self.img.shape[:2]
+        D = self._create_distance_matrix(rows, cols)
         mask = np.zeros_like(D)
 
+        # 根據選擇的濾波器類型與高/低通，計算對應的遮罩 (Mask)
         if filter_type == 'ideal':
             if pass_type == 'low': mask[D <= D0] = 1
             else: mask[D > D0] = 1
         elif filter_type == 'butterworth':
-            D_safe = np.where(D == 0, 1e-5, D)
+            D_safe = np.where(D == 0, 1e-5, D) # 避免除以零錯誤
             if pass_type == 'low': mask = 1 / (1 + (D_safe / D0)**(2 * n))
             else: mask = 1 / (1 + (D0 / D_safe)**(2 * n))
         elif filter_type == 'gaussian':
             if pass_type == 'low': mask = np.exp(-(D**2) / (2 * (D0**2)))
             else: mask = 1 - np.exp(-(D**2) / (2 * (D0**2)))
 
-        return self._apply_frequency_filter(mask)
+        # 執行濾波：若是彩色影像，需將 B, G, R 拆開獨立處理再合併
+        if self.is_color:
+            b, g, r = cv2.split(self.img)
+            b_filtered = self._apply_frequency_filter(b, mask)
+            g_filtered = self._apply_frequency_filter(g, mask)
+            r_filtered = self._apply_frequency_filter(r, mask)
+            return cv2.merge([b_filtered, g_filtered, r_filtered])
+        else:
+            return self._apply_frequency_filter(self.img, mask)
