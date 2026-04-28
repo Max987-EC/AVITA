@@ -72,13 +72,19 @@
                         <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
                         <option value="equalization">直方圖等化 (Histogram Equalization)</option>
                         <option value="clahe">限制對比自適應直方圖 (CLAHE)</option>
-                    </optgroup>
                     <optgroup label="[ 空間域濾波 ]">
                         <option value="mean">均值濾波 (Mean Filter)</option>
                         <option value="gaussian">高斯濾波 (Gaussian Filter)</option>
                         <option value="median">中值濾波 (Median Filter)</option>
-                        <option value="sobel">Sobel 邊緣偵測</option>
-                        <option value="laplacian">Laplacian 銳化</option>
+                    </optgroup>
+                    <!-- 🌟 新增：專屬的邊緣偵測群組 -->
+                    <optgroup label="[ 邊緣偵測 ]">
+                        <option value="roberts">Roberts 算子</option>
+                        <option value="prewitt">Prewitt 算子</option>
+                        <option value="sobel">Sobel 算子</option>
+                        <option value="laplacian">Laplacian 算子</option>
+                        <option value="log_edge">LoG (高斯拉普拉斯)</option>
+                        <option value="canny">Canny 邊緣偵測</option>
                     </optgroup>
                     <optgroup label="[ 頻率域濾波 ]">
                         <option value="freq_ideal_low">理想低通濾波 (Ideal Lowpass)</option>
@@ -120,14 +126,27 @@
                     <input type="range" name="tile_grid_size" min="2" max="16" step="2" value="8" oninput="document.getElementById('val_tile').innerText=this.value">
                 </div>
 
-                <div class="param-group" data-types="mean,gaussian,median">
+                <!-- 🌟 1. 在 data-types 中補上 log_edge -->
+                <div class="param-group" data-types="mean,gaussian,median,log_edge">
                     <label>卷積核大小 (Kernel Size): <span id="val_kernel">3</span></label>
                     <input type="range" name="kernel_size" min="3" max="15" step="2" value="3" oninput="document.getElementById('val_kernel').innerText=this.value">
                 </div>
 
-                <div class="param-group" data-types="gaussian">
+                <!-- 🌟 2. 在 data-types 中補上 log_edge -->
+                <div class="param-group" data-types="gaussian,log_edge">
                     <label>標準差 (Sigma): <span id="val_sigma">1.0</span></label>
                     <input type="range" name="sigma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sigma').innerText=this.value">
+                </div>
+
+                <!-- 🌟 3. 新增 Canny 專用的雙門檻值 -->
+                <div class="param-group" data-types="canny">
+                    <label>低門檻值 (Threshold 1): <span id="val_th1">50</span></label>
+                    <input type="range" name="threshold1" min="0" max="255" value="50" oninput="document.getElementById('val_th1').innerText=this.value">
+                </div>
+
+                <div class="param-group" data-types="canny">
+                    <label>高門檻值 (Threshold 2): <span id="val_th2">150</span></label>
+                    <input type="range" name="threshold2" min="0" max="255" value="150" oninput="document.getElementById('val_th2').innerText=this.value">
                 </div>
 
                 <!-- 🌟 在 data-types 裡面補上 freq_ideal_high -->

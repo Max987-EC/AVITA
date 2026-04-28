@@ -135,7 +135,7 @@ class ImageProcessor:
         return clahe.apply(self.img)
 
     # ==========================================
-    # 2. 影像空間濾波
+    # 2. 影像空間濾波與邊緣偵測
     # ==========================================
     def mean_filter(self, kernel_size=3):
         return cv2.blur(self.img, (kernel_size, kernel_size))
@@ -146,6 +146,24 @@ class ImageProcessor:
     def median_filter(self, kernel_size=3):
         return cv2.medianBlur(self.img, kernel_size)
 
+    # 🌟 新增：Roberts 算子 (2x2 交叉微分)
+    def roberts_filter(self):
+        kernel_x = np.array([[1, 0], [0, -1]], dtype=np.float32)
+        kernel_y = np.array([[0, 1], [-1, 0]], dtype=np.float32)
+        x = cv2.filter2D(self.img, cv2.CV_64F, kernel_x)
+        y = cv2.filter2D(self.img, cv2.CV_64F, kernel_y)
+        magnitude = cv2.magnitude(x, y)
+        return np.uint8(cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX))
+
+    # 🌟 新增：Prewitt 算子 (3x3 平均微分)
+    def prewitt_filter(self):
+        kernel_x = np.array([[1, 0, -1], [1, 0, -1], [1, 0, -1]], dtype=np.float32)
+        kernel_y = np.array([[1, 1, 1], [0, 0, 0], [-1, -1, -1]], dtype=np.float32)
+        x = cv2.filter2D(self.img, cv2.CV_64F, kernel_x)
+        y = cv2.filter2D(self.img, cv2.CV_64F, kernel_y)
+        magnitude = cv2.magnitude(x, y)
+        return np.uint8(cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX))
+
     def sobel_filter(self):
         sobel_x = cv2.Sobel(self.img, cv2.CV_64F, 1, 0, ksize=3)
         sobel_y = cv2.Sobel(self.img, cv2.CV_64F, 0, 1, ksize=3)
@@ -155,6 +173,18 @@ class ImageProcessor:
     def laplacian_filter(self):
         laplacian = cv2.Laplacian(self.img, cv2.CV_64F)
         return cv2.convertScaleAbs(laplacian)
+
+    # 🌟 新增：LoG (Laplacian of Gaussian) 高斯拉普拉斯
+    def log_filter(self, kernel_size=3, sigma=1.0):
+        # 先做高斯平滑抑制雜訊
+        blurred = cv2.GaussianBlur(self.img, (kernel_size, kernel_size), sigma)
+        # 再做拉普拉斯二階微分
+        laplacian = cv2.Laplacian(blurred, cv2.CV_64F)
+        return cv2.convertScaleAbs(laplacian)
+
+    # 🌟 新增：Canny 邊緣偵測 (五步驟最佳化算子)
+    def canny_filter(self, threshold1=50, threshold2=150):
+        return cv2.Canny(self.img, threshold1, threshold2)
 
     # ==========================================
     # 3. 影像頻率濾波

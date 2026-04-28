@@ -116,6 +116,10 @@ def image_processing():
         clip_limit = float(request.form.get('clip_limit', 2.0))
         tile_grid_size = int(request.form.get('tile_grid_size', 8))
         
+        # 🌟 1. 新增接收 Canny 的兩個參數
+        threshold1 = int(request.form.get('threshold1', 50))
+        threshold2 = int(request.form.get('threshold2', 150))
+        
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
@@ -124,7 +128,7 @@ def image_processing():
 
         processor = ImageProcessor(img_array)
         
-        # 🌟 2. 在判斷 process_type 的 if-elif 區塊中，加入 clahe 的條件
+        # 🌟 2. 在 if-elif 判斷式中，加入新的邊緣偵測選項
         if process_type == 'binarize':
             result_img = processor.binarize(threshold)
         elif process_type == 'clahe':  # <--- 新增這兩行
@@ -143,10 +147,22 @@ def image_processing():
             result_img = processor.gaussian_filter(kernel_size, sigma)
         elif process_type == 'median':
             result_img = processor.median_filter(kernel_size)
+            
+        # --- 邊緣偵測區塊 ---
+        elif process_type == 'roberts':
+            result_img = processor.roberts_filter()
+        elif process_type == 'prewitt':
+            result_img = processor.prewitt_filter()
         elif process_type == 'sobel':
             result_img = processor.sobel_filter()
         elif process_type == 'laplacian':
             result_img = processor.laplacian_filter()
+        elif process_type == 'log_edge':
+            result_img = processor.log_filter(kernel_size, sigma)
+        elif process_type == 'canny':
+            result_img = processor.canny_filter(threshold1, threshold2)
+        # -------------------
+        
         elif process_type.startswith('freq_'):
             # 巧妙解析頻率域的字串 (例如 'freq_butterworth_low')
             parts = process_type.split('_')
