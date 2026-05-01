@@ -254,13 +254,91 @@ input[type="range"]::-moz-range-thumb:hover {
     width: 95vw; 
     max-width: 900px; 
     max-height: 85vh; 
-    overflow-y: auto; /* 內容過多時允許內部滾動 */
+    overflow-y: auto; 
     box-shadow: 0 0 30px rgba(0, 240, 255, 0.05); 
     z-index: 10; 
     position: relative; 
 }
 
-/* 自訂工具面板內的卷軸樣式 */
+/* 🌟 修改：寬版面板 (專為三欄佈局設計) */
+.tool-panel.wide {
+    max-width: 1600px; /* 原本是 1400px，加大以容納右側面板 */
+    width: 98vw;
+}
+
+/* =========================================
+   🌟 新增：面板頂部導覽列 (Panel Header)
+   ========================================= */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed rgba(0, 240, 255, 0.3); /* 科技感虛線分隔線 */
+}
+
+/* 覆蓋原本 h2 的底部邊距，交由 header 統一管理 */
+.panel-header h2 {
+    margin: 0 !important; 
+    flex: 1;
+}
+
+/* 微調返回按鈕的大小，讓它更精緻 */
+.btn-back {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+/* 隱形佔位符：平衡左側按鈕的寬度，讓中間的標題保持完美置中 */
+.header-spacer {
+    width: 115px; 
+}
+
+/* 🌟 新增：左右分欄佈局容器 */
+.tool-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* 🌟 新增：左側控制面板 (Sidebar) */
+.sidebar {
+    flex: 0 0 350px; /* 固定寬度 350px */
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.1);
+    position: sticky; /* 黏性定位：往下滾動時固定在頂部 */
+    top: 0;
+    max-height: calc(85vh - 120px); /* 限制高度以產生獨立卷軸 */
+    overflow-y: auto;
+}
+
+/* 左側面板的獨立細卷軸 */
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 2px; }
+
+/* 🌟 新增：右側主要內容區 */
+.main-content {
+    flex: 1; /* 佔滿剩餘空間 */
+    min-width: 0; /* 防止 Flex 子元素溢出 */
+    display: flex;
+    flex-direction: column;
+    position: relative; /* 🌟 讓載入動畫可以相對於這裡浮動 */
+}
+
+/* 響應式設計：螢幕太窄時自動切換回上下佈局 */
+@media (max-width: 992px) {
+    .tool-layout { flex-direction: column; }
+    .sidebar { flex: auto; width: auto; position: relative; max-height: none; }
+    .steps-panel { flex: auto; width: 100%; position: relative; max-height: none; }
+}
+
+/* 全域卷軸樣式 */
 .tool-panel::-webkit-scrollbar { width: 6px; }
 .tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
 .tool-panel::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
@@ -289,7 +367,7 @@ input[type="file"], select {
     box-sizing: border-box; 
 }
 
-/* 客製化檔案上傳按鈕 (Choose File 按鈕) */
+/* 客製化檔案上傳按鈕 */
 input[type="file"]::file-selector-button { 
     background: #1e2d3d; 
     color: #00f0ff; 
@@ -302,7 +380,6 @@ input[type="file"]::file-selector-button {
 }
 
 .submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; }
-.back-nav { position: absolute; top: 30px; left: 30px; z-index: 100; }
 
 /* =========================================
    🎛️ 7. 動態參數面板 (Parameter Panel)
@@ -317,11 +394,42 @@ input[type="file"]::file-selector-button {
     display: none; /* 預設隱藏，由 JS 控制顯示 */
 }
 
+/* 🌟 修改：參數面板標題區塊 */
+.param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 10px; /* 新增間距，避免文字跟按鈕太靠近 */
+}
+
 .param-panel h4 {
     color: #00f0ff; 
     font-family: 'Orbitron', sans-serif; 
-    margin: 0 0 15px 0; 
-    font-size: 0.9rem;
+    margin: 0; 
+    font-size: 0.85rem;  /* 稍微縮小一點點字體以適應空間 */
+    white-space: nowrap; /* 🌟 關鍵：強制文字絕對不換行 */
+    letter-spacing: 0.5px;
+}
+
+/* 🌟 修改：重置按鈕樣式 */
+.btn-reset {
+    flex-shrink: 0; /* 🌟 關鍵：保護按鈕，絕對不允許被 Flexbox 壓縮 */
+    background: transparent;
+    color: #ff0055;
+    border: 1px solid #ff0055;
+    padding: 4px 8px; /* 稍微微調內距讓按鈕精緻一點 */
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-family: 'Orbitron', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:hover {
+    background: rgba(255, 0, 85, 0.15);
+    box-shadow: 0 0 10px rgba(255, 0, 85, 0.4);
+    color: #ffffff;
 }
 
 .param-group { margin-bottom: 15px; display: none; }
@@ -346,6 +454,7 @@ input[type="file"]::file-selector-button {
     padding: 15px; 
     border-radius: 8px; 
     border: 1px dashed rgba(0, 240, 255, 0.2); 
+    min-height: 300px; /* 🌟 防止圖片切換瞬間高度塌陷 */
 }
 
 .image-box h4 { 
@@ -375,16 +484,159 @@ input[type="file"]::file-selector-button {
    ⏳ 9. 載入動畫 (Loading Animation)
    ========================================= */
 .loading { 
-    display: none; 
+    position: absolute; 
+    top: -40px;         /* 🌟 關鍵修改：往上推 40px，讓它完全懸浮在框線外面的正上方 */
+    right: 0;           /* 🌟 貼齊框框的右側邊緣 */
+    opacity: 0;         
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    background: rgba(0, 0, 0, 0.7); /* 恢復成半透明黑底，更有懸浮感 */
+    padding: 6px 12px;  
+    border-radius: 4px;
+    border: 1px solid rgba(0, 240, 255, 0.6);
     text-align: center; 
     color: #00f0ff; 
+    font-size: 0.75rem; 
     font-family: 'Orbitron', sans-serif; 
-    animation: pulse-glow 1.5s infinite; /* 套用呼吸燈動畫 */
-    margin-bottom: 20px; 
+    animation: pulse-glow 1.5s infinite; 
+    z-index: 100;
 }
 
-/* 呼吸燈動畫：透明度與文字陰影的交替變化 */
+/* 當加上 show 類別時才會顯示 */
+.loading.show {
+    opacity: 1;
+    visibility: visible;
+}
+
 @keyframes pulse-glow { 
-    0%, 100% { opacity: 0.6; } 
-    50% { opacity: 1; text-shadow: 0 0 15px rgba(0,240,255,0.8); } 
+    0%, 100% { box-shadow: 0 0 5px rgba(0,240,255,0.4); } 
+    50% { box-shadow: 0 0 15px rgba(0,240,255,0.8); } 
+}
+
+/* =========================================
+   🌟 10. 可滑動的模組選單 (Module List)
+   ========================================= */
+.module-list {
+    max-height: 280px; /* 限制高度，產生內部卷軸 */
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+/* 清單專屬的細長卷軸 */
+.module-list::-webkit-scrollbar { width: 4px; }
+.module-list::-webkit-scrollbar-track { background: transparent; }
+.module-list::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 2px; }
+
+/* 模組分類標題 */
+.module-group {
+    color: #ff0055;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    margin: 15px 0 8px 5px;
+    letter-spacing: 1px;
+}
+.module-group:first-child { margin-top: 5px; }
+
+/* 個別選項容器 */
+.module-item {
+    display: block;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+
+/* 隱藏原生的單選圓圈 */
+.module-item input[type="radio"] {
+    display: none; 
+}
+
+/* 選項文字區塊的預設樣式 */
+.module-item span {
+    display: block;
+    padding: 10px 15px;
+    border-radius: 4px;
+    color: #8892b0;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+}
+
+/* 滑鼠懸停效果 */
+.module-item:hover span {
+    background: rgba(0, 240, 255, 0.05);
+    color: #ffffff;
+}
+
+/* 🌟 選中狀態：發光 + 邊框 + 變色 */
+.module-item input[type="radio"]:checked + span {
+    background: rgba(0, 240, 255, 0.15);
+    border-color: rgba(0, 240, 255, 0.5);
+    color: #00f0ff;
+    font-weight: bold;
+    box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.1);
+}
+
+/* =========================================
+   👣 11. 執行步驟展示區 (改為右側垂直面板)
+   ========================================= */
+.steps-panel {
+    flex: 0 0 280px; /* 固定寬度 280px */
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 240, 255, 0.1);
+    position: sticky; /* 往下滾動時固定在頂部 */
+    top: 0;
+    max-height: calc(85vh - 120px);
+    overflow-y: auto;
+    margin-top: 0 !important; 
+}
+
+/* 右側面板的獨立細卷軸 */
+.steps-panel::-webkit-scrollbar { width: 4px; }
+.steps-panel::-webkit-scrollbar-track { background: transparent; }
+.steps-panel::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 2px; }
+
+.steps-panel .steps-grid {
+    display: flex;
+    flex-direction: column; /* 🌟 關鍵：改為垂直排列 */
+    gap: 15px;
+    padding-bottom: 15px;
+}
+
+.step-box {
+    width: 100%; /* 自動填滿右側面板的寬度 */
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #1e2d3d;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.step-box:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 240, 255, 0.5);
+}
+
+.step-box h5 {
+    color: #8892b0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    margin-top: 0;
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.step-box img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }

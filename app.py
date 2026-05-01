@@ -127,6 +127,18 @@ def image_processing():
         threshold1 = int(request.form.get('threshold1', 50))             # Canny 低門檻
         threshold2 = int(request.form.get('threshold2', 150))            # Canny 高門檻
         
+        # 🌟 修改：陷波濾波器改為接收獨立的長寬半徑
+        notch_d0_u = float(request.form.get('notch_d0_u', 30.0))
+        notch_d0_v = float(request.form.get('notch_d0_v', 30.0))
+        u0 = int(request.form.get('u0', 50))
+        v0 = int(request.form.get('v0', 50))
+        
+        hough_threshold = int(request.form.get('hough_threshold', 100))
+        hough_min_dist = int(request.form.get('hough_min_dist', 20))
+        hough_param2 = int(request.form.get('hough_param2', 30))
+        hough_min_radius = int(request.form.get('hough_min_radius', 0))
+        hough_max_radius = int(request.form.get('hough_max_radius', 0))
+        
         # 3. 將上傳的圖片轉換為 OpenCV 可讀取的 Numpy 陣列
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
@@ -178,6 +190,9 @@ def image_processing():
             result_img = processor.canny_filter(threshold1, threshold2)
             
         # [ 頻率域濾波 ]
+        elif process_type == 'notch_reject':
+            # 🌟 傳入新的長寬參數
+            result_img = processor.notch_reject_filter(notch_d0_u, notch_d0_v, u0, v0, n_order)
         elif process_type.startswith('freq_'):
             # 解析字串以決定濾波器類型與高低通 (例如 'freq_butterworth_low')
             parts = process_type.split('_')
@@ -185,6 +200,13 @@ def image_processing():
             p_type = parts[2] # low, high
             result_img = processor.frequency_filter(f_type, p_type, D0, n_order)
             
+        # 🌟 [ 特徵檢測 (Hough) ]
+        elif process_type == 'hough_lines':
+            result_img = processor.hough_lines(hough_threshold)
+        elif process_type == 'hough_circles':
+            # 共用 threshold2 作為 Canny 高門檻 (param1)
+            result_img = processor.hough_circles(hough_min_dist, threshold2, hough_param2, hough_min_radius, hough_max_radius)
+
         # 防呆機制：若無符合條件則回傳原圖
         else:
             result_img = processor.img
@@ -193,7 +215,11 @@ def image_processing():
         # 5. 將所有結果編碼為 Base64 格式準備回傳
         # ==========================================
         
-        # 主影像編碼
+        # 🌟 新增：將原圖也轉成 JPG Base64，解決瀏覽器無法顯示 TIF 的問題
+        success_orig, encoded_orig = cv2.imencode('.jpg', img_array)
+        orig_b64 = base64.b64encode(encoded_orig).decode('utf-8') if success_orig else ""
+
+        # 主影像編碼 (處理後的圖)
         success, encoded_img = cv2.imencode('.jpg', result_img)
         if not success:
             return jsonify({"error": "影像編碼失敗"}), 500
@@ -207,13 +233,24 @@ def image_processing():
         orig_spec_b64 = ImageProcessor.generate_spectrum_base64(img_array)
         proc_spec_b64 = ImageProcessor.generate_spectrum_base64(result_img)
 
+        # 🌟 新增：將收集到的執行步驟圖片也編碼為 Base64
+        steps_b64 = []
+        for step_name, step_img in processor.steps:
+            _, step_buf = cv2.imencode('.jpg', step_img)
+            steps_b64.append({
+                "name": step_name,
+                "image": base64.b64encode(step_buf).decode('utf-8')
+            })
+
         # 6. 打包成 JSON 格式回傳給前端動態渲染
         return jsonify({
+            "original_image": orig_b64,          
             "processed_image": processed_b64,
             "original_histogram": orig_hist_b64,
             "processed_histogram": proc_hist_b64,
             "original_spectrum": orig_spec_b64,  
-            "processed_spectrum": proc_spec_b64  
+            "processed_spectrum": proc_spec_b64,
+            "steps": steps_b64  # 🌟 新增這行：把步驟資料傳送給前端
         })
 
 # ==========================================

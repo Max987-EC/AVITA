@@ -12,6 +12,13 @@ class ImageProcessor:
         self.img = img_array
         # 判斷影像是否為彩色 (若維度長度為 3，代表具有 BGR 三個通道)
         self.is_color = len(img_array.shape) == 3
+        # 🌟 新增：用來儲存執行步驟的列表 [(步驟名稱, 影像陣列), ...]
+        self.steps = [] 
+
+    # 🌟 新增：紀錄步驟的輔助函式
+    def add_step(self, name, img):
+        """將當前的影像狀態加入步驟紀錄中"""
+        self.steps.append((name, img.copy()))
 
     # ==========================================
     # 📊 基礎工具：直方圖與頻譜圖生成
@@ -32,16 +39,37 @@ class ImageProcessor:
         # 繪製 X 軸底線
         cv2.line(hist_img, (0, h), (w, h), (100, 100, 100), 1)
 
-        # 判斷是單通道(灰階)還是多通道(彩色)
+        # 🌟 判斷影像本質是否為灰階 (加大智能容錯機制)
+        is_gray = False
         if len(img.shape) == 2 or img.shape[2] == 1:
-            # 灰階直方圖：計算並正規化後畫出白色曲線
+            is_gray = True
+        elif len(img.shape) == 3:
+            b, g, r = cv2.split(img)
+            diff_bg = cv2.absdiff(b, g)
+            diff_gr = cv2.absdiff(g, r)
+            color_mask = cv2.bitwise_or(diff_bg, diff_gr)
+            color_pixels = cv2.countNonZero(color_mask)
+            total_pixels = img.shape[0] * img.shape[1]
+            
+            # 💡 終極容錯機制：只要彩色像素佔比不到 50%，我們就視為灰階圖
+            # 這樣即使畫了滿滿的霍夫圓圈或線條，依然能保持灰階直方圖
+            if color_pixels / total_pixels < 0.5:
+                is_gray = True
+                # 將帶有彩色線條的圖轉回純灰階，以便計算直方圖
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        if is_gray:
+            # 灰階直方圖：計算並正規化後畫出「灰色」折線
             hist = cv2.calcHist([img], [0], None, [256], [0, 256])
             cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
-            for x in range(256):
-                cv2.line(hist_img, (int(x * w / 256), h), (int(x * w / 256), h - int(hist[x][0])), (200, 200, 200), 1)
+            for x in range(1, 256):
+                cv2.line(hist_img, 
+                         (int((x - 1) * w / 256), h - int(hist[x - 1][0])),
+                         (int(x * w / 256), h - int(hist[x][0])), 
+                         (150, 150, 150), 2) # 使用灰色
         else:
-            # 彩色直方圖：分別計算 B, G, R 三個通道並畫出對應顏色的曲線
-            colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] 
+            # 彩色直方圖：分別計算 B, G, R 三個通道並畫出對應顏色的折線
+            colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)] # OpenCV 預設為 BGR 順序
             for i, col in enumerate(colors):
                 hist = cv2.calcHist([img], [i], None, [256], [0, 256])
                 cv2.normalize(hist, hist, 0, h, cv2.NORM_MINMAX)
@@ -213,9 +241,16 @@ class ImageProcessor:
         return cv2.convertScaleAbs(laplacian)
 
     def canny_filter(self, threshold1=50, threshold2=150):
-        """Canny 算子：五步驟最佳化邊緣偵測，能輸出連續且細緻的邊緣"""
+        """Canny 算子：五步驟最佳化邊緣偵測，能輸出連續且細緻的邊緣 (加入步驟紀錄)"""
         gray = self._get_gray()
-        return cv2.Canny(gray, threshold1, threshold2)
+        self.add_step("1. Grayscale", gray)
+        
+        blurred = cv2.GaussianBlur(gray, (5, 5), 1.4)
+        self.add_step("2. Gaussian Blur", blurred)
+        
+        edges = cv2.Canny(blurred, threshold1, threshold2)
+        self.add_step("3. Canny Edges", edges)
+        return edges
 
     # ==========================================
     # 3️⃣ 影像頻率域濾波 (Frequency Domain Filtering)
@@ -271,3 +306,105 @@ class ImageProcessor:
             return cv2.merge([b_filtered, g_filtered, r_filtered])
         else:
             return self._apply_frequency_filter(self.img, mask)
+
+    # ==========================================
+    # 🌟 週期性干擾移除 (陷波濾波器 Notch Filter)
+    # ==========================================
+    def notch_reject_filter(self, D0_u=30, D0_v=30, u0=50, v0=50, n=2):
+        """
+        巴特沃斯陷波阻帶濾波器 (Butterworth Notch Reject Filter)
+        🌟 終極版：支援「橢圓形」阻帶，並使用標準巴特沃斯乘積公式，完美消除條紋光且無振鈴效應
+        D0_u: 水平半徑 (Width)
+        D0_v: 垂直半徑 (Height)
+        """
+        rows, cols = self.img.shape[:2]
+        crow, ccol = rows // 2, cols // 2
+        u = np.arange(rows)
+        v = np.arange(cols)
+        V, U = np.meshgrid(v, u)
+        
+        # 避免半徑為 0 導致除以零錯誤
+        D0_u = max(1e-5, D0_u)
+        D0_v = max(1e-5, D0_v)
+        
+        # 計算到兩個對稱干擾點的「橢圓正規化距離」
+        # 當距離剛好在橢圓邊界上時，D1 或 D2 會等於 1
+        D1 = np.sqrt(((U - crow - u0)**2) / (D0_u**2) + ((V - ccol - v0)**2) / (D0_v**2))
+        D2 = np.sqrt(((U - crow + u0)**2) / (D0_u**2) + ((V - ccol + v0)**2) / (D0_v**2))
+        
+        # 避免除以零
+        D1_safe = np.where(D1 == 0, 1e-5, D1)
+        D2_safe = np.where(D2 == 0, 1e-5, D2)
+        
+        # 🌟 專業優化：分別計算兩個點的巴特沃斯遮罩再相乘
+        # 這樣能確保頻譜能量的衰減完全符合巴特沃斯的平滑特性，徹底消除振鈴效應
+        H1 = 1 / (1 + (1 / D1_safe)**(2 * n))
+        H2 = 1 / (1 + (1 / D2_safe)**(2 * n))
+        mask = H1 * H2
+        
+        if self.is_color:
+            b, g, r = cv2.split(self.img)
+            b_filtered = self._apply_frequency_filter(b, mask)
+            g_filtered = self._apply_frequency_filter(g, mask)
+            r_filtered = self._apply_frequency_filter(r, mask)
+            return cv2.merge([b_filtered, g_filtered, r_filtered])
+        else:
+            return self._apply_frequency_filter(self.img, mask)
+
+
+    # ==========================================
+    # 🌟 特徵檢測 (霍夫變換 Hough Transform)
+    # ==========================================
+    def hough_lines(self, threshold=100):
+        """霍夫線檢測：找出影像中的直線特徵 (加入步驟紀錄)"""
+        gray = self._get_gray()
+        self.add_step("1. Grayscale", gray)
+        
+        # 先用 Canny 找出邊緣
+        edges = cv2.Canny(gray, 50, 150)
+        self.add_step("2. Canny Edges", edges)
+        
+        # 執行機率霍夫線變換
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=50, maxLineGap=10)
+        
+        # 在原圖上繪製結果 (轉為彩色以便畫綠線)
+        result = self.img.copy()
+        if not self.is_color:
+            result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+            
+        if lines is not None:
+            for line in lines:
+                x1, y1, x2, y2 = line[0]
+                cv2.line(result, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                
+        self.add_step("3. Draw Lines", result)
+        return result
+
+    def hough_circles(self, min_dist=20, param1=50, param2=30, min_radius=0, max_radius=0):
+        """霍夫圓檢測：找出影像中的圓形特徵 (加入步驟紀錄)"""
+        gray = self._get_gray()
+        self.add_step("1. Grayscale", gray)
+        
+        # 圓檢測對雜訊敏感，先做輕微模糊
+        blurred = cv2.medianBlur(gray, 5)
+        self.add_step("2. Median Blur", blurred)
+        
+        # 執行霍夫圓變換
+        circles = cv2.HoughCircles(blurred, cv2.HOUGH_GRADIENT, 1, min_dist,
+                                   param1=param1, param2=param2, 
+                                   minRadius=min_radius, maxRadius=max_radius)
+        
+        result = self.img.copy()
+        if not self.is_color:
+            result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+            
+        if circles is not None:
+            circles = np.uint16(np.around(circles))
+            for i in circles[0, :]:
+                # 畫出外圓 (綠色)
+                cv2.circle(result, (i[0], i[1]), i[2], (0, 255, 0), 2)
+                # 畫出圓心 (紅色)
+                cv2.circle(result, (i[0], i[1]), 2, (0, 0, 255), 3)
+                
+        self.add_step("3. Draw Circles", result)
+        return result
