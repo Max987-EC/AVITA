@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生座位排列系統 | AVITA</title>
+    
+    <!-- 引入字體與全域樣式 -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    <!-- 🌟 新增：引入 html2canvas 用於高畫質截圖 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+    <div class="tool-panel wide">
+        
+        <!-- 🌟 頂部導覽列 -->
+        <div class="panel-header">
+            <a href="/" class="btn btn-back">◀ 返回大廳</a>
+            <h2>🎓 學生座位排列系統</h2>
+            <div class="header-spacer"></div>
+        </div>
+
+        <!-- 🌟 左右佈局 -->
+        <div class="tool-layout">
+            
+            <!-- 左側控制面板 -->
+            <div class="sidebar">
+                
+                <div class="seat-card">
+                    <div class="seat-card-title">[ 01 // 學生名單 ]</div>
+                    <label class="lbl" style="color:#8892b0; font-size:0.8rem; margin-bottom:8px; display:block;">貼上名單（每行：學號 姓名）</label>
+                    <textarea id="studentInput" placeholder="B11234 王小明&#10;B11235 李小華"></textarea>
+                    <div class="button-group" style="margin-top: 10px; gap: 10px; justify-content: flex-start;">
+                        <button class="btn" style="padding: 6px 12px;" onclick="parseStudents()">✅ 載入預覽</button>
+                        <button class="btn" style="padding: 6px 12px;" onclick="loadSample()">📝 範例</button>
+                        <button class="btn" style="padding: 6px 12px; border-color: #ff0055; color: #ff0055;" onclick="clearStudents()">🗑️ 清除</button>
+                    </div>
+                    <div id="stuInfo" style="font-size:0.75rem; color:#8892b0; margin-top:10px;"></div>
+                    <div id="stuTags" class="tags"></div>
+                </div>
+
+                <div class="seat-card">
+                    <div class="seat-card-title">[ 02 // 選擇教室 ]</div>
+                    <div id="clsList"></div>
+                    <div class="button-group" style="margin-top: 10px; justify-content: flex-start;">
+                        <button class="btn" style="padding: 6px 12px;" onclick="openAddCls()">➕ 自訂教室</button>
+                    </div>
+                    <div id="capWrap" style="display:none; margin-top:15px;">
+                        <div class="cap-bar"><div class="cap-fill" id="capFill"></div></div>
+                        <div class="cap-text" id="capText"></div>
+                    </div>
+                </div>
+
+                <div class="seat-card">
+                    <div class="seat-card-title">[ 03 // 排列方式 ]</div>
+                    <label class="opt-item selected" id="opt-order" onclick="selMode('order')">
+                        <input type="radio" name="mode" value="order" checked><span>📊 依學號排列</span>
+                    </label>
+                    <label class="opt-item" id="opt-random" onclick="selMode('random')">
+                        <input type="radio" name="mode" value="random"><span>🎲 隨機排列</span>
+                    </label>
+                    <label class="opt-item" id="opt-name" onclick="selMode('name')">
+                        <input type="radio" name="mode" value="name"><span>🔤 依姓名排列</span>
+                    </label>
+                    
+                    <div class="toggle-row" id="quincunxToggleRow">
+                        <label class="toggle">
+                            <input type="checkbox" id="quincunxToggle" onchange="onQuincunxToggle()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">🌸 梅花座 (防作弊模式)</span>
+                    </div>
+                    <div id="quincunxInfo" style="font-size:0.75rem; color:#8892b0; margin-top:8px; display:none;">
+                        啟動後，每個有人的座位上下左右皆為空位。
+                    </div>
+                    
+                    <button class="btn" style="width: 100%; margin-top: 20px; border-color: #00f0ff; color: #00f0ff; font-weight: bold;" onclick="assignSeats()">🚀 開始排座位 (API)</button>
+                </div>
+
+                <div class="seat-card">
+                    <div class="seat-card-title">[ 04 // 匯出操作 ]</div>
+                    <div class="button-group" style="gap: 10px; justify-content: flex-start; flex-wrap: wrap;">
+                        <button class="btn" style="padding: 6px 12px; border-color: #00ff99; color: #00ff99;" onclick="exportCSV()">📥 匯出 CSV</button>
+                        <button class="btn" style="padding: 6px 12px; border-color: #00f0ff; color: #00f0ff;" onclick="downloadImage()">📸 高畫質截圖</button>
+                        <button class="btn" style="padding: 6px 12px; border-color: #ffaa00; color: #ffaa00;" onclick="exportPrint()">🖨️ 列印</button>
+                        <button class="btn" style="padding: 6px 12px; border-color: #ff0055; color: #ff0055;" onclick="resetAll()">🔄 重設</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 右側主畫面 -->
+            <div class="main-content">
+                <div id="alertArea"></div>
+                
+                <div class="tabs" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 10px;">
+                        <div class="tab active" id="tab-seat" onclick="switchTab('seat')">// 🗺️ 視覺化座位圖 //</div>
+                        <div class="tab" id="tab-list" onclick="switchTab('list')">// 📋 名單列表 //</div>
+                    </div>
+                    
+                    <!-- 🌟 縮放控制拉桿 -->
+                    <div id="zoomControl" style="display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+                        <span style="font-size: 0.8rem; color: #8892b0;">🔍 縮放</span>
+                        <input type="range" id="zoomSlider" min="0.4" max="1.2" step="0.05" value="1" 
+                               oninput="updateZoom(this.value)" 
+                               style="width: 100px; accent-color: #00f0ff; cursor: pointer;">
+                        <span id="zoomVal" style="font-size: 0.75rem; color: #00f0ff; width: 35px;">100%</span>
+                    </div>
+                </div>
+                
+                <div id="view-seat">
+                    <div id="clsViews">
+                        <div class="no-result"><div class="icon">🏫</div>請先選擇教室並載入學生名單，<br>然後點擊左側的「開始排座位」</div>
+                    </div>
+                </div>
+                
+                <div id="view-list" style="display:none">
+                    <div class="seat-card" style="background: rgba(0,0,0,0.2); border: none;">
+                        <div id="listContent"><div class="no-result"><div class="icon">📋</div>尚未排列座位</div></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal: 新增教室 -->
+    <div class="modal-overlay" id="addClsModal">
+        <div class="modal">
+            <h3>➕ 新增自訂教室</h3>
+            <div class="form-group">
+                <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">教室名稱</label>
+                <input type="text" id="newClsName" placeholder="例如：EB107" style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:1px solid #1e2d3d; color:#fff; border-radius:4px;">
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">座位配置（每行一排，數字為各區塊座位數，逗號分隔）</label>
+                <textarea id="newClsLayout" placeholder="2,2,2,0&#10;3,3,3,3"></textarea>
+                <div style="font-size:0.75rem; color:#666; margin-top:5px;">提示：0 代表該排該區塊無座位 (走道)</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="border-color: #8892b0; color: #8892b0;" onclick="closeModal('addClsModal')">取消</button>
+                <button class="btn" style="border-color: #00f0ff; color: #00f0ff;" onclick="addCls()">新增</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 編輯座位 -->
+    <div class="modal-overlay" id="seatModal">
+        <div class="modal">
+            <h3>✏️ 編輯座位指派</h3>
+            <div id="seatModalInfo" style="font-size:0.85rem; color:#8892b0; margin-bottom:15px;"></div>
+            <div class="form-group">
+                <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">指派學生</label>
+                <select id="seatSelect" style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:1px solid #1e2d3d; color:#fff; border-radius:4px;">
+                    <option value="">-- 空座位 --</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="border-color: #8892b0; color: #8892b0;" onclick="closeModal('seatModal')">取消</button>
+                <button class="btn" style="border-color: #ffaa00; color: #ffaa00;" onclick="clearSeat()">清空此位</button>
+                <button class="btn" style="border-color: #00f0ff; color: #00f0ff;" onclick="saveSeat()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         ⚙️ 前端互動邏輯 (JavaScript - 極簡 API 驅動版)
+         ========================================= -->
+    <script>
+        let customCls = [];
+        let students = [];
+        let selectedCls = new Set();
+        let seatMap = {};
+        let editSeatKey = null, editSeatCls = null;
+        let currentMode = 'order';
+        let quincunxOn = false;
+        let classroomsConfig = [];
+
+        // 1. 初始化：向後端取得所有教室設定
+        async function init() { 
+            try {
+                const res = await fetch('/api/seat-arranger/arrange', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'get_config' })
+                });
+                const data = await res.json();
+                classroomsConfig = data.classrooms;
+                renderClsList();
+            } catch(e) { showAlert('無法載入教室設定', 'error'); }
+        }
+
+        function getTotalSelectedCap() {
+            return [...selectedCls].reduce((s, id) => { const c = classroomsConfig.find(x => x.id === id); return s + (c ? c.capacity : 0); }, 0);
+        }
+
+        function renderClsList() {
+            document.getElementById('clsList').innerHTML = classroomsConfig.map(c => `
+                <label class="opt-item ${selectedCls.has(c.id) ? 'selected' : ''}">
+                    <input type="checkbox" ${selectedCls.has(c.id) ? 'checked' : ''} onchange="toggleCls('${c.id}')">
+                    <span>${c.name}</span>
+                    <span style="margin-left:auto; font-size:0.75rem; color:#666;">${c.capacity}座</span>
+                </label>`).join('');
+            updateCapBar();
+        }
+
+        function toggleCls(id) {
+            if(selectedCls.has(id)) selectedCls.delete(id); else selectedCls.add(id);
+            renderClsList(); updateCapBar();
+        }
+
+        function updateCapBar() {
+            if(!selectedCls.size || !students.length) { document.getElementById('capWrap').style.display = 'none'; return; }
+            const cap = getTotalSelectedCap();
+            const pct = Math.min(100, Math.round(students.length / cap * 100));
+            const fill = document.getElementById('capFill');
+            fill.style.width = pct + '%';
+            fill.className = 'cap-fill ' + (pct > 100 ? 'over' : pct > 85 ? 'warn' : 'ok');
+            document.getElementById('capText').textContent = `${students.length} 人 / ${cap} 座 (${pct}%) — ${[...selectedCls].join('、')}`;
+            document.getElementById('capWrap').style.display = 'block';
+        }
+
+        function parseStudents() {
+            const raw = document.getElementById('studentInput').value.trim();
+            if(!raw) { showAlert('請輸入學生名單', 'warning'); return; }
+            const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+            students = lines.map((l, i) => { const parts = l.split(/\s+/); if(parts.length >= 2) return {id: parts[0], name: parts.slice(1).join(' ')}; return {id: `S${String(i+1).padStart(3,'0')}`, name: parts[0]}; });
+            document.getElementById('stuInfo').textContent = `共 ${students.length} 位學生`;
+            document.getElementById('stuTags').innerHTML = students.map(s => `<span class="tag">${s.name}</span>`).join('');
+            updateCapBar();
+            showAlert(`✅ 已載入 ${students.length} 位學生預覽`, 'success');
+        }
+
+        function loadSample() {
+            const names = ['王小明','李小華','張大偉','陳美玲','林志豪','黃雅婷','吳建宏','劉淑芬','蔡宗翰','鄭佳穎','許志明','謝雨晴','楊俊傑','周淑娟','洪建志','邱雅雯','曾志遠','廖美慧','彭建國','盧淑惠','蕭志偉','江雅琪','何建平','鍾美珍','余志強'];
+            document.getElementById('studentInput').value = names.map((n, i) => `B1${String(1001 + i).padStart(4, '0')} ${n}`).join('\n');
+            parseStudents();
+        }
+
+        function selMode(m) {
+            currentMode = m;
+            ['order', 'random', 'name'].forEach(k => { 
+                document.getElementById('opt-' + k).classList.toggle('selected', k === m); 
+                document.getElementById('opt-' + k).querySelector('input').checked = (k === m); 
+            });
+        }
+
+        function onQuincunxToggle() {
+            quincunxOn = document.getElementById('quincunxToggle').checked;
+            document.getElementById('quincunxToggleRow').classList.toggle('active', quincunxOn);
+            document.getElementById('quincunxInfo').style.display = quincunxOn ? 'block' : 'none';
+        }
+
+        // 🌟 核心：呼叫 Python 進行排列與渲染 (加入保留卷軸與縮放狀態)
+        async function callBackend(actionData) {
+            // 1. 更新前：記住目前所有教室的卷軸位置
+            const scrollPositions = [];
+            document.querySelectorAll('.cls-view').forEach(el => {
+                scrollPositions.push({ left: el.scrollLeft, top: el.scrollTop });
+            });
+
+            try {
+                const res = await fetch('/api/seat-arranger/arrange', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(actionData)
+                });
+                const data = await res.json();
+                
+                if(data.html_views) {
+                    // 替換新的 HTML 畫面
+                    document.getElementById('clsViews').innerHTML = data.html_views;
+                    
+                    // 2. 更新後：恢復卷軸位置
+                    const views = document.querySelectorAll('.cls-view');
+                    views.forEach((el, index) => {
+                        if(scrollPositions[index]) {
+                            el.scrollLeft = scrollPositions[index].left;
+                            el.scrollTop = scrollPositions[index].top;
+                        }
+                    });
+                }
+                
+                if(data.html_list) document.getElementById('listContent').innerHTML = data.html_list;
+                
+                return data;
+            } catch(e) { 
+                showAlert('❌ 後端處理失敗', 'error'); 
+                return null; 
+            }
+        }
+
+        async function assignSeats() {
+            const raw = document.getElementById('studentInput').value.trim();
+            if(!raw) { showAlert('請先輸入學生名單', 'warning'); return; }
+            if(!selectedCls.size) { showAlert('請先選擇教室', 'warning'); return; }
+
+            const data = await callBackend({
+                action: 'arrange', students_raw: raw, mode: currentMode,
+                quincunx: quincunxOn, selectedCls: [...selectedCls], customClassrooms: customCls
+            });
+
+            if(data) {
+                students = data.students; seatMap = data.seatMap;
+                if(data.assignedCount < students.length) showAlert(`⚠️ 座位不足，${students.length - data.assignedCount} 位學生未分配`, 'warning');
+                else showAlert(`✅ 排列完成！${data.assignedCount} 人分配至 ${selectedCls.size} 間教室`, 'success');
+            }
+        }
+
+        // 🌟 3. 拖曳與編輯：更新狀態後請 Python 重新畫 HTML
+        let dragKey = null, dragClsId = null;
+        function dragStart(key, clsId) { dragKey = key; dragClsId = clsId; }
+        function dragOver(e) { e.preventDefault(); }
+        async function drop(e, key, clsId) {
+            e.preventDefault(); if(!dragKey || dragClsId !== clsId || dragKey === key) return;
+            const map = seatMap[clsId] || {}; const tmp = map[dragKey];
+            if(map[key]) map[dragKey] = map[key]; else delete map[dragKey];
+            if(tmp) map[key] = tmp; else delete map[key];
+            await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls });
+        }
+
+        function openSeatEdit(key, clsId) {
+            editSeatKey = key; editSeatCls = clsId;
+            const sid = (seatMap[clsId] || {})[key]; const stu = sid ? students.find(s => s.id === sid) : null;
+            document.getElementById('seatModalInfo').textContent = `教室：${clsId}　座位：${key}　目前：${stu ? stu.name + ' (' + stu.id + ')' : '空座位'}`;
+            const occupied = new Set(); for(const m of Object.values(seatMap)) Object.values(m).forEach(v => occupied.add(v));
+            document.getElementById('seatSelect').innerHTML = '<option value="">-- 空座位 --</option>' + students.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${s.name} (${s.id})${occupied.has(s.id) && s.id !== sid ? ' ✓' : ''}</option>`).join('');
+            openModal('seatModal');
+        }
+        
+        async function clearSeat() { if(seatMap[editSeatCls]) delete seatMap[editSeatCls][editSeatKey]; closeModal('seatModal'); await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls }); }
+        
+        async function saveSeat() {
+            const v = document.getElementById('seatSelect').value;
+            if(!seatMap[editSeatCls]) seatMap[editSeatCls] = {};
+            if(v) { 
+                for(const [cid, map] of Object.entries(seatMap)) { 
+                    const oldKey = Object.keys(map).find(k => map[k] === v); 
+                    if(oldKey) { if(cid === editSeatCls && oldKey !== editSeatKey) { if(seatMap[editSeatCls][editSeatKey]) map[oldKey] = seatMap[editSeatCls][editSeatKey]; else delete map[oldKey]; } else if(cid !== editSeatCls) delete map[oldKey]; break; } 
+                } 
+                seatMap[editSeatCls][editSeatKey] = v; 
+            } else delete seatMap[editSeatCls][editSeatKey]; 
+            closeModal('seatModal'); 
+            await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls });
+        }
+
+        // ── 輔助功能 ──
+        // 🌟 修正：將縮放變數綁定在最外層容器，避免重新渲染時閃爍
+        function updateZoom(val) {
+            document.getElementById('zoomVal').textContent = Math.round(val * 100) + '%';
+            
+            // 直接把 --zoom 變數設定在最外層的 clsViews 容器上
+            const viewsContainer = document.getElementById('clsViews');
+            if(viewsContainer) {
+                viewsContainer.style.setProperty('--zoom', val);
+            }
+        }
+
+        function openAddCls() { openModal('addClsModal'); }
+
+        async function addCls() {
+            const name = document.getElementById('newClsName').value.trim(); 
+            const raw = document.getElementById('newClsLayout').value.trim();
+            if(!name || !raw) { showAlert('請填寫教室名稱與配置', 'warning'); return; }
+            
+            const layout = raw.split('\n').map((l, i) => ({row: i + 1, blocks: l.split(',').map(n => parseInt(n) || 0)}));
+            customCls.push({id: name, name, type: 'fan', layout});
+            
+            closeModal('addClsModal'); 
+            document.getElementById('newClsName').value = ''; 
+            document.getElementById('newClsLayout').value = '';
+            
+            await init(); 
+            showAlert(`✅ 已新增教室 ${name}`, 'success');
+        }
+
+        // 🌟 更新：直接在前端產生「座位表名單」CSV (移除座位編號)
+        async function exportCSV() {
+            let hasData = false; 
+            for(const m of Object.values(seatMap)) if(Object.keys(m).length) { hasData = true; break; }
+            if(!hasData) { showAlert('尚未排列座位', 'warning'); return; }
+            
+            try {
+                // 加入 BOM 讓 Excel 正確顯示中文，並移除座位編號
+                let csvContent = '\uFEFF教室,學號,姓名\n';
+                const list = [];
+                
+                // 整理所有教室的座位資料
+                for (const [clsId, map] of Object.entries(seatMap)) {
+                    for (const [seatKey, stuId] of Object.entries(map)) {
+                        const stu = students.find(s => s.id === stuId);
+                        if (stu) {
+                            list.push({ clsId, stuId: stu.id, stuName: stu.name });
+                        }
+                    }
+                }
+                
+                // 依照「教室」與「學號」排序，方便老師對照
+                list.sort((a, b) => {
+                    if (a.clsId !== b.clsId) return a.clsId.localeCompare(b.clsId);
+                    return a.stuId.localeCompare(b.stuId);
+                });
+                
+                list.forEach(item => {
+                    csvContent += `${item.clsId},${item.stuId},${item.stuName}\n`;
+                });
+                
+                const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8'});
+                const a = document.createElement('a'); 
+                a.href = URL.createObjectURL(blob); 
+                a.download = '座位表名單.csv'; 
+                a.click();
+                showAlert('✅ CSV 名單匯出成功', 'success');
+            } catch(e) {
+                showAlert('❌ CSV 匯出失敗', 'error');
+            }
+        }
+
+        // 🌟 新增：高畫質截圖下載功能 (終極防裁切版)
+        async function downloadImage() {
+            const container = document.getElementById('clsViews');
+            if(!selectedCls.size) { showAlert('請先選擇教室並排好座位', 'warning'); return; }
+            
+            // 1. 記住目前的狀態與捲軸位置
+            const originalZoom = container.style.getPropertyValue('--zoom') || 1;
+            const originalCssText = container.style.cssText;
+            const originalScrollX = window.scrollX;
+            const originalScrollY = window.scrollY;
+            
+            // 將畫面捲動到最左上角，避免捲軸偏移干擾截圖
+            window.scrollTo(0, 0);
+            
+            // 2. 恢復 100% 大小，並強制最外層展開
+            container.style.setProperty('--zoom', '1');
+            container.style.width = 'max-content';
+            container.style.overflow = 'visible';
+            
+            // 3. 關鍵修復：找出所有置中的容器，強制撐開寬度
+            // 這樣可以避免 Flexbox 置中把左側推到畫面外 (負座標)
+            const views = container.querySelectorAll('.cls-view');
+            const centers = container.querySelectorAll('.cls-center');
+            
+            const originalViewsCss = [];
+            const originalCentersCss = [];
+            
+            views.forEach(v => {
+                originalViewsCss.push(v.style.cssText);
+                v.style.width = 'max-content';
+                v.style.overflow = 'visible';
+            });
+            
+            centers.forEach(c => {
+                originalCentersCss.push(c.style.cssText);
+                c.style.width = 'max-content';
+                // 加上一點 padding 讓截圖邊緣更好看
+                c.style.padding = '20px'; 
+            });
+            
+            try {
+                showAlert('📸 正在產生完整高畫質圖片，請稍候...', 'info');
+                
+                // 4. 進行截圖
+                const canvas = await html2canvas(container, { 
+                    scale: 2, 
+                    backgroundColor: '#0b1121',
+                    scrollX: 0,
+                    scrollY: 0
+                });
+                
+                // 5. 自動下載圖片
+                const link = document.createElement('a');
+                link.download = '完整高畫質座位表.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                showAlert('✅ 圖片下載成功！', 'success');
+            } catch (error) {
+                console.error("截圖失敗:", error);
+                showAlert("❌ 截圖失敗，請稍後再試！", 'error');
+            } finally {
+                // 6. 截圖完成後，瞬間把所有東西恢復原狀
+                container.style.cssText = originalCssText;
+                views.forEach((v, i) => v.style.cssText = originalViewsCss[i]);
+                centers.forEach((c, i) => c.style.cssText = originalCentersCss[i]);
+                window.scrollTo(originalScrollX, originalScrollY);
+            }
+        }
+
+        // 🌟 更新：智慧型比例偵測 (只針對過寬的教室拉長)
+        async function exportPrint() {
+            const container = document.getElementById('clsViews');
+            if(!selectedCls.size) { showAlert('請先選擇教室並排好座位', 'warning'); return; }
+            
+            // 1. 準備截圖環境
+            const originalZoom = container.style.getPropertyValue('--zoom') || 1;
+            const originalCssText = container.style.cssText;
+            const originalScrollX = window.scrollX;
+            const originalScrollY = window.scrollY;
+            window.scrollTo(0, 0);
+            
+            container.style.setProperty('--zoom', '1');
+            container.style.width = 'max-content';
+            container.style.overflow = 'visible';
+            
+            const views = container.querySelectorAll('.cls-view');
+            const centers = container.querySelectorAll('.cls-center');
+            const originalViewsCss = [];
+            const originalCentersCss = [];
+            
+            views.forEach(v => {
+                originalViewsCss.push(v.style.cssText);
+                v.style.width = 'max-content';
+                v.style.overflow = 'visible';
+            });
+            centers.forEach(c => {
+                originalCentersCss.push(c.style.cssText);
+                c.style.width = 'max-content';
+                c.style.padding = '20px';
+            });
+
+            // 🌟 2. 注入魔法：套用「黑白列印」與「智慧拉高」專用 CSS
+            const printStyle = document.createElement('style');
+            printStyle.id = 'print-theme-css';
+            printStyle.innerHTML = `
+                .print-mode, .print-mode * {
+                    background: transparent !important; 
+                    color: #000000 !important;          
+                    border-color: #000000 !important;   
+                    box-shadow: none !important;        
+                    text-shadow: none !important;
+                }
+                .print-mode {
+                    background: #ffffff !important;     
+                }
+                /* 所有教室的基礎簽名格設定 */
+                .print-mode .seat {
+                    border: 2px solid #000000 !important; 
+                    min-height: 65px !important;     
+                    justify-content: flex-start !important; 
+                    padding-top: 10px !important;    
+                }
+                /* 🌟 只有被標記為「過寬」的教室，才會啟動拉高模式 */
+                .print-mode .print-wide-stretch .seat {
+                    height: 110px !important;        
+                    margin: 10px 4px !important;     
+                }
+            `;
+            document.head.appendChild(printStyle);
+            container.classList.add('print-mode');
+
+            // 🌟 3. 智慧偵測：計算每間教室的長寬比
+            views.forEach(v => {
+                const rect = v.getBoundingClientRect();
+                const ratio = rect.width / rect.height;
+                // 如果寬度 ÷ 高度 > 1.6 (比 A4 紙還要寬扁)，就幫它加上拉高標籤
+                if (ratio > 1.6) {
+                    v.classList.add('print-wide-stretch');
+                }
+            });
+
+            // 🌟 4. 清理空座位：移除梅花圖示，變成純空格讓考生簽名
+            const seats = container.querySelectorAll('.seat');
+            const originalSeatHtmls = [];
+            seats.forEach(seat => {
+                originalSeatHtmls.push(seat.innerHTML);
+                seat.innerHTML = seat.innerHTML.replace(/🌸/g, '');
+            });
+
+            try {
+                showAlert('🖨️ 正在準備智慧排版列印畫面，請稍候...', 'info');
+                
+                // 5. 建立列印排版視窗
+                const w = window.open('', '_blank');
+                w.document.write(`
+                    <html><head><title>列印座位表</title>
+                    <style>
+                        @page { size: landscape; margin: 10mm; }
+                        body { margin: 0; background: #fff; text-align: center; }
+                        img { max-width: 100%; max-height: 95vh; object-fit: contain; page-break-after: always; margin-bottom: 20px; }
+                    </style>
+                    </head><body>
+                `);
+                
+                // 6. 針對每個教室截圖
+                for (let i = 0; i < views.length; i++) {
+                    const canvas = await html2canvas(views[i], { 
+                        scale: 2, 
+                        backgroundColor: '#ffffff', 
+                        scrollX: 0, scrollY: 0
+                    });
+                    const imgData = canvas.toDataURL('image/png');
+                    w.document.write(`<img src="${imgData}">`);
+                }
+                
+                w.document.write('</body></html>');
+                w.document.close();
+                
+                // 7. 等待圖片載入後自動呼叫列印
+                setTimeout(() => {
+                    w.focus();
+                    w.print();
+                }, 500);
+                
+            } catch (error) {
+                console.error("列印準備失敗:", error);
+                showAlert("❌ 列印準備失敗！", 'error');
+            } finally {
+                // 8. 瞬間恢復原狀
+                container.classList.remove('print-mode');
+                const pStyle = document.getElementById('print-theme-css');
+                if(pStyle) pStyle.remove();
+                
+                // 移除拉高標籤
+                views.forEach(v => v.classList.remove('print-wide-stretch'));
+                
+                // 復原座位的 HTML (把梅花加回來)
+                seats.forEach((seat, i) => {
+                    seat.innerHTML = originalSeatHtmls[i];
+                });
+                
+                container.style.cssText = originalCssText;
+                views.forEach((v, i) => v.style.cssText = originalViewsCss[i]);
+                centers.forEach((c, i) => c.style.cssText = originalCentersCss[i]);
+                window.scrollTo(originalScrollX, originalScrollY);
+            }
+        }
+
+        function clearStudents() { document.getElementById('studentInput').value = ''; students = []; document.getElementById('stuInfo').textContent = ''; document.getElementById('stuTags').innerHTML = ''; updateCapBar(); }
+        
+        function resetAll() { 
+            seatMap = {}; clearStudents(); selectedCls = new Set(); 
+            document.getElementById('quincunxToggle').checked = false; onQuincunxToggle(); 
+            renderClsList(); 
+            document.getElementById('clsViews').innerHTML = '<div class="no-result"><div class="icon">🏫</div>請先選擇教室並載入學生名單，<br>然後點擊左側的「開始排座位」</div>'; 
+            document.getElementById('listContent').innerHTML = '<div class="no-result"><div class="icon">📋</div>尚未排列座位</div>'; 
+            showAlert('已重設所有資料', 'info'); 
+        }
+        
+        function switchTab(t) { ['seat', 'list'].forEach(k => { document.getElementById('tab-' + k).classList.toggle('active', k === t); document.getElementById('view-' + k).style.display = k === t ? 'block' : 'none'; }); }
+        function openModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+        function showAlert(msg, type = 'info') { const d = document.getElementById('alertArea'); d.innerHTML = `<div class="alert alert-${type}">${msg}</div>`; setTimeout(() => d.innerHTML = '', 3500); }
+
+        init();
+    </script>
+</body>
+</html>

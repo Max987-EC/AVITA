@@ -9,9 +9,10 @@ from flask import Flask, request, send_file, render_template, jsonify
 # ==========================================
 # 📦 自定義模組與第三方套件引入
 # ==========================================
-from lane_detector import LaneDetector       # 車道線偵測核心邏輯
+from seat_arranger import SeatArranger       # 🎓 座位排列核心邏輯 (工具 1)
+from lane_detector import LaneDetector       # 🚗 車道線偵測核心邏輯 (工具 2)
 from moviepy import VideoFileClip            # 用於影片轉碼 (確保網頁能播放)
-from image_processor import ImageProcessor   # 綜合影像處理核心邏輯
+from image_processor import ImageProcessor   # 🎨 綜合影像處理核心邏輯 (工具 3)
 
 # 初始化 Flask 應用程式
 app = Flask(__name__)
@@ -25,16 +26,19 @@ def index():
     return render_template('index.html')
 
 # ==========================================
-# 🛠️ 工具 1：影像縮放 (Image Resizer)
+# 🎓 工具 1：學生座位排列系統 (Seat Arranger)
 # ==========================================
-@app.route('/tool/image-resizer', methods=['GET', 'POST'])
-def image_resizer():
-    """處理影像縮放的路由 (目前為保留擴充區塊)"""
-    if request.method == 'GET':
-        return render_template('image_resizer.html')
-        
-    if request.method == 'POST':
-        pass # 待實作：替換成原本的縮放程式碼
+@app.route('/tool/seat-arranger', methods=['GET'])
+def seat_arranger_route():
+    """渲染座位排列系統的網頁"""
+    return render_template('seat.html')
+
+@app.route('/api/seat-arranger/arrange', methods=['POST'])
+def arrange_seats_api():
+    """接收前端傳來的資料，交由 SeatArranger 處理 (包含取得設定、排列、重新渲染)"""
+    data = request.json
+    arranger = SeatArranger()
+    return jsonify(arranger.handle_request(data))
 
 # ==========================================
 # 🚗 工具 2：車道線偵測 (Lane Detection)
