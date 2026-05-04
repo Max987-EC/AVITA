@@ -1,0 +1,13 @@
+<!-- 引入核心與 UI 邏輯 -->
+{% include 'components/seat/_scripts_core.html' %}
+
+<!-- 引入 API 與座位編輯邏輯 -->
+{% include 'components/seat/_scripts_api.html' %}
+
+<!-- 引入匯出與列印邏輯 -->
+{% include 'components/seat/_scripts_export.html' %}
+
+<script>
+    // 當所有腳本都載入後，執行初始化
+    init();
+</script>

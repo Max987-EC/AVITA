@@ -1,0 +1,16 @@
+<!-- 左側控制面板與滑桿 (主容器) -->
+<div class="sidebar">
+    <form id="processForm">
+        <!-- 01 // 圖片上傳 -->
+        <div class="form-group">
+            <label for="imageInput">01 // 選擇目標影像 (IMAGE INPUT)</label>
+            <input type="file" id="imageInput" name="image" accept="image/*" required>
+        </div>
+        
+        <!-- 02 // 模組選擇 (引入拆分的檔案) -->
+        {% include 'components/image_processing/_sidebar_modules.html' %}
+
+        <!-- 03 // 參數面板 (引入拆分的檔案) -->
+        {% include 'components/image_processing/_sidebar_params.html' %}
+    </form>
+</div>

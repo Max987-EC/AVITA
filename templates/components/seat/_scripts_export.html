@@ -1,0 +1,210 @@
+<!-- 匯出與列印邏輯 -->
+
+<script>
+    async function exportCSV() {
+        let hasData = false; 
+        for(const m of Object.values(seatMap)) if(Object.keys(m).length) { hasData = true; break; }
+        if(!hasData) { showAlert('尚未排列座位', 'warning'); return; }
+        
+        try {
+            let csvContent = '\uFEFF教室,學號,姓名\n';
+            const list = [];
+            
+            for (const [clsId, map] of Object.entries(seatMap)) {
+                for (const [seatKey, stuId] of Object.entries(map)) {
+                    const stu = students.find(s => s.id === stuId);
+                    if (stu) {
+                        list.push({ clsId, stuId: stu.id, stuName: stu.name });
+                    }
+                }
+            }
+            
+            list.sort((a, b) => {
+                if (a.clsId !== b.clsId) return a.clsId.localeCompare(b.clsId);
+                return a.stuId.localeCompare(b.stuId);
+            });
+            
+            list.forEach(item => {
+                csvContent += `${item.clsId},${item.stuId},${item.stuName}\n`;
+            });
+            
+            const blob = new Blob([csvContent], {type: 'text/csv;charset=utf-8'});
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = '座位表名單.csv'; 
+            a.click();
+            showAlert('✅ CSV 名單匯出成功', 'success');
+        } catch(e) {
+            showAlert('❌ CSV 匯出失敗', 'error');
+        }
+    }
+
+    async function downloadImage() {
+        const container = document.getElementById('clsViews');
+        if(!selectedCls.size) { showAlert('請先選擇教室並排好座位', 'warning'); return; }
+        
+        const originalZoom = container.style.getPropertyValue('--zoom') || 1;
+        const originalCssText = container.style.cssText;
+        const originalScrollX = window.scrollX;
+        const originalScrollY = window.scrollY;
+        
+        window.scrollTo(0, 0);
+        
+        container.style.setProperty('--zoom', '1');
+        container.style.width = 'max-content';
+        container.style.overflow = 'visible';
+        
+        const views = container.querySelectorAll('.cls-view');
+        const centers = container.querySelectorAll('.cls-center');
+        
+        const originalViewsCss = [];
+        const originalCentersCss = [];
+        
+        views.forEach(v => {
+            originalViewsCss.push(v.style.cssText);
+            v.style.width = 'max-content';
+            v.style.overflow = 'visible';
+        });
+        
+        centers.forEach(c => {
+            originalCentersCss.push(c.style.cssText);
+            c.style.width = 'max-content';
+            c.style.padding = '20px'; 
+        });
+        
+        try {
+            showAlert('📸 正在產生完整高畫質圖片，請稍候...', 'info');
+            
+            const canvas = await html2canvas(container, { 
+                scale: 2, 
+                backgroundColor: '#0b1121',
+                scrollX: 0,
+                scrollY: 0
+            });
+            
+            const link = document.createElement('a');
+            link.download = '完整高畫質座位表.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            showAlert('✅ 圖片下載成功！', 'success');
+        } catch (error) {
+            console.error("截圖失敗:", error);
+            showAlert("❌ 截圖失敗，請稍後再試！", 'error');
+        } finally {
+            container.style.cssText = originalCssText;
+            views.forEach((v, i) => v.style.cssText = originalViewsCss[i]);
+            centers.forEach((c, i) => c.style.cssText = originalCentersCss[i]);
+            window.scrollTo(originalScrollX, originalScrollY);
+        }
+    }
+
+    async function exportPrint() {
+        const container = document.getElementById('clsViews');
+        if(!selectedCls.size) { showAlert('請先選擇教室並排好座位', 'warning'); return; }
+        
+        const originalCssText = container.style.cssText;
+        const originalScrollX = window.scrollX;
+        const originalScrollY = window.scrollY;
+        window.scrollTo(0, 0);
+        
+        container.style.setProperty('--zoom', '1');
+        container.style.width = 'max-content';
+        container.style.overflow = 'visible';
+        
+        const views = container.querySelectorAll('.cls-view');
+        const centers = container.querySelectorAll('.cls-center');
+        const originalViewsCss = [];
+        const originalCentersCss = [];
+        
+        views.forEach(v => {
+            originalViewsCss.push(v.style.cssText);
+            v.style.width = 'max-content';
+            v.style.overflow = 'visible';
+        });
+        centers.forEach(c => {
+            originalCentersCss.push(c.style.cssText);
+            c.style.width = 'max-content';
+            c.style.padding = '20px';
+        });
+
+        const printStyle = document.createElement('style');
+        printStyle.id = 'print-theme-css';
+        printStyle.innerHTML = `
+            .print-mode, .print-mode * {
+                background: transparent !important; 
+                color: #000000 !important;          
+                border-color: #000000 !important;   
+                box-shadow: none !important;        
+                text-shadow: none !important;
+            }
+            .print-mode { background: #ffffff !important; }
+            .print-mode .seat {
+                border: 2px solid #000000 !important; 
+                min-height: 65px !important;     
+                justify-content: flex-start !important; 
+                padding-top: 10px !important;    
+            }
+            .print-mode .print-wide-stretch .seat {
+                height: 110px !important;        
+                margin: 10px 4px !important;     
+            }
+        `;
+        document.head.appendChild(printStyle);
+        container.classList.add('print-mode');
+
+        views.forEach(v => {
+            const rect = v.getBoundingClientRect();
+            if (rect.width / rect.height > 1.6) v.classList.add('print-wide-stretch');
+        });
+
+        const seats = container.querySelectorAll('.seat');
+        const originalSeatHtmls = [];
+        seats.forEach(seat => {
+            originalSeatHtmls.push(seat.innerHTML);
+            seat.innerHTML = seat.innerHTML.replace(/🌸/g, '');
+        });
+
+        try {
+            showAlert('🖨️ 正在準備智慧排版列印畫面，請稍候...', 'info');
+            
+            const w = window.open('', '_blank');
+            w.document.write(`
+                <html><head><title>列印座位表</title>
+                <style>
+                    @page { size: landscape; margin: 10mm; }
+                    body { margin: 0; background: #fff; text-align: center; }
+                    img { max-width: 100%; max-height: 95vh; object-fit: contain; page-break-after: always; margin-bottom: 20px; }
+                </style>
+                </head><body>
+            `);
+            
+            for (let i = 0; i < views.length; i++) {
+                const canvas = await html2canvas(views[i], { 
+                    scale: 2, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0
+                });
+                w.document.write(`<img src="${canvas.toDataURL('image/png')}">`);
+            }
+            
+            w.document.write('</body></html>');
+            w.document.close();
+            
+            setTimeout(() => { w.focus(); w.print(); }, 500);
+            
+        } catch (error) {
+            showAlert("❌ 列印準備失敗！", 'error');
+        } finally {
+            container.classList.remove('print-mode');
+            const pStyle = document.getElementById('print-theme-css');
+            if(pStyle) pStyle.remove();
+            
+            views.forEach(v => v.classList.remove('print-wide-stretch'));
+            seats.forEach((seat, i) => seat.innerHTML = originalSeatHtmls[i]);
+            
+            container.style.cssText = originalCssText;
+            views.forEach((v, i) => v.style.cssText = originalViewsCss[i]);
+            centers.forEach((c, i) => c.style.cssText = originalCentersCss[i]);
+            window.scrollTo(originalScrollX, originalScrollY);
+        }
+    }
+</script>

@@ -1,0 +1,33 @@
+<!-- 右側：視覺化座位圖、名單列表 -->
+
+<div class="main-content">
+    <div id="alertArea"></div>
+    
+    <div class="tabs" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 10px;">
+            <div class="tab active" id="tab-seat" onclick="switchTab('seat')">// 🗺️ 視覺化座位圖 //</div>
+            <div class="tab" id="tab-list" onclick="switchTab('list')">// 📋 名單列表 //</div>
+        </div>
+        
+        <!-- 縮放控制拉桿 -->
+        <div id="zoomControl" style="display: flex; align-items: center; gap: 10px; padding-right: 10px;">
+            <span style="font-size: 0.8rem; color: #8892b0;">🔍 縮放</span>
+            <input type="range" id="zoomSlider" min="0.4" max="1.2" step="0.05" value="1" 
+                   oninput="updateZoom(this.value)" 
+                   style="width: 100px; accent-color: #00f0ff; cursor: pointer;">
+            <span id="zoomVal" style="font-size: 0.75rem; color: #00f0ff; width: 35px;">100%</span>
+        </div>
+    </div>
+    
+    <div id="view-seat">
+        <div id="clsViews">
+            <div class="no-result"><div class="icon">🏫</div>請先選擇教室並載入學生名單，<br>然後點擊左側的「開始排座位」</div>
+        </div>
+    </div>
+    
+    <div id="view-list" style="display:none">
+        <div class="seat-card" style="background: rgba(0,0,0,0.2); border: none;">
+            <div id="listContent"><div class="no-result"><div class="icon">📋</div>尚未排列座位</div></div>
+        </div>
+    </div>
+</div>

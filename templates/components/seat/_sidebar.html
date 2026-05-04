@@ -1,0 +1,66 @@
+<!-- 左側：名單、教室、排列設定 -->
+
+<div class="sidebar">
+                
+    <div class="seat-card">
+        <div class="seat-card-title">[ 01 // 學生名單 ]</div>
+        <label class="lbl" style="color:#8892b0; font-size:0.8rem; margin-bottom:8px; display:block;">貼上名單（每行：學號 姓名）</label>
+        <textarea id="studentInput" placeholder="B11234 王小明&#10;B11235 李小華"></textarea>
+        <div class="button-group" style="margin-top: 10px; gap: 10px; justify-content: flex-start;">
+            <button class="btn" style="padding: 6px 12px;" onclick="parseStudents()">✅ 載入預覽</button>
+            <button class="btn" style="padding: 6px 12px;" onclick="loadSample()">📝 範例</button>
+            <button class="btn" style="padding: 6px 12px; border-color: #ff0055; color: #ff0055;" onclick="clearStudents()">🗑️ 清除</button>
+        </div>
+        <div id="stuInfo" style="font-size:0.75rem; color:#8892b0; margin-top:10px;"></div>
+        <div id="stuTags" class="tags"></div>
+    </div>
+
+    <div class="seat-card">
+        <div class="seat-card-title">[ 02 // 選擇教室 ]</div>
+        <div id="clsList"></div>
+        <div class="button-group" style="margin-top: 10px; justify-content: flex-start;">
+            <button class="btn" style="padding: 6px 12px;" onclick="openAddCls()">➕ 自訂教室</button>
+        </div>
+        <div id="capWrap" style="display:none; margin-top:15px;">
+            <div class="cap-bar"><div class="cap-fill" id="capFill"></div></div>
+            <div class="cap-text" id="capText"></div>
+        </div>
+    </div>
+
+    <div class="seat-card">
+        <div class="seat-card-title">[ 03 // 排列方式 ]</div>
+        <label class="opt-item selected" id="opt-order" onclick="selMode('order')">
+            <input type="radio" name="mode" value="order" checked><span>📊 依學號排列</span>
+        </label>
+        <label class="opt-item" id="opt-random" onclick="selMode('random')">
+            <input type="radio" name="mode" value="random"><span>🎲 隨機排列</span>
+        </label>
+        <label class="opt-item" id="opt-name" onclick="selMode('name')">
+            <input type="radio" name="mode" value="name"><span>🔤 依姓名排列</span>
+        </label>
+        
+        <div class="toggle-row" id="quincunxToggleRow">
+            <label class="toggle">
+                <input type="checkbox" id="quincunxToggle" onchange="onQuincunxToggle()">
+                <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">🌸 梅花座 (防作弊模式)</span>
+        </div>
+        <div id="quincunxInfo" style="font-size:0.75rem; color:#8892b0; margin-top:8px; display:none;">
+            啟動後，每個有人的座位上下左右皆為空位。
+        </div>
+        
+        <button class="btn" style="width: 100%; margin-top: 20px; border-color: #00f0ff; color: #00f0ff; font-weight: bold;" onclick="assignSeats()">🚀 開始排座位 (API)</button>
+    </div>
+
+    <div class="seat-card">
+        <div class="seat-card-title">[ 04 // 匯出操作 ]</div>
+        <div class="button-group" style="gap: 10px; justify-content: flex-start; flex-wrap: wrap;">
+            <button class="btn" style="padding: 6px 12px; border-color: #00ff99; color: #00ff99;" onclick="exportCSV()">📥 匯出 CSV</button>
+            <button class="btn" style="padding: 6px 12px; border-color: #00f0ff; color: #00f0ff;" onclick="downloadImage()">📸 高畫質截圖</button>
+            <button class="btn" style="padding: 6px 12px; border-color: #ffaa00; color: #ffaa00;" onclick="exportPrint()">🖨️ 列印</button>
+            <button class="btn" style="padding: 6px 12px; border-color: #ff0055; color: #ff0055;" onclick="resetAll()">🔄 重設</button>
+        </div>
+    </div>
+
+</div>

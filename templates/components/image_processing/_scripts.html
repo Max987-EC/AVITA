@@ -1,0 +1,194 @@
+<!-- 底部的 JavaScript 邏輯 -->
+
+<script>
+    const paramPanel = document.getElementById('paramPanel');
+    const paramGroups = document.querySelectorAll('.param-group');
+    const radioButtons = document.querySelectorAll('input[name="process_type"]');
+
+    function updateParams() {
+        const selectedType = document.querySelector('input[name="process_type"]:checked').value;
+        let hasVisibleParams = false;
+
+        paramGroups.forEach(group => {
+            const types = group.getAttribute('data-types').split(',');
+            if (types.includes(selectedType)) {
+                group.style.display = 'block';
+                hasVisibleParams = true;
+            } else {
+                group.style.display = 'none';
+            }
+        });
+
+        paramPanel.style.display = hasVisibleParams ? 'block' : 'none';
+    }
+
+    updateParams(); 
+
+    const form = document.getElementById('processForm');
+    const loading = document.getElementById('loadingIndicator');
+
+    async function processImage() {
+        const fileInput = document.getElementById('imageInput');
+        if (!fileInput.files || fileInput.files.length === 0) return; 
+
+        const formData = new FormData(form);
+        loading.classList.add('show');
+
+        try {
+            const response = await fetch('/tool/image-processing', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || "伺服器錯誤");
+
+            if (data.original_image) {
+                document.getElementById('originalImage').src = "data:image/jpeg;base64," + data.original_image;
+            }
+            
+            document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
+            document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
+            document.getElementById('processedHistogram').src = "data:image/png;base64," + data.processed_histogram;
+            document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + data.original_spectrum;
+            document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + data.processed_spectrum;
+            
+            document.getElementById('histogramSection').style.display = 'block';
+            document.getElementById('spectrumSection').style.display = 'block'; 
+
+            const stepsContainer = document.getElementById('stepsContainer');
+            const stepsGrid = document.getElementById('stepsGrid');
+            stepsGrid.innerHTML = ''; 
+            
+            if (data.steps && data.steps.length > 0) {
+                stepsContainer.style.display = 'block'; 
+                data.steps.forEach(step => {
+                    const stepBox = document.createElement('div');
+                    stepBox.className = 'step-box';
+                    stepBox.innerHTML = `
+                        <h5>[ ${step.name} ]</h5>
+                        <img src="data:image/jpeg;base64,${step.image}" alt="${step.name}">
+                    `;
+                    stepsGrid.appendChild(stepBox);
+                });
+            } else {
+                stepsContainer.style.display = 'none'; 
+            }
+
+        } catch (error) {
+            console.error('處理失敗：' + error.message);
+        } finally {
+            loading.classList.remove('show');
+        }
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    const debouncedProcessImage = debounce(processImage, 50);
+
+    const ranges = document.querySelectorAll('input[type="range"]');
+    ranges.forEach(range => {
+        range.addEventListener('input', debouncedProcessImage);
+    });
+    
+    document.getElementById('resetParamsBtn').addEventListener('click', () => {
+        const ranges = document.querySelectorAll('#paramPanel input[type="range"]');
+        ranges.forEach(range => {
+            range.value = range.defaultValue;
+            range.dispatchEvent(new Event('input'));
+        });
+        
+        // 重置 checkbox 與 select
+        const otsuCheckbox = document.getElementById('otsuCheckbox');
+        if (otsuCheckbox) {
+            otsuCheckbox.checked = false;
+            otsuCheckbox.dispatchEvent(new Event('change'));
+        }
+        
+        const typeSelect = document.querySelector('select[name="thresh_type"]');
+        if (typeSelect) {
+            typeSelect.value = 'binary';
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+
+        const dirSelect = document.querySelector('select[name="edge_direction"]');
+        if (dirSelect) {
+            dirSelect.value = 'both';
+            dirSelect.dispatchEvent(new Event('change'));
+        }
+
+        const notchSelect = document.querySelector('select[name="notch_type"]');
+        if (notchSelect) {
+            notchSelect.value = 'reject';
+            notchSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', () => {
+            updateParams();
+            processImage();
+        });
+    });
+
+    document.getElementById('imageInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const isTiff = file.name.toLowerCase().endsWith('.tif') || file.name.toLowerCase().endsWith('.tiff');
+            const origImgTag = document.getElementById('originalImage');
+
+            if (isTiff) {
+                origImgTag.src = "";
+                origImgTag.alt = "[ TIFF 格式無法即時預覽，處理中... ]";
+                document.getElementById('imageGrid').style.display = 'grid';
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    origImgTag.src = e.target.result;
+                    origImgTag.alt = "原圖預覽";
+                    document.getElementById('imageGrid').style.display = 'grid';
+                }
+                reader.readAsDataURL(file);
+            }
+
+            document.getElementById('processedImage').src = "";
+            document.getElementById('originalHistogram').src = "";
+            document.getElementById('processedHistogram').src = "";
+            document.getElementById('originalSpectrum').src = ""; 
+            document.getElementById('processedSpectrum').src = ""; 
+            document.getElementById('histogramSection').style.display = 'none';
+            document.getElementById('spectrumSection').style.display = 'none'; 
+            document.getElementById('stepsContainer').style.display = 'none';
+
+            processImage();
+        }
+    });
+
+    // 監聽 Otsu 勾選框
+    const otsuCheckbox = document.getElementById('otsuCheckbox');
+    if (otsuCheckbox) {
+        otsuCheckbox.addEventListener('change', function(e) {
+            const slider = document.getElementById('thresholdSlider');
+            if (e.target.checked) {
+                slider.disabled = true;
+                slider.style.opacity = '0.3';
+            } else {
+                slider.disabled = false;
+                slider.style.opacity = '1';
+            }
+            debouncedProcessImage();
+        });
+    }
+
+    // 監聽所有 select 下拉選單
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        select.addEventListener('change', debouncedProcessImage);
+    });
+</script>

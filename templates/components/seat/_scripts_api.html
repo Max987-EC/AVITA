@@ -1,0 +1,110 @@
+<!-- API 與座位編輯邏輯 -->
+
+<script>
+    // 核心：呼叫 Python 進行排列與渲染
+    async function callBackend(actionData) {
+        const scrollPositions = [];
+        document.querySelectorAll('.cls-view').forEach(el => {
+            scrollPositions.push({ left: el.scrollLeft, top: el.scrollTop });
+        });
+
+        try {
+            const res = await fetch('/api/seat-arranger/arrange', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(actionData)
+            });
+            const data = await res.json();
+            
+            if(data.html_views) {
+                document.getElementById('clsViews').innerHTML = data.html_views;
+                
+                const views = document.querySelectorAll('.cls-view');
+                views.forEach((el, index) => {
+                    if(scrollPositions[index]) {
+                        el.scrollLeft = scrollPositions[index].left;
+                        el.scrollTop = scrollPositions[index].top;
+                    }
+                });
+            }
+            
+            if(data.html_list) document.getElementById('listContent').innerHTML = data.html_list;
+            
+            return data;
+        } catch(e) { 
+            showAlert('❌ 後端處理失敗', 'error'); 
+            return null; 
+        }
+    }
+
+    async function assignSeats() {
+        const raw = document.getElementById('studentInput').value.trim();
+        if(!raw) { showAlert('請先輸入學生名單', 'warning'); return; }
+        if(!selectedCls.size) { showAlert('請先選擇教室', 'warning'); return; }
+
+        const data = await callBackend({
+            action: 'arrange', students_raw: raw, mode: currentMode,
+            quincunx: quincunxOn, selectedCls: [...selectedCls], customClassrooms: customCls
+        });
+
+        if(data) {
+            students = data.students; seatMap = data.seatMap;
+            if(data.assignedCount < students.length) showAlert(`⚠️ 座位不足，${students.length - data.assignedCount} 位學生未分配`, 'warning');
+            else showAlert(`✅ 排列完成！${data.assignedCount} 人分配至 ${selectedCls.size} 間教室`, 'success');
+        }
+    }
+
+    // 拖曳與編輯
+    let dragKey = null, dragClsId = null;
+    function dragStart(key, clsId) { dragKey = key; dragClsId = clsId; }
+    function dragOver(e) { e.preventDefault(); }
+    async function drop(e, key, clsId) {
+        e.preventDefault(); if(!dragKey || dragClsId !== clsId || dragKey === key) return;
+        const map = seatMap[clsId] || {}; const tmp = map[dragKey];
+        if(map[key]) map[dragKey] = map[key]; else delete map[dragKey];
+        if(tmp) map[key] = tmp; else delete map[key];
+        await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls });
+    }
+
+    function openSeatEdit(key, clsId) {
+        editSeatKey = key; editSeatCls = clsId;
+        const sid = (seatMap[clsId] || {})[key]; const stu = sid ? students.find(s => s.id === sid) : null;
+        document.getElementById('seatModalInfo').textContent = `教室：${clsId}　座位：${key}　目前：${stu ? stu.name + ' (' + stu.id + ')' : '空座位'}`;
+        const occupied = new Set(); for(const m of Object.values(seatMap)) Object.values(m).forEach(v => occupied.add(v));
+        document.getElementById('seatSelect').innerHTML = '<option value="">-- 空座位 --</option>' + students.map(s => `<option value="${s.id}" ${s.id === sid ? 'selected' : ''}>${s.name} (${s.id})${occupied.has(s.id) && s.id !== sid ? ' ✓' : ''}</option>`).join('');
+        openModal('seatModal');
+    }
+    
+    async function clearSeat() { if(seatMap[editSeatCls]) delete seatMap[editSeatCls][editSeatKey]; closeModal('seatModal'); await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls }); }
+    
+    async function saveSeat() {
+        const v = document.getElementById('seatSelect').value;
+        if(!seatMap[editSeatCls]) seatMap[editSeatCls] = {};
+        if(v) { 
+            for(const [cid, map] of Object.entries(seatMap)) { 
+                const oldKey = Object.keys(map).find(k => map[k] === v); 
+                if(oldKey) { if(cid === editSeatCls && oldKey !== editSeatKey) { if(seatMap[editSeatCls][editSeatKey]) map[oldKey] = seatMap[editSeatCls][editSeatKey]; else delete map[oldKey]; } else if(cid !== editSeatCls) delete map[oldKey]; break; } 
+            } 
+            seatMap[editSeatCls][editSeatKey] = v; 
+        } else delete seatMap[editSeatCls][editSeatKey]; 
+        closeModal('seatModal'); 
+        await callBackend({ action: 'render_only', selectedCls: [...selectedCls], seatMap, students, quincunx: quincunxOn, customClassrooms: customCls });
+    }
+
+    function openAddCls() { openModal('addClsModal'); }
+
+    async function addCls() {
+        const name = document.getElementById('newClsName').value.trim(); 
+        const raw = document.getElementById('newClsLayout').value.trim();
+        if(!name || !raw) { showAlert('請填寫教室名稱與配置', 'warning'); return; }
+        
+        const layout = raw.split('\n').map((l, i) => ({row: i + 1, blocks: l.split(',').map(n => parseInt(n) || 0)}));
+        customCls.push({id: name, name, type: 'fan', layout});
+        
+        closeModal('addClsModal'); 
+        document.getElementById('newClsName').value = ''; 
+        document.getElementById('newClsLayout').value = '';
+        
+        await init(); 
+        showAlert(`✅ 已新增教室 ${name}`, 'success');
+    }
+</script>

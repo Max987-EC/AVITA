@@ -1,0 +1,40 @@
+<!-- 彈出視窗：新增教室、編輯座位 -->
+
+<!-- Modal: 新增教室 -->
+<div class="modal-overlay" id="addClsModal">
+    <div class="modal">
+        <h3>➕ 新增自訂教室</h3>
+        <div class="form-group">
+            <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">教室名稱</label>
+            <input type="text" id="newClsName" placeholder="例如：EB107" style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:1px solid #1e2d3d; color:#fff; border-radius:4px;">
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+            <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">座位配置（每行一排，數字為各區塊座位數，逗號分隔）</label>
+            <textarea id="newClsLayout" placeholder="2,2,2,0&#10;3,3,3,3"></textarea>
+            <div style="font-size:0.75rem; color:#666; margin-top:5px;">提示：0 代表該排該區塊無座位 (走道)</div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" style="border-color: #8892b0; color: #8892b0;" onclick="closeModal('addClsModal')">取消</button>
+            <button class="btn" style="border-color: #00f0ff; color: #00f0ff;" onclick="addCls()">新增</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: 編輯座位 -->
+<div class="modal-overlay" id="seatModal">
+    <div class="modal">
+        <h3>✏️ 編輯座位指派</h3>
+        <div id="seatModalInfo" style="font-size:0.85rem; color:#8892b0; margin-bottom:15px;"></div>
+        <div class="form-group">
+            <label style="color:#8892b0; font-size:0.85rem; margin-bottom:5px; display:block;">指派學生</label>
+            <select id="seatSelect" style="width:100%; padding:10px; background:rgba(0,0,0,0.5); border:1px solid #1e2d3d; color:#fff; border-radius:4px;">
+                <option value="">-- 空座位 --</option>
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" style="border-color: #8892b0; color: #8892b0;" onclick="closeModal('seatModal')">取消</button>
+            <button class="btn" style="border-color: #ffaa00; color: #ffaa00;" onclick="clearSeat()">清空此位</button>
+            <button class="btn" style="border-color: #00f0ff; color: #00f0ff;" onclick="saveSeat()">儲存</button>
+        </div>
+    </div>
+</div>

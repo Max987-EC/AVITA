@@ -1,0 +1,51 @@
+<!-- 中間視覺化圖片與直方圖 -->
+
+<div class="main-content">
+    <div class="comparison-grid" id="imageGrid">
+        <div class="image-box">
+            <h4>[ SPATIAL: ORIGINAL ]</h4>
+            <img id="originalImage" src="" alt="原圖預覽">
+        </div>
+        
+        <div class="image-box" style="position: relative;">
+            <div class="loading" id="loadingIndicator">[ PROCESSING DATA... ]</div>
+            <h4>[ SPATIAL: PROCESSED ]</h4>
+            <img id="processedImage" src="" alt="處理結果">
+        </div>
+    </div>
+    
+    <div class="histogram-section" id="spectrumSection">
+        <h3 style="color: #b366ff; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// FREQUENCY SPECTRUM //</h3>
+        <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+            <div class="image-box" style="border-color: rgba(179, 102, 255, 0.3);">
+                <h4 style="color: #b366ff;">[ SPECTRUM: ORIGINAL ]</h4>
+                <img id="originalSpectrum" src="" alt="原圖頻譜">
+            </div>
+            <div class="image-box" style="border-color: rgba(179, 102, 255, 0.3);">
+                <h4 style="color: #b366ff;">[ SPECTRUM: PROCESSED ]</h4>
+                <img id="processedSpectrum" src="" alt="處理後頻譜">
+            </div>
+        </div>
+    </div>
+
+    <div class="histogram-section" id="histogramSection">
+        <h3 style="color: #ff0055; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// INTENSITY HISTOGRAM //</h3>
+        <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+            <div class="image-box" style="border-color: rgba(255, 0, 85, 0.3);">
+                <h4 style="color: #ff0055;">[ HISTOGRAM: ORIGINAL ]</h4>
+                <img id="originalHistogram" src="" alt="原圖直方圖">
+            </div>
+            <div class="image-box" style="border-color: rgba(255, 0, 85, 0.3);">
+                <h4 style="color: #ff0055;">[ HISTOGRAM: PROCESSED ]</h4>
+                <img id="processedHistogram" src="" alt="處理後直方圖">
+            </div>
+        </div>
+    </div>
+</div> 
+
+<!-- 右側：執行步驟面板 -->
+<div id="stepsContainer" class="steps-panel" style="display: none;">
+    <h3 style="color: #00f0ff; text-align: center; font-family: 'Orbitron'; margin-top: 0; font-size: 1rem;">// STEPS //</h3>
+    <div class="steps-grid" id="stepsGrid">
+    </div>
+</div>

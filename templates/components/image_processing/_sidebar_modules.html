@@ -1,0 +1,49 @@
+<div class="form-group">
+    <label>02 // 選擇處理模組 (PROCESSING MODULE)</label>
+    <div class="module-list">
+        
+        <div class="module-group">[ 基本強度轉換 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="negative" checked><span>負轉換 (Negative)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="linear"><span>線性轉換 (亮度/對比)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="binarize"><span>二值化 (Binarization)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="log"><span>對數轉換 (Log Transform)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="power_law"><span>指數轉換 (Power-Law / Gamma)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="equalization"><span>直方圖等化 (Histogram Equalization)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="clahe"><span>限制對比自適應直方圖 (CLAHE)</span></label>
+
+        <div class="module-group">[ 空間域濾波 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="mean"><span>均值濾波 (Mean Filter)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="gaussian"><span>高斯濾波 (Gaussian Filter)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="median"><span>中值濾波 (Median Filter)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="bilateral"><span>雙邊濾波 (Bilateral / 保邊平滑)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="sharpen"><span>影像銳化 (Sharpening)</span></label>
+
+        <div class="module-group">[ 邊緣偵測 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="roberts"><span>Roberts 算子</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="prewitt"><span>Prewitt 算子</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="sobel"><span>Sobel 算子</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="laplacian"><span>Laplacian 算子</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="log_edge"><span>LoG (高斯拉普拉斯)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="canny"><span>Canny 邊緣偵測</span></label>
+
+        <div class="module-group">[ 頻率域濾波 - 低通/高通 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_ideal_low"><span>理想低通 (Ideal Lowpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_low"><span>巴特沃斯低通 (Butterworth Lowpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_gaussian_low"><span>高斯低通 (Gaussian Lowpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_ideal_high"><span>理想高通 (Ideal Highpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_high"><span>巴特沃斯高通 (Butterworth Highpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_gaussian_high"><span>高斯高通 (Gaussian Highpass)</span></label>
+
+        <div class="module-group">[ 頻率域濾波 - 進階 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_bandreject"><span>帶阻濾波 (Bandreject)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_bandpass"><span>帶通濾波 (Bandpass)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_emphasis"><span>高頻強調 (High-Freq Emphasis)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="notch_reject"><span>陷波濾波 (Notch Filter)</span></label>
+
+        <div class="module-group">[ 特徵檢測 (Hough) ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="hough_lines_standard"><span>標準霍夫線 (無限長直線)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="hough_lines_p"><span>機率霍夫線 (有限線段)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="hough_circles"><span>霍夫圓檢測 (Hough Circles)</span></label>
+        
+    </div>
+</div>
