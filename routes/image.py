@@ -132,9 +132,9 @@ def image_processing():
             parts = process_type.split('_')
             result_img = processor.frequency_filter(parts[1], parts[2], D0, n_order, freq_W, freq_a, freq_b)
         elif process_type == 'hough_lines_standard':
-            result_img = processor.hough_lines_standard(hough_threshold, hough_rho, hough_theta, hough_canny_th1, hough_canny_th2)
+            result_img = processor.hough_lines_standard(hough_threshold, hough_rho, hough_theta, hough_canny_th1, hough_canny_th2, hough_blur_ksize)
         elif process_type == 'hough_lines_p':
-            result_img = processor.hough_lines_p(hough_threshold, hough_min_line_length, hough_max_line_gap, hough_rho, hough_theta, hough_canny_th1, hough_canny_th2)
+            result_img = processor.hough_lines_p(hough_threshold, hough_min_line_length, hough_max_line_gap, hough_rho, hough_theta, hough_canny_th1, hough_canny_th2, hough_blur_ksize)
         elif process_type == 'hough_circles':
             result_img = processor.hough_circles(hough_dp, hough_min_dist, hough_param1, hough_param2, hough_min_radius, hough_max_radius, hough_blur_ksize)
         else:

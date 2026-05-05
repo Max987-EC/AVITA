@@ -34,17 +34,23 @@ class FeatureMixin:
         # 視覺化：將累加器轉為熱力圖風格
         acc_vis = cv2.normalize(accumulator, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         acc_color = cv2.applyColorMap(acc_vis, cv2.COLORMAP_HOT)
-        self.steps.append(("Step 3: 霍夫空間投票圖 (Hough Accumulator)", acc_color))
+        self.steps.append(("Step 4: 霍夫空間投票圖 (Hough Accumulator)", acc_color))
 
     # ==========================================
     # ⚙️ 演算法實作
     # ==========================================
-    def hough_lines_standard(self, threshold=150, rho=1.0, theta_deg=1.0, canny_th1=50, canny_th2=150):
+    def hough_lines_standard(self, threshold=150, rho=1.0, theta_deg=1.0, canny_th1=50, canny_th2=150, blur_ksize=5):
         gray = self._get_gray()
         self.steps.append(("Step 1: 轉換為灰階 (Grayscale)", gray))
         
-        edges = cv2.Canny(gray, canny_th1, canny_th2)
-        self.steps.append(("Step 2: Canny 邊緣 (Edges)", edges))
+        # 🌟 新增：高斯模糊前處理
+        if blur_ksize % 2 == 0: blur_ksize += 1 # 確保 kernel size 是奇數
+        blurred = cv2.GaussianBlur(gray, (blur_ksize, blur_ksize), 0)
+        self.steps.append(("Step 2: 高斯模糊去噪 (Blurred)", blurred))
+        
+        # 將 blurred 傳給 Canny，而不是 gray
+        edges = cv2.Canny(blurred, canny_th1, canny_th2)
+        self.steps.append(("Step 3: Canny 邊緣 (Edges)", edges))
         
         # 🎨 視覺化霍夫空間 (這非常具備教學價值！)
         self._draw_hough_space(edges, rho, theta_deg)
@@ -67,15 +73,21 @@ class FeatureMixin:
                 y2 = int(y0 - 10000 * (a))
                 cv2.line(result, (x1, y1), (x2, y2), (0, 0, 255), 2)
                 
-        self.steps.append(("Step 4: 繪製無限長直線 (Standard Lines)", result))
+        self.steps.append(("Step 5: 繪製無限長直線 (Standard Lines)", result))
         return result
 
-    def hough_lines_p(self, threshold=100, min_line_length=50, max_line_gap=10, rho=1.0, theta_deg=1.0, canny_th1=50, canny_th2=150):
+    def hough_lines_p(self, threshold=100, min_line_length=50, max_line_gap=10, rho=1.0, theta_deg=1.0, canny_th1=50, canny_th2=150, blur_ksize=5):
         gray = self._get_gray()
         self.steps.append(("Step 1: 轉換為灰階 (Grayscale)", gray))
         
-        edges = cv2.Canny(gray, canny_th1, canny_th2)
-        self.steps.append(("Step 2: Canny 邊緣 (Edges)", edges))
+        # 🌟 新增：高斯模糊前處理
+        if blur_ksize % 2 == 0: blur_ksize += 1
+        blurred = cv2.GaussianBlur(gray, (blur_ksize, blur_ksize), 0)
+        self.steps.append(("Step 2: 高斯模糊去噪 (Blurred)", blurred))
+        
+        # 將 blurred 傳給 Canny
+        edges = cv2.Canny(blurred, canny_th1, canny_th2)
+        self.steps.append(("Step 3: Canny 邊緣 (Edges)", edges))
         
         theta = theta_deg * np.pi / 180.0
         lines = cv2.HoughLinesP(edges, rho, theta, threshold, minLineLength=min_line_length, maxLineGap=max_line_gap)
@@ -87,7 +99,7 @@ class FeatureMixin:
                 x1, y1, x2, y2 = line[0]
                 cv2.line(result, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 
-        self.steps.append(("Step 3: 繪製線段 (Probabilistic Lines)", result))
+        self.steps.append(("Step 4: 繪製線段 (Probabilistic Lines)", result))
         return result
 
     def hough_circles(self, dp=1.0, min_dist=20, param1=50, param2=30, min_radius=0, max_radius=0, blur_ksize=5):

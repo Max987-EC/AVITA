@@ -212,9 +212,9 @@
         <label>邊緣檢測高門檻 (Param1): <span id="val_hc_p1">50</span></label>
         <input type="range" name="hough_param1" min="10" max="255" step="1" value="50" oninput="document.getElementById('val_hc_p1').innerText=this.value">
     </div>
-    <div class="param-group" data-types="hough_circles">
-        <label>中值模糊核大小 (Blur Kernel): <span id="val_hc_k">5</span></label>
-        <input type="range" name="hough_blur_ksize" min="3" max="15" step="2" value="5" oninput="document.getElementById('val_hc_k').innerText=this.value">
+    <div class="param-group" data-types="hough_circles,hough_lines_standard,hough_lines_p">
+        <label>前處理模糊核大小 (Blur Kernel): <span id="val_hc_k">5</span></label>
+        <input type="range" name="hough_blur_ksize" min="1" max="15" step="2" value="5" oninput="document.getElementById('val_hc_k').innerText=this.value">
     </div>
     <div class="param-group" data-types="hough_circles">
         <label>圓檢測靈敏度 (Param2): <span id="val_hough_p2">30</span></label>
