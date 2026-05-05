@@ -137,3 +137,88 @@ class SpatialMixin:
         edges = cv2.Canny(blurred, threshold1, threshold2)
         self.steps.append(("Step 3: Canny 邊緣追蹤 (Edges)", edges))
         return edges
+
+    def canny_custom_filter(self, threshold1=50, threshold2=150, blur_ksize=5, blur_sigma=1.4):
+        # 1. 轉灰階與高斯模糊
+        gray = self._get_gray()
+        blurred = cv2.GaussianBlur(gray, (blur_ksize, blur_ksize), blur_sigma)
+        self.steps.append(("Step 1: 高斯模糊 (Gaussian Blur)", blurred))
+
+        # ==========================================
+        # 2. 計算梯度與角度 (Sobel)
+        # ==========================================
+        Gx = cv2.Sobel(blurred, cv2.CV_64F, 1, 0, ksize=3)
+        Gy = cv2.Sobel(blurred, cv2.CV_64F, 0, 1, ksize=3)
+        
+        # 【修改這裡】保持 M 為原始數值，不做正規化！
+        M = np.hypot(Gx, Gy) 
+        
+        theta = np.arctan2(Gy, Gx)
+        angle = np.rad2deg(theta)
+        angle[angle < 0] += 180
+        
+        # 【新增這裡】專門做一個用來顯示在網頁上的版本 (壓縮到 0~255)
+        M_vis = np.uint8(M / M.max() * 255)
+        self.steps.append(("Step 2: 梯度大小 (Gradient Magnitude)", M_vis))
+
+        # ==========================================
+        # 3. 非最大抑制 (NMS)
+        # ==========================================
+        # 【修改這裡】因為 M 現在是浮點數，所以 Z 也要改成浮點數陣列
+        Z = np.zeros_like(M, dtype=np.float64)
+        rows, cols = M.shape
+        for i in range(1, rows - 1):
+            for j in range(1, cols - 1):
+                q = 255
+                r = 255
+                a = angle[i, j]
+                # 判斷 4 個主方向
+                if (0 <= a < 22.5) or (157.5 <= a <= 180):
+                    q, r = M[i, j+1], M[i, j-1]
+                elif (22.5 <= a < 67.5):
+                    q, r = M[i+1, j-1], M[i-1, j+1]
+                elif (67.5 <= a < 112.5):
+                    q, r = M[i+1, j], M[i-1, j]
+                elif (112.5 <= a < 157.5):
+                    q, r = M[i-1, j-1], M[i+1, j+1]
+
+                if (M[i, j] >= q) and (M[i, j] >= r):
+                    Z[i, j] = M[i, j]
+                else:
+                    Z[i, j] = 0
+        # 【新增這裡】同樣地，NMS 完的 Z 也要做一個視覺化版本
+        Z_vis = np.uint8(Z / Z.max() * 255)
+        self.steps.append(("Step 3: 非最大抑制 (NMS)", Z_vis))
+
+        # 4. 雙閾值與 Hysteresis DFS 追蹤
+        res = np.zeros_like(Z, dtype=np.uint8)
+        WEAK, STRONG = 75, 255
+        
+        strong_i, strong_j = np.where(Z >= threshold2)
+        weak_i, weak_j = np.where((Z <= threshold2) & (Z >= threshold1))
+        
+        res[strong_i, strong_j] = STRONG
+        res[weak_i, weak_j] = WEAK
+        
+        # 視覺化雙閾值分類結果
+        thresh_vis = np.zeros_like(Z, dtype=np.uint8)
+        thresh_vis[strong_i, strong_j] = 255
+        thresh_vis[weak_i, weak_j] = 100
+        self.steps.append((f"Step 4a: 雙閾值分類 (T1={threshold1}, T2={threshold2})", thresh_vis))
+
+        # DFS 追蹤
+        stack = list(zip(strong_i, strong_j))
+        while stack:
+            r, c = stack.pop()
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0: continue
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols and res[nr, nc] == WEAK:
+                        res[nr, nc] = STRONG
+                        stack.append((nr, nc))
+
+        res[res == WEAK] = 0
+        self.steps.append(("Step 4b: Hysteresis 邊緣追蹤完成", res))
+        
+        return res

@@ -124,6 +124,8 @@ def image_processing():
             result_img = processor.log_filter(kernel_size, sigma)
         elif process_type == 'canny':
             result_img = processor.canny_filter(threshold1, threshold2, canny_blur_ksize, canny_blur_sigma)
+        elif process_type == 'canny_custom':
+            result_img = processor.canny_custom_filter(threshold1, threshold2, canny_blur_ksize, canny_blur_sigma)
         elif process_type == 'notch_reject':
             result_img = processor.notch_reject_filter(notch_d0_u, notch_d0_v, u0, v0, n_order, notch_type)
         elif process_type.startswith('freq_'):
