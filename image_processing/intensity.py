@@ -43,17 +43,22 @@ class IntensityMixin:
             'tozero': cv2.THRESH_TOZERO,
             'tozero_inv': cv2.THRESH_TOZERO_INV
         }
-        cv_type = type_mapping.get(thresh_type, cv2.THRESH_BINARY)
         
+        # 1. 先保留基礎的二值化模式 (不含 Otsu)
+        base_cv_type = type_mapping.get(thresh_type, cv2.THRESH_BINARY)
+        cv_type = base_cv_type
+        
+        # 2. 如果啟用 Otsu，才在實際處理影像的 cv_type 加上標籤
         if use_otsu:
             cv_type += cv2.THRESH_OTSU
             
-        # 取得實際使用的 threshold (Otsu 會回傳計算出的最佳值)
+        # 3. 對影像進行二值化，取得實際使用的 actual_thresh
         actual_thresh, result = cv2.threshold(gray, threshold, 255, cv_type)
         
-        # 畫出二值化的階梯曲線
+        # 4. 畫出二值化的階梯曲線 (⚠️ 這裡改用 base_cv_type，不要帶 Otsu 標籤)
         x = np.arange(256, dtype=np.uint8)
-        _, lut = cv2.threshold(x, actual_thresh, 255, cv_type)
+        _, lut = cv2.threshold(x, actual_thresh, 255, base_cv_type) 
+        
         self._draw_transfer_curve(lut, f"Step 2: 二值化轉換曲線 (Thresh={int(actual_thresh)})")
         
         return result
