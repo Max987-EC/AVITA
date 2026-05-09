@@ -73,21 +73,37 @@
         });
         
         try {
-            showAlert('📸 正在產生完整高畫質圖片，請稍候...', 'info');
+            showAlert('📸 正在為每間教室產生高畫質圖片，請稍候...', 'info');
             
-            const canvas = await html2canvas(container, { 
-                scale: 2, 
-                backgroundColor: '#0b1121',
-                scrollX: 0,
-                scrollY: 0
-            });
+            // 針對每一個教室視圖進行迴圈截圖
+            for (let i = 0; i < views.length; i++) {
+                const view = views[i];
+                
+                const canvas = await html2canvas(view, { 
+                    scale: 2, 
+                    backgroundColor: '#0b1121',
+                    scrollX: 0,
+                    scrollY: 0
+                });
+                
+                const link = document.createElement('a');
+                
+                // 嘗試尋找教室名稱 (可根據你的 HTML 結構調整選擇器)
+                // 若找不到標題元素，則預設使用 "教室_1", "教室_2"
+                const titleEl = view.querySelector('h2, h3, .title, .cls-title');
+                const clsName = titleEl ? titleEl.innerText.trim() : `教室_${i + 1}`;
+                
+                link.download = `${clsName}_座位表.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                // 加入 0.5 秒延遲，避免瀏覽器阻擋連續下載多個檔案
+                if (i < views.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
             
-            const link = document.createElement('a');
-            link.download = '完整高畫質座位表.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            
-            showAlert('✅ 圖片下載成功！', 'success');
+            showAlert('✅ 所有圖片下載成功！', 'success');
         } catch (error) {
             console.error("截圖失敗:", error);
             showAlert("❌ 截圖失敗，請稍後再試！", 'error');
