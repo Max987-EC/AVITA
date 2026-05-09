@@ -3,31 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>綜合影像處理 | AVITA</title>
+    <title>AOI 視覺檢測工作站 | AVITA</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='image_processing.css') }}">
 </head>
 <body>
 
     <div class="tool-panel wide">
-        <div class="panel-header">
-            <a href="/" class="btn btn-back">◀ 返回大廳</a>
-            <h2>🎨 綜合影像處理</h2>
-            <div class="header-spacer"></div> 
+        <div class="panel-header" style="position: relative; display: flex; justify-content: space-between; align-items: center;">
+            <!-- 左側：返回按鈕 -->
+            <a href="/" class="btn btn-back" style="z-index: 2;">◀ 返回大廳</a>
+            
+            <!-- 中間：絕對置中的標題 -->
+            <h2 style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0; width: 100%; text-align: center; pointer-events: none;">
+                👁️‍🗨️ AOI 視覺檢測工作站
+            </h2>
+            
+            <!-- 右側：模式切換開關 -->
+            <div class="mode-toggle-group header-toggle" style="z-index: 2; margin: 0;">
+                <label class="mode-btn">
+                    <input type="radio" name="app_mode" value="single" checked>
+                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">單步分析</span>
+                </label>
+                <label class="mode-btn">
+                    <input type="radio" name="app_mode" value="stack">
+                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">檢測管線</span>
+                </label>
+            </div>
         </div>
+
         
         <div class="tool-layout">
-            <!-- 引入左側控制面板 -->
+            <!-- 1. 引入左側控制面板 (現在管線面板已經完美整合在裡面囉！) -->
             {% include 'components/image_processing/_sidebar.html' %}
 
-            <!-- 引入中間視覺化內容 -->
-            {% include 'components/image_processing/_content.html' %}
+            <!-- 右側主要區域 (改為佔滿剩餘空間 flex: 1) -->
+            <div class="main-workspace" style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                
+                <!-- 2. 引入中間視覺化內容與步驟面板 -->
+                <!-- ⚠️ 關鍵修正：加入 flex-direction: row 讓內容與步驟左右並排 -->
+                <div class="content-wrapper" style="display: flex; flex-direction: row; gap: 30px; align-items: flex-start; width: 100%;">
+                    {% include 'components/image_processing/_content.html' %}
+                </div>
+                
+            </div>
         </div> 
     </div> 
 
     <!-- 引入前端互動邏輯 -->
     {% include 'components/image_processing/_scripts.html' %}
 
+    <!-- 🔍 圖片放大模態框 (Image Lightbox Modal) -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="close-modal" onclick="closeImageModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <div id="modalCaption"></div>
+    </div>
+
+    <!-- 📷 相機擷取模態框 (Camera Modal) -->
+    <div id="cameraModal" class="image-modal">
+        <div class="camera-container">
+            <div class="camera-header">
+                <h3 style="margin: 0; color: #00f0ff; font-family: 'Orbitron', sans-serif;">📷 實時影像擷取</h3>
+                <span class="close-camera" onclick="closeCamera()">&times;</span>
+            </div>
+            
+            <!-- 鏡頭選擇下拉選單 -->
+            <select id="cameraSelect" class="tech-select" style="margin-bottom: 15px;"></select>
+            
+            <!-- 攝影機預覽畫面 -->
+            <div class="video-wrapper">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <!-- 掃描線動畫 (增加科技感) -->
+                <div class="scan-line"></div>
+            </div>
+            
+            <!-- 拍照按鈕 -->
+            <button id="captureBtn" class="btn submit-btn" style="margin-top: 15px; background: rgba(0, 240, 255, 0.2); border-color: #00f0ff;">
+                📸 擷取畫面 (Capture)
+            </button>
+            
+            <!-- 隱藏的 Canvas 用來轉換圖片 -->
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,29 +1,321 @@
 <!-- 底部的 JavaScript 邏輯 -->
-
 <script>
     const paramPanel = document.getElementById('paramPanel');
     const paramGroups = document.querySelectorAll('.param-group');
-    const radioButtons = document.querySelectorAll('input[name="process_type"]');
+    const sidebarModuleList = document.getElementById('sidebarModuleList'); 
 
-    function updateParams() {
-        const selectedType = document.querySelector('input[name="process_type"]:checked').value;
-        let hasVisibleParams = false;
+    // ==========================================
+    // 1. 狀態管理 (State Management)
+    // ==========================================
+    let currentMode = 'single'; 
+    let layerStack = [];        
+    let activeLayerId = null;
 
+    // 🌟 新增：管線模式的資料快取
+    let currentPipelineData = []; 
+    let globalInputUrl = '';
+    let globalOutputUrl = '';
+    let globalOriginalHistogram = '';
+    let globalProcessedHistogram = '';
+    let globalOriginalSpectrum = '';
+    let globalProcessedSpectrum = '';
+
+    function toggleDrawer() {
+        const drawer = document.getElementById('modeDrawer');
+        if(drawer) drawer.classList.toggle('open');
+    }
+
+    // 監聽模式切換
+    document.querySelectorAll('input[name="app_mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentMode = e.target.value;
+            const layerManager = document.getElementById('layerManager');
+
+            if (currentMode === 'stack') {
+                layerManager.style.display = 'flex';
+                if(sidebarModuleList) sidebarModuleList.style.display = 'none';
+                
+                if(layerStack.length === 0) {
+                    paramPanel.style.display = 'none';
+                } else {
+                    selectLayer(layerStack[layerStack.length - 1].id);
+                }
+                renderTopLayers();
+                debouncedProcessImage(); // 切換模式時重新運算
+            } else {
+                layerManager.style.display = 'none';
+                if(sidebarModuleList) sidebarModuleList.style.display = 'block';
+                updateParamsForSingleMode(); 
+                debouncedProcessImage();
+            }
+        });
+    });
+
+    // 監聽左側模組切換 (單步分析模式)
+    document.querySelectorAll('input[name="process_type"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (currentMode === 'single') {
+                updateParamsForSingleMode(); 
+                debouncedProcessImage();     
+            }
+        });
+    });
+
+    // ==========================================
+    // 2. 圖層管理與排序邏輯
+    // ==========================================
+    function addNewLayerFromSelect() {
+        const select = document.getElementById('newLayerSelect');
+        const type = select.value;
+        const name = select.options[select.selectedIndex].text;
+        
+        const layerId = 'layer_' + Date.now();
+        layerStack.push({
+            id: layerId,
+            type: type,
+            name: name,
+            params: {}
+        });
+        
+        selectLayer(layerId);
+        renderTopLayers();
+        debouncedProcessImage();
+    }
+
+    function removeLayer(id, event) {
+        event.stopPropagation();
+        layerStack = layerStack.filter(layer => layer.id !== id);
+        
+        if (activeLayerId === id) {
+            activeLayerId = layerStack.length > 0 ? layerStack[layerStack.length - 1].id : null;
+        }
+        
+        renderTopLayers();
+        if (activeLayerId) selectLayer(activeLayerId);
+        else paramPanel.style.display = 'none';
+        debouncedProcessImage();
+    }
+
+    function moveLayer(index, direction, event) {
+        event.stopPropagation();
+        if (direction === -1 && index > 0) {
+            [layerStack[index - 1], layerStack[index]] = [layerStack[index], layerStack[index - 1]];
+        } else if (direction === 1 && index < layerStack.length - 1) {
+            [layerStack[index + 1], layerStack[index]] = [layerStack[index], layerStack[index + 1]];
+        }
+        renderTopLayers();
+        debouncedProcessImage();
+    }
+
+    function selectLayer(id) {
+        if (currentMode !== 'stack') return;
+        
+        saveCurrentParamsToLayer();
+        activeLayerId = id;
+        renderTopLayers();
+        
+        const layer = layerStack.find(l => l.id === id);
+        if (layer) {
+            showParamGroupForType(layer.type);
+            loadParamsIntoDOM(layer);
+            
+            // 🌟 如果有快取資料，切換到該節點的專屬視圖
+            const index = layerStack.findIndex(l => l.id === id);
+            if (currentPipelineData && currentPipelineData[index]) {
+                renderNodeView(index);
+            }
+        }
+    }
+
+    function renderTopLayers() {
+        const list = document.getElementById('topLayerList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        layerStack.forEach((layer, index) => {
+            const item = document.createElement('div');
+            item.className = `top-layer-item ${layer.id === activeLayerId ? 'active' : ''}`;
+            
+            // 🌟 修正：將點擊事件綁定在「整個 item 框框」上，並加上指標樣式
+            item.onclick = () => selectLayer(layer.id);
+            item.style.cursor = 'pointer';
+            
+            item.innerHTML = `
+                <div class="top-layer-name" style="flex:1;">${index + 1}. ${layer.name}</div>
+                <div class="top-layer-actions">
+                    <button onclick="moveLayer(${index}, -1, event)" ${index === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
+                    <button onclick="moveLayer(${index}, 1, event)" ${index === layerStack.length - 1 ? 'disabled style="opacity:0.3"' : ''}>▼</button>
+                    <button class="btn-del" onclick="removeLayer('${layer.id}', event)">✖</button>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    // ==========================================
+    // 🌟 3. 管線視圖渲染函數 (Global vs Node)
+    // ==========================================
+    function renderGlobalView() {
+        activeLayerId = null;
+        renderTopLayers(); 
+        paramPanel.style.display = 'none'; 
+        
+        document.getElementById('originalImage').src = globalInputUrl;
+        document.getElementById('processedImage').src = globalOutputUrl;
+        
+        document.getElementById('originalHistogram').src = "data:image/png;base64," + globalOriginalHistogram;
+        document.getElementById('processedHistogram').src = "data:image/png;base64," + globalProcessedHistogram;
+        document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + globalOriginalSpectrum;
+        document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + globalProcessedSpectrum;
+        
+        document.getElementById('histogramSection').style.display = 'block';
+        document.getElementById('spectrumSection').style.display = 'block';
+        
+        const stepsContainer = document.getElementById('stepsContainer');
+        const stepsGrid = document.getElementById('stepsGrid');
+        stepsGrid.innerHTML = ''; 
+        
+        if (currentPipelineData.length > 0) {
+            stepsContainer.style.display = 'block';
+            currentPipelineData.forEach((node, index) => {
+                const stepBox = document.createElement('div');
+                stepBox.className = 'step-box';
+                stepBox.innerHTML = `
+                    <h5>[ Node ${index + 1} ] ${node.operation_name}</h5>
+                    <img src="data:image/jpeg;base64,${node.output_img}" alt="Node Output">
+                `;
+                stepBox.style.cursor = 'pointer';
+                stepBox.onclick = () => selectLayer(layerStack[index].id);
+                stepsGrid.appendChild(stepBox);
+            });
+        } else {
+            stepsContainer.style.display = 'none';
+        }
+    }
+
+    function renderNodeView(nodeIndex) {
+        const nodeData = currentPipelineData[nodeIndex];
+        if (!nodeData) return;
+        
+        document.getElementById('originalImage').src = "data:image/jpeg;base64," + nodeData.input_img;
+        document.getElementById('processedImage').src = "data:image/jpeg;base64," + nodeData.output_img;
+        
+        document.getElementById('originalHistogram').src = "data:image/png;base64," + nodeData.original_histogram;
+        document.getElementById('processedHistogram').src = "data:image/png;base64," + nodeData.processed_histogram;
+        document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + nodeData.original_spectrum;
+        document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + nodeData.processed_spectrum;
+        
+        document.getElementById('histogramSection').style.display = 'block';
+        document.getElementById('spectrumSection').style.display = 'block';
+        
+        const stepsContainer = document.getElementById('stepsContainer');
+        const stepsGrid = document.getElementById('stepsGrid');
+        stepsGrid.innerHTML = ''; 
+        
+        if (nodeData.steps && nodeData.steps.length > 0) {
+            stepsContainer.style.display = 'block';
+            nodeData.steps.forEach(step => {
+                const stepBox = document.createElement('div');
+                stepBox.className = 'step-box';
+                stepBox.innerHTML = `
+                    <h5>[ ${step.name} ]</h5>
+                    <img src="data:image/jpeg;base64,${step.image}" alt="${step.name}">
+                `;
+                stepsGrid.appendChild(stepBox);
+            });
+        } else {
+            stepsContainer.style.display = 'none';
+        }
+    }
+
+    // ==========================================
+    // 4. 參數儲存與讀取 (🌟 修正多群組遺漏 Bug)
+    // ==========================================
+    function saveCurrentParamsToLayer() {
+        if (!activeLayerId) return;
+        const layer = layerStack.find(l => l.id === activeLayerId);
+        if (!layer) return;
+
+        // 遍歷所有 paramGroups，確保不會漏掉被拆分的參數區塊
         paramGroups.forEach(group => {
             const types = group.getAttribute('data-types').split(',');
-            if (types.includes(selectedType)) {
+            if (types.includes(layer.type)) {
+                const inputs = group.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (!input.name) return; // 略過沒有 name 的元素
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        layer.params[input.name] = input.checked;
+                    } else {
+                        layer.params[input.name] = input.value;
+                    }
+                });
+            }
+        });
+    }
+
+    function loadParamsIntoDOM(layer) {
+        paramGroups.forEach(group => {
+            const types = group.getAttribute('data-types').split(',');
+            if (types.includes(layer.type)) {
+                const inputs = group.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (!input.name) return;
+                    
+                    if (layer.params[input.name] !== undefined) {
+                        // 1. 節點已經有存好的參數，直接載入
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = layer.params[input.name];
+                        } else {
+                            input.value = layer.params[input.name];
+                        }
+                    } else {
+                        // 2. 🌟 關鍵修正：這是新節點，必須抓取 HTML 原始預設值，避免被上一個節點污染
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = input.defaultChecked;
+                            layer.params[input.name] = input.defaultChecked;
+                        } else if (input.tagName.toLowerCase() === 'select') {
+                            // 尋找帶有 selected 屬性的 option，否則抓第一個
+                            const defaultOption = Array.from(input.options).find(opt => opt.defaultSelected);
+                            const defVal = defaultOption ? defaultOption.value : input.options[0].value;
+                            input.value = defVal;
+                            layer.params[input.name] = defVal;
+                        } else {
+                            input.value = input.defaultValue;
+                            layer.params[input.name] = input.defaultValue;
+                        }
+                    }
+                    
+                    // 觸發事件更新 UI (例如數值顯示、Otsu 反灰連動)
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                });
+            }
+        });
+    }
+
+
+    function showParamGroupForType(type) {
+        let hasVisibleParams = false;
+        paramGroups.forEach(group => {
+            const types = group.getAttribute('data-types').split(',');
+            if (types.includes(type)) {
                 group.style.display = 'block';
                 hasVisibleParams = true;
             } else {
                 group.style.display = 'none';
             }
         });
-
         paramPanel.style.display = hasVisibleParams ? 'block' : 'none';
     }
 
-    updateParams(); 
+    function updateParamsForSingleMode() {
+        const checkedRadio = document.querySelector('input[name="process_type"]:checked');
+        if (checkedRadio) showParamGroupForType(checkedRadio.value);
+    }
 
+    // ==========================================
+    // 5. API 請求與防抖
+    // ==========================================
     const form = document.getElementById('processForm');
     const loading = document.getElementById('loadingIndicator');
 
@@ -32,47 +324,69 @@
         if (!fileInput.files || fileInput.files.length === 0) return; 
 
         const formData = new FormData(form);
+        
+        // 🌟 如果是管線模式，把 layerStack 轉成 JSON 傳給後端
+        if (currentMode === 'stack') {
+            saveCurrentParamsToLayer();
+            formData.append('pipeline_sequence', JSON.stringify(layerStack));
+        }
+        
         loading.classList.add('show');
-
         try {
-            const response = await fetch('/tool/image-processing', {
-                method: 'POST',
-                body: formData
-            });
-
+            const response = await fetch('/tool/image-processing', { method: 'POST', body: formData });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || "伺服器錯誤");
 
-            if (data.original_image) {
-                document.getElementById('originalImage').src = "data:image/jpeg;base64," + data.original_image;
-            }
-            
-            document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
-            document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
-            document.getElementById('processedHistogram').src = "data:image/png;base64," + data.processed_histogram;
-            document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + data.original_spectrum;
-            document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + data.processed_spectrum;
-            
-            document.getElementById('histogramSection').style.display = 'block';
-            document.getElementById('spectrumSection').style.display = 'block'; 
-
-            const stepsContainer = document.getElementById('stepsContainer');
-            const stepsGrid = document.getElementById('stepsGrid');
-            stepsGrid.innerHTML = ''; 
-            
-            if (data.steps && data.steps.length > 0) {
-                stepsContainer.style.display = 'block'; 
-                data.steps.forEach(step => {
-                    const stepBox = document.createElement('div');
-                    stepBox.className = 'step-box';
-                    stepBox.innerHTML = `
-                        <h5>[ ${step.name} ]</h5>
-                        <img src="data:image/jpeg;base64,${step.image}" alt="${step.name}">
-                    `;
-                    stepsGrid.appendChild(stepBox);
-                });
+            if (data.mode === 'stack') {
+                // 🌟 管線模式的處理邏輯
+                currentPipelineData = data.nodes_data;
+                globalInputUrl = "data:image/jpeg;base64," + data.global_input;
+                globalOutputUrl = "data:image/jpeg;base64," + data.global_output;
+                globalOriginalHistogram = data.original_histogram;
+                globalProcessedHistogram = data.processed_histogram;
+                globalOriginalSpectrum = data.original_spectrum;
+                globalProcessedSpectrum = data.processed_spectrum;
+                
+                if (activeLayerId) {
+                    const activeIndex = layerStack.findIndex(l => l.id === activeLayerId);
+                    if (activeIndex !== -1 && currentPipelineData[activeIndex]) {
+                        renderNodeView(activeIndex);
+                    } else {
+                        renderGlobalView();
+                    }
+                } else {
+                    renderGlobalView();
+                }
             } else {
-                stepsContainer.style.display = 'none'; 
+                // 🌟 單步模式的處理邏輯
+                if (data.original_image) document.getElementById('originalImage').src = "data:image/jpeg;base64," + data.original_image;
+                document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
+                document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
+                document.getElementById('processedHistogram').src = "data:image/png;base64," + data.processed_histogram;
+                document.getElementById('originalSpectrum').src = "data:image/jpeg;base64," + data.original_spectrum;
+                document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + data.processed_spectrum;
+                
+                document.getElementById('histogramSection').style.display = 'block';
+                document.getElementById('spectrumSection').style.display = 'block'; 
+
+                const stepsContainer = document.getElementById('stepsContainer');
+                const stepsGrid = document.getElementById('stepsGrid');
+                stepsGrid.innerHTML = ''; 
+                
+                if (data.steps && data.steps.length > 0) {
+                    stepsContainer.style.display = 'block'; 
+                    data.steps.forEach(step => {
+                        const stepBox = document.createElement('div');
+                        stepBox.className = 'step-box';
+                        stepBox.innerHTML = `
+                            <h5>[ ${step.name} ]</h5>
+                            <img src="data:image/jpeg;base64,${step.image}" alt="${step.name}">
+                        `;
+                        stepsGrid.appendChild(stepBox);
+                    });
+                } else {
+                    stepsContainer.style.display = 'none'; 
+                }
             }
 
         } catch (error) {
@@ -90,13 +404,13 @@
         };
     }
 
-    const debouncedProcessImage = debounce(processImage, 50);
+    const debouncedProcessImage = debounce(processImage, 500);
 
-    const ranges = document.querySelectorAll('input[type="range"]');
-    ranges.forEach(range => {
-        range.addEventListener('input', debouncedProcessImage);
+    document.querySelectorAll('input[type="range"], select, input[type="checkbox"]').forEach(el => {
+        el.addEventListener('input', debouncedProcessImage);
+        el.addEventListener('change', debouncedProcessImage);
     });
-    
+
     document.getElementById('resetParamsBtn').addEventListener('click', () => {
         const ranges = document.querySelectorAll('#paramPanel input[type="range"]');
         ranges.forEach(range => {
@@ -104,7 +418,6 @@
             range.dispatchEvent(new Event('input'));
         });
         
-        // 重置 checkbox 與 select
         const otsuCheckbox = document.getElementById('otsuCheckbox');
         if (otsuCheckbox) {
             otsuCheckbox.checked = false;
@@ -128,13 +441,6 @@
             notchSelect.value = 'reject';
             notchSelect.dispatchEvent(new Event('change'));
         }
-    });
-
-    radioButtons.forEach(radio => {
-        radio.addEventListener('change', () => {
-            updateParams();
-            processImage();
-        });
     });
 
     document.getElementById('imageInput').addEventListener('change', function(e) {
@@ -170,7 +476,6 @@
         }
     });
 
-    // 監聽 Otsu 勾選框
     const otsuCheckbox = document.getElementById('otsuCheckbox');
     if (otsuCheckbox) {
         otsuCheckbox.addEventListener('change', function(e) {
@@ -186,9 +491,259 @@
         });
     }
 
-    // 監聽所有 select 下拉選單
-    const selects = document.querySelectorAll('select');
-    selects.forEach(select => {
-        select.addEventListener('change', debouncedProcessImage);
+    // ==========================================
+    // 6. 預設圖片載入邏輯
+    // ==========================================
+    async function loadPresetImage(filename) {
+        const loading = document.getElementById('loadingIndicator');
+        if(loading) loading.classList.add('show');
+        
+        try {
+            const response = await fetch(`/static/samples/${filename}`);
+            if (!response.ok) throw new Error("找不到圖片檔案");
+            
+            const blob = await response.blob();
+            const file = new File([blob], filename, { type: blob.type });
+            
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            
+            const imageInput = document.getElementById('imageInput');
+            imageInput.files = dataTransfer.files;
+            
+            imageInput.dispatchEvent(new Event('change'));
+            
+        } catch (error) {
+            console.error("載入預設圖片失敗:", error);
+            alert(`無法載入 ${filename}！請確認圖片已放在 static/samples/ 資料夾中。`);
+        } finally {
+            if(loading) loading.classList.remove('show');
+        }
+    }
+
+    // ==========================================
+    // 🔍 7. 圖片放大鏡功能 (終極修復版)
+    // ==========================================
+    let currentScale = 1;
+    let isDragging = false;
+    let startX, startY, translateX = 0, translateY = 0;
+
+    function openImageModal(imgSrc, captionText) {
+        const imageModal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        const caption = document.getElementById("modalCaption");
+        
+        if (!imageModal || !modalImg) {
+            console.error("找不到放大鏡元素，請確認 HTML 是否完整！");
+            return;
+        }
+
+        // 🌟 關鍵修復：強制清除 HTML 上舊的 onclick 屬性，防止點擊圖片時瞬間關閉
+        imageModal.removeAttribute("onclick");
+        
+        imageModal.style.display = "block";
+        modalImg.src = imgSrc;
+        caption.innerHTML = captionText || "影像預覽";
+        
+        // 重置縮放與位移狀態
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+        modalImg.style.transform = `translate(0px, 0px) scale(1)`;
+        
+        setTimeout(() => { modalImg.style.cursor = 'grab'; }, 300);
+    }
+
+    function closeImageModal() {
+        const imageModal = document.getElementById("imageModal");
+        if (imageModal) imageModal.style.display = "none";
+    }
+
+    // ==========================================
+    // 🌟 全面改用「事件委派」，解決載入順序報錯問題
+    // ==========================================
+
+    // 1. 點擊邏輯 (開啟與關閉)
+    document.addEventListener('click', function(e) {
+        // 點擊縮圖：開啟放大鏡
+        if (e.target.tagName === 'IMG' && (e.target.closest('.image-box') || e.target.closest('.step-box'))) {
+            if (e.target.src && e.target.src.length > 10) {
+                openImageModal(e.target.src, e.target.alt);
+            }
+        }
+        // 點擊背景或叉叉：關閉放大鏡 (嚴格排除點擊圖片本身)
+        else if (e.target.id === 'imageModal' || e.target.classList.contains('close-modal')) {
+            closeImageModal();
+        }
     });
+
+    // 2. 滾輪縮放 (Zoom)
+    document.addEventListener('wheel', function(e) {
+        if (e.target.id === 'modalImage') {
+            e.preventDefault(); // 防止網頁跟著滾動
+            const zoomSpeed = 0.15;
+            currentScale += (e.deltaY < 0) ? zoomSpeed : -zoomSpeed;
+            currentScale = Math.min(Math.max(0.5, currentScale), 15); // 限制 0.5倍 ~ 15倍
+            e.target.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+        }
+    }, { passive: false });
+
+    // 3. 滑鼠拖曳 (Pan) - 按下
+    document.addEventListener('mousedown', function(e) {
+        if (e.target.id === 'modalImage') {
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            e.target.style.cursor = 'grabbing';
+        }
+    });
+
+    // 4. 滑鼠拖曳 (Pan) - 移動
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const modalImg = document.getElementById("modalImage");
+        if (modalImg) {
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            modalImg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+        }
+    });
+
+    // 5. 滑鼠拖曳 (Pan) - 放開
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            const modalImg = document.getElementById("modalImage");
+            if (modalImg) modalImg.style.cursor = 'grab';
+        }
+    });
+
+    // 6. 鍵盤 ESC 關閉
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape") {
+            closeImageModal();
+        }
+    });
+
+    // ==========================================
+    // 📷 8. 實時相機擷取功能 (WebRTC)
+    // ==========================================
+    let currentStream = null;
+
+    // 開啟相機模態框並啟動鏡頭
+    async function openCamera() {
+        document.getElementById('cameraModal').style.display = 'block';
+        await getCameras();
+    }
+
+    // 關閉相機並釋放鏡頭資源 (重要！避免鏡頭燈一直亮著)
+    function closeCamera() {
+        document.getElementById('cameraModal').style.display = 'none';
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+            currentStream = null;
+        }
+    }
+
+    // 取得所有可用的攝影機清單 (包含手機虛擬鏡頭)
+    async function getCameras() {
+        try {
+            // 先請求一次權限，系統才會給出真實的設備名稱
+            const initialStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            initialStream.getTracks().forEach(track => track.stop());
+
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            
+            const cameraSelect = document.getElementById('cameraSelect');
+            cameraSelect.innerHTML = ''; // 清空選單
+            
+            videoDevices.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.text = device.label || `攝影機 ${index + 1}`;
+                cameraSelect.appendChild(option);
+            });
+
+            // 啟動選單中的第一個鏡頭
+            if (videoDevices.length > 0) {
+                startStream(videoDevices[0].deviceId);
+            }
+            
+            // 當使用者切換下拉選單時，切換鏡頭
+            cameraSelect.onchange = () => startStream(cameraSelect.value);
+
+        } catch (err) {
+            console.error("無法存取攝影機:", err);
+            alert("無法存取攝影機，請確認瀏覽器權限已開啟！");
+        }
+    }
+
+    // 啟動指定鏡頭的影像流
+    async function startStream(deviceId) {
+        if (currentStream) {
+            currentStream.getTracks().forEach(track => track.stop());
+        }
+        
+        const constraints = {
+            video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } }
+        };
+
+        try {
+            currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+            const video = document.getElementById('cameraVideo');
+            video.srcObject = currentStream;
+        } catch (err) {
+            console.error("啟動影像流失敗:", err);
+        }
+    }
+
+    // 📸 拍照並將影像送入系統 (防呆版：解決載入順序問題)
+    document.addEventListener('click', function(e) {
+        // 確保點擊的是擷取按鈕 (或按鈕內的文字/圖示)
+        const captureBtn = e.target.closest('#captureBtn');
+        if (!captureBtn) return;
+
+        const video = document.getElementById('cameraVideo');
+        const canvas = document.getElementById('cameraCanvas');
+        if (!video || !canvas) return;
+
+        const context = canvas.getContext('2d');
+
+        // 設定 Canvas 尺寸與影片原始解析度一致
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        // 處理鏡像翻轉 (因為預覽畫面是翻轉的，存檔時要翻回來)
+        context.translate(canvas.width, 0);
+        context.scale(-1, 1);
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // 將 Canvas 轉換為圖片檔案 (Blob)
+        canvas.toBlob((blob) => {
+            // 建立一個假的 File 物件
+            const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+            
+            // 找到您原本側邊欄的 file input
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) {
+                // 使用 DataTransfer 將假檔案塞入 input 中
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                // 主動觸發 change 事件，讓系統開始處理圖片
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                console.error("找不到上傳欄位 (input type='file')！");
+                alert("找不到圖片上傳欄位，請確認左側面板結構。");
+            }
+            
+            // 拍照完成，關閉相機
+            closeCamera();
+        }, 'image/jpeg', 0.95);
+    });
+
 </script>

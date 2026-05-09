@@ -5,12 +5,44 @@
         <div class="form-group">
             <label for="imageInput">01 // 選擇目標影像 (IMAGE INPUT)</label>
             <input type="file" id="imageInput" name="image" accept="image/*" required>
+            <!-- 啟動相機的按鈕 -->
+            <button type="button" class="btn" onclick="openCamera()" style="width: 100%; margin-top: 10px; border-style: dashed;">
+                📷 開啟相機擷取
+            </button>
+
+            
+            <!-- 🌟 新增：預設圖片快速選擇區 (選單版) -->
+            <div class="preset-image-container">
+                <span class="preset-label">[ 快速載入經典測試圖 ]</span>
+                
+                <!-- 使用 onchange 觸發載入，並套用共用的 tech-select 樣式 -->
+                <select id="presetImageSelect" class="tech-select" onchange="if(this.value) { loadPresetImage(this.value); this.selectedIndex = 0; }">
+                    <option value="" disabled selected hidden>🔽 點擊選擇測試圖片...</option>
+                    
+                    <optgroup label="[ 經典人像與風景 ]">
+                        <option value="Lenna.jpeg">👩‍🦰 Lenna (灰)</option>
+                        <option value="Lenna彩色.jpg">🎨 Lenna (彩)</option>
+                        <option value="camera man.jpg">📷 攝影師</option>
+                        <option value="Einstein.jpg">🧠 愛因斯坦</option>
+                    </optgroup>
+                    
+                    <optgroup label="[ 工業與科學測試圖 ]">
+                        <option value="blobs.tif">🦠 Blobs</option>
+                        <option value="dowels.tif">🪵 Dowels</option>
+                        <option value="airport.tif">✈️ Airport</option>
+                        <option value="ripple.tif">🌊 Ripple</option>
+                    </optgroup>
+                </select>
+            </div>
         </div>
         
-        <!-- 02 // 模組選擇 (引入拆分的檔案) -->
+        <!-- 02 // 檢測管線模組 (管線模式專用) -->
+        {% include 'components/image_processing/_sidebar_pipeline.html' %}
+
+        <!-- 03 // 模組選擇 (單步模式專用) -->
         {% include 'components/image_processing/_sidebar_modules.html' %}
 
-        <!-- 03 // 參數面板 (引入拆分的檔案) -->
+        <!-- 04 // 參數面板 -->
         {% include 'components/image_processing/_sidebar_params.html' %}
     </form>
 </div>

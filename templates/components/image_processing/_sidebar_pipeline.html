@@ -1,0 +1,81 @@
+<!-- =========================================
+     管線模式專屬：算子管理器 (預設隱藏)
+     ========================================= -->
+<div class="form-group" id="layerManager" style="display: none; flex-direction: column; gap: 10px;">
+    
+    <label>02 // 檢測管線 (PIPELINE NODES)</label>
+    
+    <div style="background: rgba(10, 15, 25, 0.6); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+        
+        <!-- 🌟 全局總覽按鈕 -->
+        <button type="button" class="btn" onclick="renderGlobalView()" 
+                style="width: 100%; padding: 8px; background: rgba(179, 102, 255, 0.1); border: 1px dashed #b366ff; color: #b366ff; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s; margin-bottom: 5px;"
+                onmouseover="this.style.background='rgba(179, 102, 255, 0.2)'" 
+                onmouseout="this.style.background='rgba(179, 102, 255, 0.1)'">
+            👁️ 檢視全局結果與流程
+        </button>
+
+        <!-- 🌟 完整版下拉選單 (已補齊所有功能) -->
+        <select id="newLayerSelect" class="tech-select">
+            <optgroup label="[ 基本強度轉換 ]">
+                <option value="negative">負轉換 (Negative)</option>
+                <option value="linear">線性轉換 (亮度/對比)</option>
+                <option value="binarize">二值化 (Binarization)</option>
+                <option value="log">對數轉換 (Log Transform)</option>
+                <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
+                <option value="equalization">直方圖等化 (Equalization)</option>
+                <option value="clahe">自適應直方圖 (CLAHE)</option>
+            </optgroup>
+            
+            <optgroup label="[ 空間域濾波 ]">
+                <option value="mean">均值濾波 (Mean Filter)</option>
+                <option value="gaussian">高斯濾波 (Gaussian Filter)</option>
+                <option value="median">中值濾波 (Median Filter)</option>
+                <option value="bilateral">雙邊濾波 (Bilateral)</option>
+                <option value="sharpen">影像銳化 (Sharpening)</option>
+            </optgroup>
+            
+            <optgroup label="[ 邊緣偵測 ]">
+                <option value="roberts">Roberts 算子</option>
+                <option value="prewitt">Prewitt 算子</option>
+                <option value="sobel">Sobel 算子</option>
+                <option value="laplacian">Laplacian 算子</option>
+                <option value="log_edge">LoG (高斯拉普拉斯)</option>
+                <option value="canny">Canny 邊緣偵測 (OpenCV)</option>
+                <option value="canny_custom">手刻版 Canny (From Scratch)</option>
+            </optgroup>
+            
+            <optgroup label="[ 頻率域濾波 - 低通/高通 ]">
+                <option value="freq_ideal_low">理想低通 (Ideal Lowpass)</option>
+                <option value="freq_butterworth_low">巴特沃斯低通 (Butterworth Low)</option>
+                <option value="freq_gaussian_low">高斯低通 (Gaussian Lowpass)</option>
+                <option value="freq_ideal_high">理想高通 (Ideal Highpass)</option>
+                <option value="freq_butterworth_high">巴特沃斯高通 (Butterworth High)</option>
+                <option value="freq_gaussian_high">高斯高通 (Gaussian Highpass)</option>
+            </optgroup>
+
+            <optgroup label="[ 頻率域濾波 - 進階 ]">
+                <option value="freq_butterworth_bandreject">帶阻濾波 (Bandreject)</option>
+                <option value="freq_butterworth_bandpass">帶通濾波 (Bandpass)</option>
+                <option value="freq_butterworth_emphasis">高頻強調 (High-Freq Emphasis)</option>
+                <option value="notch_reject">陷波濾波 (Notch Filter)</option>
+            </optgroup>
+
+            <optgroup label="[ 特徵檢測 (Hough) ]">
+                <option value="hough_lines_standard">標準霍夫線 (無限長直線)</option>
+                <option value="hough_lines_p">機率霍夫線 (有限線段)</option>
+                <option value="hough_circles">霍夫圓檢測 (Hough Circles)</option>
+            </optgroup>
+        </select>
+        
+        <!-- 加入按鈕 -->
+        <button type="button" class="btn" style="width: 100%; padding: 8px; background: rgba(0, 240, 255, 0.1); border: 1px solid #00f0ff; color: #00f0ff; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s;" onmouseover="this.style.background='rgba(0, 240, 255, 0.2)'" onmouseout="this.style.background='rgba(0, 240, 255, 0.1)'" onclick="addNewLayerFromSelect()">
+            ➕ 加入管線
+        </button>
+        
+        <!-- 垂直排列的管線流程 -->
+        <div id="topLayerList" class="top-layer-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+            <!-- 算子項目會動態產生在這裡 -->
+        </div>
+    </div>
+</div>

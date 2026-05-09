@@ -80,14 +80,19 @@ class IntensityMixin:
         return 255 - self.img
 
     def log_transform(self, c=1.0):
-        # 畫出對數轉換曲線
+        # 1. 計算基準常數：確保當 c=1.0 時，輸入 255 剛好對應輸出 255
+        # 公式: 255 / log(1 + 255)
+        base_c = 255.0 / np.log(256.0)
+        
+        # 2. 畫出對數轉換曲線 (移除 normalize，改用 clip)
         x = np.arange(256, dtype=np.float32)
-        lut = c * np.log(1 + x)
-        lut = np.uint8(cv2.normalize(lut, None, 0, 255, cv2.NORM_MINMAX))
+        lut = c * base_c * np.log(1 + x)
+        lut = np.uint8(np.clip(lut, 0, 255))
         self._draw_transfer_curve(lut, f"對數轉換曲線 (Log Curve, c={c})")
         
-        result = c * np.log(1 + np.float32(self.img))
-        return np.uint8(cv2.normalize(result, None, 0, 255, cv2.NORM_MINMAX))
+        # 3. 處理實際影像 (移除 normalize，改用 clip)
+        result = c * base_c * np.log(1 + np.float32(self.img))
+        return np.uint8(np.clip(result, 0, 255))
 
     def power_law_transform(self, gamma=1.0, c=1.0):
         # 畫出 Gamma 轉換曲線

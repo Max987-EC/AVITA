@@ -7,7 +7,8 @@
     <!-- 同時引入優雅的 Playfair (給大標) 與科技感的 Orbitron (給副標) -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <!-- 連結 CSS 檔案 -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
 </head>
 <body>
     <!-- 原本的 container 裡面現在只剩下標題與副標題 -->
@@ -25,7 +26,7 @@
         <div class="button-group">
             <a href="/tool/seat-arranger" class="btn">🎓 學生座位排列系統</a>
             <a href="/tool/lane-detection" class="btn">🚗 車道線偵測</a>
-            <a href="/tool/image-processing" class="btn">🎨 綜合影像處理</a>
+            <a href="/tool/image-processing" class="btn">👁️‍🗨️ AOI 視覺檢測工作站</a>
             
             <!-- 💡 補上一個新的佔位按鈕，保持版面豐富度與期待感 -->
             <a href="#" class="btn disabled">🚀 更多功能開發中...</a>
