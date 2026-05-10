@@ -37,14 +37,13 @@
 
         
         <div class="tool-layout">
-            <!-- 1. 引入左側控制面板 (現在管線面板已經完美整合在裡面囉！) -->
+            <!-- 1. 引入左側控制面板 -->
             {% include 'components/image_processing/_sidebar.html' %}
 
-            <!-- 右側主要區域 (改為佔滿剩餘空間 flex: 1) -->
+            <!-- 右側主要區域 -->
             <div class="main-workspace" style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
                 
                 <!-- 2. 引入中間視覺化內容與步驟面板 -->
-                <!-- ⚠️ 關鍵修正：加入 flex-direction: row 讓內容與步驟左右並排 -->
                 <div class="content-wrapper" style="display: flex; flex-direction: row; gap: 30px; align-items: flex-start; width: 100%;">
                     {% include 'components/image_processing/_content.html' %}
                 </div>
@@ -67,7 +66,7 @@
     <div id="cameraModal" class="image-modal">
         <div class="camera-container">
             <div class="camera-header">
-                <h3 style="margin: 0; color: #00f0ff; font-family: 'Orbitron', sans-serif;">📷 實時影像擷取</h3>
+                <h3 style="margin: 0; color: #64ffda; font-family: 'Orbitron', sans-serif;">📷 實時影像擷取</h3>
                 <span class="close-camera" onclick="closeCamera()">&times;</span>
             </div>
             
@@ -82,7 +81,7 @@
             </div>
             
             <!-- 拍照按鈕 -->
-            <button id="captureBtn" class="btn submit-btn" style="margin-top: 15px; background: rgba(0, 240, 255, 0.2); border-color: #00f0ff;">
+            <button id="captureBtn" class="btn submit-btn" style="margin-top: 15px; background: rgba(100, 255, 218, 0.2); border-color: #64ffda; color: #f8fafc;">
                 📸 擷取畫面 (Capture)
             </button>
             

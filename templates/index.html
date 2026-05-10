@@ -4,33 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AVITA | 視覺影像工具</title>
-    <!-- 同時引入優雅的 Playfair (給大標) 與科技感的 Orbitron (給副標) -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
-    <!-- 連結 CSS 檔案 -->
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
+    
+    <!-- 🌟 新增：專屬貓咪印章的樣式 (直接寫在這裡覆蓋舊設定，確保不會消失) -->
+    <style>
+        .mini-cat {
+            position: fixed;
+            width: 45px;
+            height: 45px;
+            /* 讓滑鼠可以穿透貓咪，確保不會擋住底下的按鈕 */
+            pointer-events: none; 
+            z-index: 0; 
+            /* 彈出動畫，且停留在最終狀態 (forwards) */
+            animation: cat-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            /* 設定微透明，讓畫面點滿貓咪時依然有質感 */
+            opacity: 0.6; 
+        }
+
+        @keyframes cat-pop {
+            0% { transform: scale(0) rotate(-20deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+    </style>
 </head>
 <body>
-    <!-- 原本的 container 裡面現在只剩下標題與副標題 -->
     <div class="container">
         <h1 class="logo">AVITA</h1>
         <p class="subtitle">全用途視覺影像工具應用</p>
     </div>
 
-    <!-- 全新的底部上拉抽屜 (獨立於 container 之外) -->
+    <!-- 底部上拉抽屜 -->
     <div class="bottom-drawer">
-        <!-- 抽屜上方的視覺把手，暗示使用者這裡可以互動 -->
         <div class="drawer-handle"></div>
-
-        <!-- 按鈕群組 -->
         <div class="button-group">
             <a href="/tool/seat-arranger" class="btn">🎓 學生座位排列系統</a>
             <a href="/tool/lane-detection" class="btn">🚗 車道線偵測</a>
             <a href="/tool/image-processing" class="btn">👁️‍🗨️ AOI 視覺檢測工作站</a>
-            
-            <!-- 💡 補上一個新的佔位按鈕，保持版面豐富度與期待感 -->
             <a href="#" class="btn disabled">🚀 更多功能開發中...</a>
         </div>
     </div>
+
+    <!-- 🐾 點擊空白處蓋上「貓咪印章」的腳本 -->
+    <script>
+        document.addEventListener('click', function(e) {
+            // 避免點擊按鈕或抽屜時也觸發
+            if (e.target.closest('.btn') || e.target.closest('.bottom-drawer')) {
+                return;
+            }
+
+            const cat = document.createElement('div');
+            cat.className = 'mini-cat';
+            
+            // 讓貓咪的中心點精準對齊滑鼠點擊位置 (扣除寬高的一半)
+            cat.style.left = (e.clientX - 22.5) + 'px';
+            cat.style.top = (e.clientY - 22.5) + 'px';
+
+            // 隨機抽取系統主題色
+            const colors = ['#64ffda', '#82aaff', '#ff79c6'];
+            cat.style.color = colors[Math.floor(Math.random() * colors.length)];
+
+            // ^ - ^ 顏文字貓咪圖像
+            cat.innerHTML = `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M 25 40 L 35 25 L 45 40" />
+                        <path d="M 55 40 L 65 25 L 75 40" />
+                        <line x1="46" y1="45" x2="54" y2="45" />
+                        <path d="M 15 45 L 25 48 M 10 55 L 25 55 M 15 65 L 25 62" />
+                        <path d="M 85 45 L 75 48 M 90 55 L 75 55 M 85 65 L 75 62" />
+                    </g>
+                    <g fill="currentColor">
+                        <rect x="41" y="52" width="4" height="8" rx="2" />
+                        <rect x="55" y="52" width="4" height="8" rx="2" />
+                    </g>
+                </svg>
+            `;
+
+            document.body.appendChild(cat);
+            
+            // 💡 已經移除了 setTimeout，貓咪現在會永遠留在畫面上！
+        });
+    </script>
 </body>
 </html>

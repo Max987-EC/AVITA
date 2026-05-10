@@ -3,6 +3,7 @@
 import os
 import uuid
 import cv2
+import io  # 🌟 新增：用於記憶體緩衝
 from flask import Blueprint, render_template, request, send_file
 from moviepy import VideoFileClip
 from lane_detector import LaneDetector
@@ -51,7 +52,16 @@ def lane_detection():
     except Exception as e:
         return f"影片轉碼失敗: {str(e)}", 500
 
+    # 🌟 核心魔法：將最終影片讀入記憶體 (BytesIO)
+    return_data = io.BytesIO()
+    with open(web_output_path, 'rb') as f:
+        return_data.write(f.read())
+    return_data.seek(0) # 將讀取指標移回開頭，準備發送給前端
+
+    # 🌟 閱後即焚：徹底刪除硬碟上的所有暫存檔案 (包含最終輸出的檔案)
     if os.path.exists(input_path): os.remove(input_path)
     if os.path.exists(opencv_output_path): os.remove(opencv_output_path)
+    if os.path.exists(web_output_path): os.remove(web_output_path)
 
-    return send_file(web_output_path, mimetype='video/mp4')
+    # 將記憶體中的影片資料發送出去
+    return send_file(return_data, mimetype='video/mp4', download_name='result.mp4')

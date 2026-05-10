@@ -2,147 +2,133 @@
    🗄️ 1. 工具面板與表單佈局 (Tool Panel)
    ========================================= */
 .tool-panel { 
-    background: rgba(10, 15, 25, 0.65); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
-    border: 1px solid rgba(0, 240, 255, 0.2); border-radius: 16px; padding: 30px; 
+    background: rgba(10, 15, 25, 0.92); /* 🌟 加深：從 0.7 提升至 0.92 */
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
+    border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 16px; padding: 30px; 
     width: 95vw; max-width: 900px; max-height: 85vh; overflow-y: auto; 
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.05); z-index: 10; position: relative; 
+    box-shadow: 0 0 30px rgba(100, 255, 218, 0.05); z-index: 10; position: relative; 
 }
 .tool-panel.wide { max-width: 1600px; width: 98vw; }
 .tool-panel::-webkit-scrollbar { width: 6px; }
 .tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-.tool-panel::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
+.tool-panel::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
 
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0, 240, 255, 0.3); }
-.panel-header h2 { margin: 0 !important; flex: 1; font-family: 'Orbitron', sans-serif; color: #00f0ff; text-align: center; text-shadow: 0 0 15px rgba(0, 240, 255, 0.4); }
-.btn-back { padding: 8px 16px; font-size: 0.85rem; white-space: nowrap; border-color: rgba(0, 240, 255, 0.3); }
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed rgba(100, 255, 218, 0.25); }
+.panel-header h2 { margin: 0 !important; flex: 1; font-family: 'Orbitron', sans-serif; color: #64ffda; text-align: center; text-shadow: 0 0 12px rgba(100, 255, 218, 0.25); }
+.btn-back { padding: 8px 16px; font-size: 0.85rem; white-space: nowrap; border-color: rgba(100, 255, 218, 0.3); color: #f8fafc; }
 .header-spacer { width: 115px; }
 
 .tool-layout { display: flex; gap: 30px; align-items: flex-start; }
 .sidebar {
-    flex: 0 0 350px; background: rgba(0, 0, 0, 0.2); padding: 20px; border-radius: 12px;
-    border: 1px solid rgba(0, 240, 255, 0.1); position: sticky; top: 0;
+    flex: 0 0 350px; 
+    background: rgba(10, 15, 25, 0.85); /* 🌟 加深：原本是透明度很高的黑，改為扎實的深藍黑 */
+    padding: 20px; border-radius: 12px;
+    border: 1px solid rgba(100, 255, 218, 0.15); position: sticky; top: 0;
     max-height: calc(85vh - 120px); overflow-y: auto;
 }
 .sidebar::-webkit-scrollbar { width: 4px; }
 .sidebar::-webkit-scrollbar-track { background: transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 2px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 2px; }
 
 .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
-
-@media (max-width: 992px) {
-    .tool-layout { flex-direction: column; }
-    .sidebar, .steps-panel { flex: auto; width: auto; position: relative; max-height: none; }
-}
 
 /* =========================================
    📝 2. 表單元素 (Forms)
    ========================================= */
 .form-group { margin-bottom: 20px; text-align: left; }
-.form-group label { display: block; margin-bottom: 8px; color: #8892b0; font-size: 0.9rem; }
+.form-group label { display: block; margin-bottom: 8px; color: #cbd5e1; font-size: 0.9rem; }
 input[type="file"], select { 
-    width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.5); 
-    border: 1px solid #1e2d3d; border-radius: 6px; color: #ffffff; outline: none; box-sizing: border-box; 
+    width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.6); /* 🌟 加深輸入框 */
+    border: 1px solid #334155; border-radius: 6px; color: #f8fafc; outline: none; box-sizing: border-box; 
 }
 input[type="file"]::file-selector-button { 
-    background: #1e2d3d; color: #00f0ff; border: none; padding: 6px 12px; 
+    background: #334155; color: #64ffda; border: none; padding: 6px 12px; 
     border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: 'Orbitron', sans-serif; 
 }
-.submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; }
+.submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; color: #f8fafc; }
 
-複製
 /* =========================================
    🗃️ 3. 模式切換與抽屜面板 (Drawers)
    ========================================= */
-/* 標題列右側的模式切換按鈕 */
 .mode-toggle-group { display: flex; gap: 10px; }
 .mode-btn input { display: none; }
 .mode-btn .btn-text { 
-    border: 1px solid #555; 
-    border-radius: 4px; 
-    color: #888; 
-    cursor: pointer; 
-    font-weight: bold; 
-    letter-spacing: 1px; 
-    transition: all 0.3s ease; 
-    display: inline-block; 
-    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #475569; border-radius: 4px; color: #94a3b8; 
+    cursor: pointer; font-weight: bold; letter-spacing: 1px; 
+    transition: all 0.3s ease; display: inline-block; background: rgba(0, 0, 0, 0.6);
 }
 .mode-btn input:checked + .btn-text { 
-    border-color: #00f0ff; 
-    color: #00f0ff; 
-    box-shadow: 0 0 10px rgba(0, 240, 255, 0.3); 
-    background: rgba(0, 240, 255, 0.15); 
+    border-color: #64ffda; color: #64ffda; 
+    box-shadow: 0 0 8px rgba(100, 255, 218, 0.2); background: rgba(100, 255, 218, 0.1); 
 }
 
-/* 下方抽屜 (大廳的按鈕選單，保持不變) */
 .bottom-drawer {
     position: fixed; bottom: 0; left: 50%; transform: translate(-50%, calc(100% - 40px));
-    background: rgba(10, 15, 25, 0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.08); border-bottom: none; border-radius: 24px 24px 0 0;
-    padding: 0px 50px 40px; /* 微調 padding 讓箭頭更貼合邊緣 */
-    width: max-content; max-width: 90vw; z-index: 100;
+    background: rgba(10, 15, 25, 0.95); /* 🌟 加深：幾乎不透明的深藍黑 */
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(100, 255, 218, 0.15); border-bottom: none; border-radius: 24px 24px 0 0;
+    padding: 0px 50px 40px; width: max-content; max-width: 90vw; z-index: 100;
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .bottom-drawer:hover { transform: translate(-50%, 0); }
-
-/* 隱藏原本的長方形，改為置中容器 */
 .bottom-drawer .drawer-handle { 
-    background: transparent; 
-    box-shadow: none;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    margin: 0 auto 15px auto;
-    border: none; 
+    background: transparent; box-shadow: none; height: 40px; display: flex;
+    justify-content: center; align-items: center; cursor: pointer; margin: 0 auto 15px auto; border: none; 
 }
-
-/* 用 ::before 畫出科技感向上箭頭 */
 .bottom-drawer .drawer-handle::before {
-    content: '';
-    width: 14px;
-    height: 14px;
-    border-top: 3px solid #00f0ff; /* 賽博龐克藍 */
-    border-right: 3px solid #00f0ff;
-    transform: rotate(-45deg); /* 旋轉成向上箭頭 */
-    transition: all 0.3s ease;
-    filter: drop-shadow(0px 0px 5px rgba(0, 240, 255, 0.8)); /* 發光效果 */
-    margin-top: 10px;
+    content: ''; width: 14px; height: 14px;
+    border-top: 3px solid #64ffda; border-right: 3px solid #64ffda;
+    transform: rotate(-45deg); transition: all 0.3s ease;
+    filter: drop-shadow(0px 0px 5px rgba(100, 255, 218, 0.5)); margin-top: 10px;
 }
-
-/* 滑鼠懸停整個抽屜時，箭頭變色並向上浮動 */
 .bottom-drawer:hover .drawer-handle::before {
-    border-color: #b366ff; /* 變成霓虹紫 */
-    transform: rotate(-45deg) translate(3px, -3px);
-    filter: drop-shadow(0px 0px 8px rgba(179, 102, 255, 0.8));
+    border-color: #ff79c6; transform: rotate(-45deg) translate(3px, -3px);
+    filter: drop-shadow(0px 0px 8px rgba(255, 121, 198, 0.6));
 }
 
 /* =========================================
    📚 4. 上方橫向圖層管理器 (Top Layer Manager)
    ========================================= */
-.top-layer-list {
-    display: flex; gap: 15px; overflow-x: auto; width: 100%; padding: 10px 5px 20px 5px;
-}
+.top-layer-list { display: flex; gap: 15px; overflow-x: auto; width: 100%; padding: 10px 5px 20px 5px; }
 .top-layer-list::-webkit-scrollbar { height: 6px; }
 .top-layer-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-.top-layer-list::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 3px; }
+.top-layer-list::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
 
 .top-layer-item {
-    flex: 0 0 auto; background: rgba(0, 0, 0, 0.6); border: 1px solid #1e2d3d; border-radius: 8px;
+    flex: 0 0 auto; 
+    background: rgba(10, 15, 25, 0.85); /* 🌟 加深 */
+    border: 1px solid #334155; border-radius: 8px;
     padding: 10px 15px; display: flex; flex-direction: column; align-items: center; gap: 10px;
     cursor: pointer; transition: all 0.2s ease; min-width: 120px;
 }
-.top-layer-item.active {
-    border-color: #00f0ff; background: rgba(0, 240, 255, 0.1); box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-}
-.top-layer-name {
-    color: #fff; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: bold; pointer-events: none;
-}
+.top-layer-item.active { border-color: #64ffda; background: rgba(100, 255, 218, 0.1); box-shadow: 0 0 12px rgba(100, 255, 218, 0.2); }
+.top-layer-name { color: #f8fafc; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: bold; pointer-events: none; }
 .top-layer-actions { display: flex; gap: 5px; }
 .top-layer-actions button {
-    background: rgba(255, 255, 255, 0.1); border: none; color: #fff; border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1); border: none; color: #f8fafc; border-radius: 4px;
     padding: 4px 8px; cursor: pointer; font-size: 0.7rem; transition: background 0.2s;
 }
-.top-layer-actions button:hover { background: rgba(0, 240, 255, 0.5); }
-.top-layer-actions .btn-del:hover { background: rgba(255, 0, 85, 0.8); }
+.top-layer-actions button:hover { background: rgba(100, 255, 218, 0.4); }
+.top-layer-actions .btn-del:hover { background: rgba(255, 121, 198, 0.8); }
+
+/* =========================================
+   📱 5. 響應式防護 (Responsive)
+   ========================================= */
+@media (max-width: 1400px) {
+    .content-wrapper { flex-wrap: wrap !important; }
+    .main-content { flex: 1 1 500px !important; }
+    .steps-panel { flex: 1 1 100% !important; max-height: none !important; margin-top: 10px !important; }
+}
+@media (max-width: 992px) {
+    .tool-layout { flex-direction: column; }
+    .sidebar, .steps-panel { flex: auto; width: 100%; position: relative; max-height: none; box-sizing: border-box; }
+    .content-wrapper { flex-direction: column !important; }
+    .panel-header { flex-direction: column; gap: 15px; position: relative !important; }
+    .panel-header h2 { position: static !important; transform: none !important; }
+}
+@media screen and (max-width: 768px) {
+    .panel-header h2 { font-size: 1.2rem; }
+    .content-wrapper { gap: 15px !important; }
+    .sidebar, .steps-panel, .main-content { width: 100% !important; flex: none !important; padding: 15px !important; box-sizing: border-box; }
+    .tool-panel { width: 100vw; max-height: 100vh; border-radius: 0; padding: 15px; border: none; box-sizing: border-box; }
+}

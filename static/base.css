@@ -5,13 +5,13 @@ body {
     margin: 0; padding: 0;
     background-color: #020203;
     background-image: 
-        radial-gradient(circle at 50% 35%, rgba(0, 240, 255, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 50% 65%, rgba(255, 0, 85, 0.08) 0%, transparent 50%),
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        radial-gradient(circle at 50% 35%, rgba(100, 255, 218, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 65%, rgba(255, 121, 198, 0.06) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px;
     background-position: center center;
-    color: #ffffff;
+    color: #f8fafc;
     font-family: 'Helvetica Neue', Arial, sans-serif;
     display: flex; justify-content: center; align-items: center;
     height: 100vh; overflow: hidden;
@@ -27,18 +27,25 @@ body {
 
 .logo {
     font-family: 'Playfair Display', serif; font-size: 6.5rem; margin: 0; letter-spacing: 4px;
-    background: linear-gradient(90deg, #ff0055, #00ff99, #00aaff, #ff0055);
-    background-size: 300% 300%;
+    background: linear-gradient(90deg, #64ffda, #82aaff, #ff79c6, #82aaff, #64ffda);
+    background-size: 200% auto; 
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    animation: rgb-flow 5s linear infinite;
+    animation: rgb-flow 6s ease-in-out infinite; 
+    filter: drop-shadow(0 0 20px rgba(130, 170, 255, 0.3));
 }
-@keyframes rgb-flow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+
+@keyframes rgb-flow { 
+    0% { background-position: 0% 50%; } 
+    50% { background-position: 100% 50%; } 
+    100% { background-position: 0% 50%; } 
+}
 
 .subtitle {
     font-family: 'Playfair Display', serif; font-style: italic;
-    color: rgba(157, 128, 255, 0.85); letter-spacing: 8px; font-size: 1.2rem;
+    color: #82aaff; 
+    letter-spacing: 8px; font-size: 1.2rem;
     margin-top: 25px; margin-bottom: 0; 
-    text-shadow: 0 0 15px rgba(157, 128, 255, 0.4), 0 0 35px rgba(157, 128, 255, 0.15); 
+    text-shadow: 0 0 15px rgba(130, 170, 255, 0.5), 0 0 35px rgba(130, 170, 255, 0.2); 
 }
 
 /* =========================================
@@ -46,37 +53,37 @@ body {
    ========================================= */
 .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
 .btn {
-    text-decoration: none; color: #8892b0; border: 1px solid #1e2d3d;
+    text-decoration: none; color: #cbd5e1; border: 1px solid #334155;
     padding: 12px 28px; border-radius: 4px; font-size: 0.9rem;
     font-family: 'Orbitron', sans-serif; letter-spacing: 1px; transition: all 0.3s ease;
     background-color: rgba(10, 15, 25, 0.8); backdrop-filter: blur(5px);
 }
 .btn:hover {
-    color: #ffffff; border-color: #00f0ff; background-color: rgba(0, 240, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4), inset 0 0 10px rgba(0, 240, 255, 0.2);
+    color: #f8fafc; border-color: #64ffda; background-color: rgba(100, 255, 218, 0.1);
+    box-shadow: 0 0 15px rgba(100, 255, 218, 0.3), inset 0 0 10px rgba(100, 255, 218, 0.15);
     transform: translateY(-2px);
 }
 .btn.disabled { opacity: 0.3; cursor: not-allowed; border-style: dashed; }
-.btn.disabled:hover { transform: none; box-shadow: none; border-color: #1e2d3d; background-color: transparent; color: #8892b0; }
+.btn.disabled:hover { transform: none; box-shadow: none; border-color: #334155; background-color: transparent; color: #cbd5e1; }
 
 /* =========================================
    🎚️ 4. 自訂 Range 滑桿 (Custom Slider)
    ========================================= */
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
 input[type="range"]:focus { outline: none; }
-input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #1e2d3d; border-radius: 2px; }
+input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
 input[type="range"]::-webkit-slider-thumb {
-    height: 16px; width: 16px; border-radius: 50%; background: #00f0ff;
+    height: 16px; width: 16px; border-radius: 50%; background: #64ffda;
     -webkit-appearance: none; appearance: none; margin-top: -6px; cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(0, 240, 255, 0.6); }
-input[type="range"]::-moz-range-track { width: 100%; height: 4px; cursor: pointer; background: #1e2d3d; border-radius: 2px; }
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
+input[type="range"]::-moz-range-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
 input[type="range"]::-moz-range-thumb {
-    height: 16px; width: 16px; border-radius: 50%; background: #00f0ff; border: none; cursor: pointer;
+    height: 16px; width: 16px; border-radius: 50%; background: #64ffda; border: none; cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-input[type="range"]::-moz-range-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(0, 240, 255, 0.6); }
+input[type="range"]::-moz-range-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
 
 /* =========================================
    ⏳ 5. 載入動畫 (Loading Animation)
@@ -84,9 +91,33 @@ input[type="range"]::-moz-range-thumb:hover { transform: scale(1.2); box-shadow:
 .loading { 
     position: absolute; top: -40px; right: 0; opacity: 0; visibility: hidden;
     transition: opacity 0.2s ease; background: rgba(0, 0, 0, 0.7);
-    padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(0, 240, 255, 0.6);
-    text-align: center; color: #00f0ff; font-size: 0.75rem; 
+    padding: 6px 12px; border-radius: 4px; border: 1px solid rgba(100, 255, 218, 0.5);
+    text-align: center; color: #64ffda; font-size: 0.75rem; 
     font-family: 'Orbitron', sans-serif; animation: pulse-glow 1.5s infinite; z-index: 100;
 }
 .loading.show { opacity: 1; visibility: visible; }
-@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(0,240,255,0.4); } 50% { box-shadow: 0 0 15px rgba(0,240,255,0.8); } }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(100,255,218,0.3); } 50% { box-shadow: 0 0 15px rgba(100,255,218,0.6); } }
+
+/* =========================================
+   🐾 6. 貓咪印章特效 (Cat Stamp)
+   ========================================= */
+.mini-cat {
+    position: fixed;
+    width: 45px;
+    height: 45px;
+    pointer-events: none; /* 🌟 讓滑鼠穿透，確保不擋住按鈕 */
+    z-index: 0; /* 放在背景層 */
+    animation: cat-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    opacity: 0.6; /* 微透明質感，點滿畫面也不會太刺眼 */
+}
+
+/* 讓印章帶有淡淡的霓虹發光感 */
+.mini-cat svg {
+    filter: drop-shadow(0 0 5px currentColor);
+}
+
+/* Ｑ彈的蓋印章動畫 */
+@keyframes cat-pop {
+    0% { transform: scale(0) rotate(-20deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
