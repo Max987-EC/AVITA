@@ -4,7 +4,6 @@
 body {
     margin: 0; padding: 0;
     background-color: #020203;
-    /* 複層背景：霓虹光暈 (Radial) + 科技感格點 (Linear) */
     background-image: 
         radial-gradient(circle at 50% 35%, rgba(100, 255, 218, 0.12) 0%, transparent 50%),
         radial-gradient(circle at 50% 65%, rgba(255, 121, 198, 0.06) 0%, transparent 50%),
@@ -28,7 +27,6 @@ body {
 
 .logo {
     font-family: 'Playfair Display', serif; font-size: 6.5rem; margin: 0; letter-spacing: 4px;
-    /* 漸層動態文字效果 */
     background: linear-gradient(90deg, #64ffda, #82aaff, #ff79c6, #82aaff, #64ffda);
     background-size: 200% auto; 
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
@@ -36,7 +34,6 @@ body {
     filter: drop-shadow(0 0 20px rgba(130, 170, 255, 0.3));
 }
 
-/* 文字流光動畫 */
 @keyframes rgb-flow { 
     0% { background-position: 0% 50%; } 
     50% { background-position: 100% 50%; } 
@@ -45,14 +42,13 @@ body {
 
 .subtitle {
     font-family: 'Playfair Display', serif; font-style: italic;
-    color: #82aaff; 
-    letter-spacing: 8px; font-size: 1.2rem;
+    color: #82aaff; letter-spacing: 8px; font-size: 1.2rem;
     margin-top: 25px; margin-bottom: 0; 
     text-shadow: 0 0 15px rgba(130, 170, 255, 0.5), 0 0 35px rgba(130, 170, 255, 0.2); 
 }
 
 /* =========================================
-   🔘 3. 科技感交互組件 (Buttons)
+   🔘 3. 科技感交互組件 (Buttons & Forms)
    ========================================= */
 .button-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
 
@@ -69,9 +65,28 @@ body {
     transform: translateY(-2px);
 }
 
-/* 停用按鈕狀態 */
 .btn.disabled { opacity: 0.3; cursor: not-allowed; border-style: dashed; }
 .btn.disabled:hover { transform: none; box-shadow: none; border-color: #334155; background-color: transparent; color: #cbd5e1; }
+
+/* 共用表單元素 */
+.form-group { margin-bottom: 20px; text-align: left; }
+.form-group label { display: block; margin-bottom: 8px; color: #cbd5e1; font-size: 0.9rem; letter-spacing: 0.5px; }
+
+input[type="file"], select { 
+    width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.6); 
+    border: 1px solid #334155; border-radius: 6px; color: #f8fafc; outline: none; box-sizing: border-box; 
+}
+
+input[type="file"]::file-selector-button { 
+    background: #334155; color: #64ffda; border: none; padding: 6px 12px; 
+    border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: 'Orbitron', sans-serif; 
+}
+
+/* 送出與主要動作按鈕 (新增補回) */
+.submit-btn { 
+    width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; 
+    text-align: center; margin-bottom: 20px; color: #f8fafc; 
+}
 
 /* =========================================
    🎚️ 4. 自定義數值滑桿 (Custom Range Slider)
@@ -79,9 +94,7 @@ body {
 input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; }
 input[type="range"]:focus { outline: none; }
 
-/* 軌道樣式 */
 input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
-/* 控制鈕樣式 */
 input[type="range"]::-webkit-slider-thumb {
     height: 16px; width: 16px; border-radius: 50%; background: #64ffda;
     -webkit-appearance: none; appearance: none; margin-top: -6px; cursor: pointer;
@@ -89,7 +102,7 @@ input[type="range"]::-webkit-slider-thumb {
 }
 input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); box-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
 
-/* Firefox 相容性設定 */
+/* Firefox 相容 */
 input[type="range"]::-moz-range-track { width: 100%; height: 4px; cursor: pointer; background: #334155; border-radius: 2px; }
 input[type="range"]::-moz-range-thumb {
     height: 16px; width: 16px; border-radius: 50%; background: #64ffda; border: none; cursor: pointer;
@@ -109,28 +122,18 @@ input[type="range"]::-moz-range-thumb:hover { transform: scale(1.2); box-shadow:
 }
 .loading.show { opacity: 1; visibility: visible; }
 
-/* 呼吸燈特效 */
 @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(100,255,218,0.3); } 50% { box-shadow: 0 0 15px rgba(100,255,218,0.6); } }
 
 /* =========================================
    🐾 6. 趣味互動：貓咪印章 (Cat Stamp Effect)
    ========================================= */
 .mini-cat {
-    position: fixed;
-    width: 45px;
-    height: 45px;
-    pointer-events: none; /* 讓滑鼠點擊穿透，不影響 UI 操作 */
-    z-index: 0;           /* 位於元件底層 */
+    position: fixed; width: 45px; height: 45px;
+    pointer-events: none; z-index: 0;
     animation: cat-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     opacity: 0.6; 
 }
-
-/* 霓虹發光感濾鏡 */
-.mini-cat svg {
-    filter: drop-shadow(0 0 5px currentColor);
-}
-
-/* Ｑ彈彈出動畫 */
+.mini-cat svg { filter: drop-shadow(0 0 5px currentColor); }
 @keyframes cat-pop {
     0% { transform: scale(0) rotate(-20deg); }
     100% { transform: scale(1) rotate(0deg); }

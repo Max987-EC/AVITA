@@ -2,32 +2,32 @@
    🗄️ 1. 主工具面板佈局 (Main Tool Panel Layout)
    ========================================= */
 .tool-panel { 
-    background: rgba(10, 15, 25, 0.92); /* 深色霧面質感 */
+    background: rgba(10, 15, 25, 0.92);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
     border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 16px; padding: 30px; 
     width: 95vw; max-width: 900px; max-height: 85vh; overflow-y: auto; 
     box-shadow: 0 0 30px rgba(100, 255, 218, 0.05); z-index: 10; position: relative; 
 }
 
-/* 寬版配置 (應用於 AOI 工作站) */
 .tool-panel.wide { max-width: 1600px; width: 98vw; }
 .tool-panel::-webkit-scrollbar { width: 6px; }
 .tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
 .tool-panel::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
 
-/* 頂部標題與返回鍵排列 */
+/* =========================================
+   🏗️ 2. 標題與分欄結構 (Header & Columns)
+   ========================================= */
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed rgba(100, 255, 218, 0.25); }
 .panel-header h2 { margin: 0 !important; flex: 1; font-family: 'Orbitron', sans-serif; color: #64ffda; text-align: center; text-shadow: 0 0 12px rgba(100, 255, 218, 0.25); }
 .btn-back { padding: 8px 16px; font-size: 0.85rem; white-space: nowrap; border-color: rgba(100, 255, 218, 0.3); color: #f8fafc; }
+
+/* 用於平衡 Flexbox 標題列的隱形墊片 (新增補回) */
 .header-spacer { width: 115px; }
 
-/* 主工作區域分欄 */
 .tool-layout { display: flex; gap: 30px; align-items: flex-start; }
 
-/* 側邊控制欄 */
 .sidebar {
-    flex: 0 0 350px; 
-    background: rgba(10, 15, 25, 0.85); 
+    flex: 0 0 350px; background: rgba(10, 15, 25, 0.85); 
     padding: 20px; border-radius: 12px;
     border: 1px solid rgba(100, 255, 218, 0.15); position: sticky; top: 0;
     max-height: calc(85vh - 120px); overflow-y: auto;
@@ -39,24 +39,7 @@
 .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
 
 /* =========================================
-   📝 2. 通用表單元素 (Form Elements)
-   ========================================= */
-.form-group { margin-bottom: 20px; text-align: left; }
-.form-group label { display: block; margin-bottom: 8px; color: #cbd5e1; font-size: 0.9rem; }
-
-/* 輸入框與選單樣式 */
-input[type="file"], select { 
-    width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.6); 
-    border: 1px solid #334155; border-radius: 6px; color: #f8fafc; outline: none; box-sizing: border-box; 
-}
-input[type="file"]::file-selector-button { 
-    background: #334155; color: #64ffda; border: none; padding: 6px 12px; 
-    border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: 'Orbitron', sans-serif; 
-}
-.submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; color: #f8fafc; }
-
-/* =========================================
-   🗃️ 3. 首頁功能抽屜 (Bottom Tool Drawer)
+   🎛️ 3. 運行模式切換器 (Mode Toggles)
    ========================================= */
 .mode-toggle-group { display: flex; gap: 10px; }
 .mode-btn input { display: none; }
@@ -70,6 +53,35 @@ input[type="file"]::file-selector-button {
     box-shadow: 0 0 8px rgba(100, 255, 218, 0.2); background: rgba(100, 255, 218, 0.1); 
 }
 
+/* =========================================
+   📱 4. 響應式排版修正 (Media Queries)
+   ========================================= */
+@media (max-width: 1400px) {
+    .content-wrapper { flex-wrap: wrap !important; }
+    .main-content { flex: 1 1 500px !important; }
+    .steps-panel { flex: 1 1 100% !important; max-height: none !important; margin-top: 10px !important; }
+}
+
+@media (max-width: 992px) {
+    .tool-layout { flex-direction: column; }
+    .sidebar, .steps-panel { width: 100%; position: relative; max-height: none; box-sizing: border-box; }
+    .content-wrapper { flex-direction: column !important; }
+    .panel-header { flex-direction: column; gap: 15px; position: relative !important; }
+    .panel-header h2 { position: static !important; transform: none !important; }
+}
+
+@media screen and (max-width: 768px) {
+    .panel-header h2 { font-size: 1.2rem; }
+    .content-wrapper { gap: 15px !important; }
+    .sidebar, .steps-panel, .main-content { width: 100% !important; flex: none !important; padding: 15px !important; box-sizing: border-box; }
+    .btn-text, .tech-select, input[type="file"] { padding: 12px 15px !important; font-size: 16px !important; }
+    .comparison-grid { grid-template-columns: 1fr !important; }
+    .tool-panel { width: 100vw; max-height: 100vh; border-radius: 0; padding: 15px; border: none; box-sizing: border-box; }
+}
+
+/* =========================================
+   🗃️ 5. 首頁底部功能抽屜 (Bottom Tool Drawer)
+   ========================================= */
 .bottom-drawer {
     position: fixed; bottom: 0; left: 50%; transform: translate(-50%, calc(100% - 40px));
     background: rgba(10, 15, 25, 0.95); 
@@ -78,10 +90,11 @@ input[type="file"]::file-selector-button {
     padding: 0px 50px 40px; width: max-content; max-width: 90vw; z-index: 100;
     transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Ｑ彈的上拉效果 */
 }
+
 /* 滑鼠觸碰時彈出 */
 .bottom-drawer:hover { transform: translate(-50%, 0); }
 
-/* 裝飾性抽屜手柄 */
+/* 裝飾性抽屜手柄 (發光箭頭) */
 .bottom-drawer .drawer-handle { 
     background: transparent; height: 40px; display: flex;
     justify-content: center; align-items: center; cursor: pointer; margin: 0 auto 15px auto; 
@@ -95,59 +108,4 @@ input[type="file"]::file-selector-button {
 .bottom-drawer:hover .drawer-handle::before {
     border-color: #ff79c6; transform: rotate(-45deg) translate(3px, -3px);
     filter: drop-shadow(0px 0px 8px rgba(255, 121, 198, 0.6));
-}
-
-/* =========================================
-   📚 4. 上方橫向圖層管理器 (Top Layer Manager)
-   ========================================= */
-.top-layer-list { display: flex; gap: 15px; overflow-x: auto; width: 100%; padding: 10px 5px 20px 5px; }
-.top-layer-list::-webkit-scrollbar { height: 6px; }
-.top-layer-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-.top-layer-list::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
-
-.top-layer-item {
-    flex: 0 0 auto; 
-    background: rgba(10, 15, 25, 0.85); /* 🌟 加深 */
-    border: 1px solid #334155; border-radius: 8px;
-    padding: 10px 15px; display: flex; flex-direction: column; align-items: center; gap: 10px;
-    cursor: pointer; transition: all 0.2s ease; min-width: 120px;
-}
-.top-layer-item.active { border-color: #64ffda; background: rgba(100, 255, 218, 0.1); box-shadow: 0 0 12px rgba(100, 255, 218, 0.2); }
-.top-layer-name { color: #f8fafc; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; font-weight: bold; pointer-events: none; }
-.top-layer-actions { display: flex; gap: 5px; }
-.top-layer-actions button {
-    background: rgba(255, 255, 255, 0.1); border: none; color: #f8fafc; border-radius: 4px;
-    padding: 4px 8px; cursor: pointer; font-size: 0.7rem; transition: background 0.2s;
-}
-.top-layer-actions button:hover { background: rgba(100, 255, 218, 0.4); }
-.top-layer-actions .btn-del:hover { background: rgba(255, 121, 198, 0.8); }
-
-/* =========================================
-   📱 5. 響應式排版修正 (Media Queries)
-   ========================================= */
-
-/* 中尺寸螢幕：自動折行 */
-@media (max-width: 1400px) {
-    .content-wrapper { flex-wrap: wrap !important; }
-    .main-content { flex: 1 1 500px !important; }
-    .steps-panel { flex: 1 1 100% !important; max-height: none !important; margin-top: 10px !important; }
-}
-
-/* 平板尺寸：改為垂直堆疊 */
-@media (max-width: 992px) {
-    .tool-layout { flex-direction: column; }
-    .sidebar, .steps-panel { width: 100%; position: relative; max-height: none; box-sizing: border-box; }
-    .content-wrapper { flex-direction: column !important; }
-    .panel-header { flex-direction: column; gap: 15px; position: relative !important; }
-    .panel-header h2 { position: static !important; transform: none !important; }
-}
-
-/* 手機尺寸：全螢幕化與文字縮放 */
-@media screen and (max-width: 768px) {
-    .panel-header h2 { font-size: 1.2rem; }
-    .content-wrapper { gap: 15px !important; }
-    .sidebar, .steps-panel, .main-content { width: 100% !important; flex: none !important; padding: 15px !important; box-sizing: border-box; }
-    .btn-text, .submit-btn, .tech-select, input[type="file"] { padding: 12px 15px !important; font-size: 16px !important; }
-    .comparison-grid { grid-template-columns: 1fr !important; }
-    .tool-panel { width: 100vw; max-height: 100vh; border-radius: 0; padding: 15px; border: none; box-sizing: border-box; }
 }

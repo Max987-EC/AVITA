@@ -1,90 +1,11 @@
 /* =========================================
-   🗄️ 1. 影像處理工作站主面板 (Main Station Layout)
-   ========================================= */
-.tool-panel { 
-    background: rgba(10, 15, 25, 0.92); /* 深色半透明底色，提升科技質感 */
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
-    border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 16px; padding: 30px; 
-    width: 95vw; max-width: 900px; max-height: 85vh; overflow-y: auto; 
-    box-shadow: 0 0 30px rgba(100, 255, 218, 0.05); z-index: 10; position: relative; 
-}
-
-/* 寬屏模式 (AOI 專用) */
-.tool-panel.wide { max-width: 1600px; width: 98vw; }
-
-/* 面板捲軸自定義 */
-.tool-panel::-webkit-scrollbar { width: 6px; }
-.tool-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-.tool-panel::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
-
-/* 頂部標題列 */
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed rgba(100, 255, 218, 0.25); }
-.panel-header h2 { margin: 0 !important; flex: 1; font-family: 'Orbitron', sans-serif; color: #64ffda; text-align: center; text-shadow: 0 0 12px rgba(100, 255, 218, 0.25); }
-.btn-back { padding: 8px 16px; font-size: 0.85rem; white-space: nowrap; border-color: rgba(100, 255, 218, 0.3); color: #f8fafc; }
-.header-spacer { width: 115px; }
-
-/* 佈局結構 */
-.tool-layout { display: flex; gap: 30px; align-items: flex-start; }
-
-/* 控制側邊欄 (Sidebar) */
-.sidebar {
-    flex: 0 0 350px; 
-    background: rgba(10, 15, 25, 0.85); 
-    padding: 20px; border-radius: 12px;
-    border: 1px solid rgba(100, 255, 218, 0.15); position: sticky; top: 0;
-    max-height: calc(85vh - 120px); overflow-y: auto;
-}
-.sidebar::-webkit-scrollbar { width: 4px; }
-.sidebar::-webkit-scrollbar-track { background: transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 2px; }
-
-.main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
-
-/* =========================================
-   📝 2. 表單與輸入控制項 (Form Elements)
-   ========================================= */
-.form-group { margin-bottom: 20px; text-align: left; }
-.form-group label { display: block; margin-bottom: 8px; color: #cbd5e1; font-size: 0.9rem; letter-spacing: 0.5px; }
-
-/* 檔案選擇與下拉選單 */
-input[type="file"], select { 
-    width: 100%; padding: 10px; background: rgba(0, 0, 0, 0.6); 
-    border: 1px solid #334155; border-radius: 6px; color: #f8fafc; outline: none; box-sizing: border-box; 
-}
-
-/* 自定義檔案按鈕樣式 */
-input[type="file"]::file-selector-button { 
-    background: #334155; color: #64ffda; border: none; padding: 6px 12px; 
-    border-radius: 4px; cursor: pointer; margin-right: 10px; font-family: 'Orbitron', sans-serif; 
-}
-
-.submit-btn { width: 100%; font-size: 1rem; padding: 12px; cursor: pointer; text-align: center; margin-bottom: 20px; color: #f8fafc; }
-
-/* =========================================
-   🗃️ 3. 運行模式切換 (App Mode Toggles)
-   ========================================= */
-.mode-toggle-group { display: flex; gap: 10px; }
-.mode-btn input { display: none; }
-.mode-btn .btn-text { 
-    border: 1px solid #475569; border-radius: 4px; color: #94a3b8; 
-    cursor: pointer; font-weight: bold; letter-spacing: 1px; 
-    transition: all 0.3s ease; display: inline-block; background: rgba(0, 0, 0, 0.6);
-}
-/* 選中狀態的發光效果 */
-.mode-btn input:checked + .btn-text { 
-    border-color: #64ffda; color: #64ffda; 
-    box-shadow: 0 0 8px rgba(100, 255, 218, 0.2); background: rgba(100, 255, 218, 0.1); 
-}
-
-/* =========================================
-   📚 4. 管線圖層管理器 (Pipeline Layer UI)
+   📚 1. 管線圖層管理器 (Pipeline Layer UI)
    ========================================= */
 .top-layer-list { display: flex; gap: 15px; overflow-x: auto; width: 100%; padding: 10px 5px 20px 5px; }
 .top-layer-list::-webkit-scrollbar { height: 6px; }
 .top-layer-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
 .top-layer-list::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 3px; }
 
-/* 單個圖層卡片 */
 .top-layer-item {
     flex: 0 0 auto; background: rgba(10, 15, 25, 0.85); 
     border: 1px solid #334155; border-radius: 8px;
@@ -102,7 +23,7 @@ input[type="file"]::file-selector-button {
 .top-layer-actions .btn-del:hover { background: rgba(255, 121, 198, 0.8); }
 
 /* =========================================
-   🎛️ 5. 動態參數調節面板 (Parameter Adjustment)
+   🎛️ 2. 動態參數調節面板 (Parameter Adjustment)
    ========================================= */
 .param-panel { 
     background: rgba(0, 0, 0, 0.6); 
@@ -111,39 +32,38 @@ input[type="file"]::file-selector-button {
 .param-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 10px; }
 .param-panel h4 { color: #64ffda; font-family: 'Orbitron', sans-serif; margin: 0; font-size: 0.85rem; white-space: nowrap; letter-spacing: 0.5px; }
 
-/* 重置按鈕 */
 .btn-reset { flex-shrink: 0; background: transparent; color: #ff79c6; border: 1px solid #ff79c6; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: all 0.2s ease; }
 .btn-reset:hover { background: rgba(255, 121, 198, 0.15); box-shadow: 0 0 10px rgba(255, 121, 198, 0.3); color: #f8fafc; }
 .param-group { margin-bottom: 15px; display: none; }
 .param-group label span { color: #64ffda; font-weight: bold; font-family: 'Orbitron', sans-serif; }
 
 /* =========================================
-   🖼️ 6. 視覺化比較網格 (Visualization Grids)
+   🖼️ 3. 視覺化比較網格 (Visualization Grids)
    ========================================= */
 .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; display: none; }
 
-/* 影像容器 */
 .image-box { 
-    text-align: center; 
-    background: rgba(0, 0, 0, 0.5); 
+    text-align: center; background: rgba(0, 0, 0, 0.5); 
     padding: 15px; border-radius: 8px; border: 1px dashed rgba(100, 255, 218, 0.2); min-height: 300px; 
 }
 .image-box h4 { color: #64ffda; font-family: 'Orbitron', sans-serif; margin: 0 0 10px 0; font-size: 0.9rem; letter-spacing: 1px; }
-.image-box img { max-width: 100%; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+.image-box img { max-width: 100%; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); cursor: zoom-in; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.image-box img:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(100, 255, 218, 0.3); }
+
 .histogram-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(100, 255, 218, 0.2); display: none; }
 .histogram-section h4 { color: #ff79c6; }
 
 /* =========================================
-   🎙️ 7. 處理模組清單 (Module Selection List)
+   📋 4. 處理模組清單 (Module Selection List)
    ========================================= */
 .module-list { 
-    max-height: 280px; overflow-y: auto; 
-    background: rgba(0, 0, 0, 0.6); 
+    max-height: 280px; overflow-y: auto; background: rgba(0, 0, 0, 0.6); 
     border: 1px solid rgba(100, 255, 218, 0.2); border-radius: 6px; padding: 10px; margin-bottom: 20px; 
 }
 .module-list::-webkit-scrollbar { width: 4px; }
 .module-list::-webkit-scrollbar-track { background: transparent; }
 .module-list::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 2px; }
+
 .module-group { color: #ff79c6; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; margin: 15px 0 8px 5px; letter-spacing: 1px; }
 .module-group:first-child { margin-top: 5px; }
 .module-item { display: block; margin-bottom: 4px; cursor: pointer; }
@@ -153,38 +73,38 @@ input[type="file"]::file-selector-button {
 .module-item input[type="radio"]:checked + span { background: rgba(100, 255, 218, 0.15); border-color: rgba(100, 255, 218, 0.4); color: #64ffda; font-weight: bold; box-shadow: inset 0 0 10px rgba(100, 255, 218, 0.1); }
 
 /* =========================================
-   👣 8. 演算法中間步驟展示 (Steps Showcase)
+   👣 5. 演算法中間步驟展示 (Steps Showcase)
    ========================================= */
 .steps-panel { 
-    flex: 0 0 280px; 
-    background: rgba(10, 15, 25, 0.85); 
+    flex: 0 0 280px; background: rgba(10, 15, 25, 0.85); 
     padding: 20px; border-radius: 12px; border: 1px solid rgba(100, 255, 218, 0.15); position: sticky; top: 0; max-height: calc(85vh - 120px); overflow-y: auto; margin-top: 0 !important; 
 }
 .steps-panel::-webkit-scrollbar { width: 4px; }
 .steps-panel::-webkit-scrollbar-track { background: transparent; }
 .steps-panel::-webkit-scrollbar-thumb { background: rgba(100, 255, 218, 0.3); border-radius: 2px; }
 .steps-panel .steps-grid { display: flex; flex-direction: column; gap: 15px; padding-bottom: 15px; }
+
 .step-box { 
-    width: 100%; box-sizing: border-box; 
-    background: rgba(0, 0, 0, 0.6); 
+    width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.6); 
     border: 1px solid #334155; border-radius: 8px; padding: 10px; text-align: center; transition: transform 0.2s ease, border-color 0.2s ease; 
 }
 .step-box:hover { transform: translateY(-3px); border-color: rgba(100, 255, 218, 0.4); }
 .step-box h5 { color: #cbd5e1; font-family: 'Orbitron', sans-serif; font-size: 0.75rem; margin-top: 0; margin-bottom: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.step-box img { width: 100%; height: auto; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); }
+.step-box img { width: 100%; height: auto; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.1); cursor: zoom-in; transition: transform 0.2s ease; }
+.step-box img:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(100, 255, 218, 0.3); }
 
 /* =========================================
-   🌟 9. 預設圖片與科技感下拉選單 (共用樣式)
+   🚀 6. 預設圖片科技選單 (Tech Select)
    ========================================= */
 .preset-image-container { margin-top: 12px; }
 .preset-label { font-size: 0.75rem; color: #64ffda; margin-bottom: 8px; display: block; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; opacity: 0.9; }
-.tech-select { width: 100%; padding: 8px 10px; background: rgba(10, 15, 25, 0.8); border: 1px solid #334155; color: #cbd5e1; border-radius: 4px; outline: none; cursor: pointer; font-size: 0.85rem; font-family: 'Helvetica Neue', Arial, sans-serif; transition: all 0.3s ease; }
+.tech-select { width: 100%; padding: 8px 10px; background: rgba(10, 15, 25, 0.8); border: 1px solid #334155; color: #cbd5e1; border-radius: 4px; outline: none; cursor: pointer; font-size: 0.85rem; transition: all 0.3s ease; }
 .tech-select:hover, .tech-select:focus { border-color: rgba(100, 255, 218, 0.4); color: #64ffda; background: rgba(100, 255, 218, 0.05); box-shadow: 0 0 10px rgba(100, 255, 218, 0.1); }
 .tech-select optgroup { color: #ff79c6; font-weight: bold; background: #020203; }
 .tech-select option { color: #f8fafc; background: #0a0f19; }
 
 /* =========================================
-   🔍 10. 圖片放大鏡與相機介面 (Interactive UI)
+   🔍 7. 圖片放大鏡與相機介面 (Interactive UI)
    ========================================= */
 .image-modal {
     display: none; position: fixed; z-index: 9999; padding-top: 60px;
@@ -205,15 +125,9 @@ input[type="file"]::file-selector-button {
     position: absolute; top: 20px; right: 40px; color: #cbd5e1;
     font-size: 40px; font-weight: bold; transition: 0.3s; cursor: pointer;
 }
-.close-modal:hover, .close-modal:focus { color: #ff79c6; text-decoration: none; }
+.close-modal:hover { color: #ff79c6; }
 
-@keyframes zoomIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.image-box img, .step-box img { cursor: zoom-in; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-.image-box img:hover, .step-box img:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(100, 255, 218, 0.3); }
+@keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
 /* 相機視窗 */
 .camera-container {
@@ -228,34 +142,9 @@ input[type="file"]::file-selector-button {
 .video-wrapper { position: relative; width: 100%; border-radius: 8px; overflow: hidden; border: 1px dashed rgba(100, 255, 218, 0.4); background: #000; }
 #cameraVideo { width: 100%; height: auto; display: block; transform: scaleX(-1); }
 
-/* 科技感掃描線 */
 .scan-line {
     position: absolute; top: 0; left: 0; width: 100%; height: 2px;
     background: rgba(100, 255, 218, 0.8); box-shadow: 0 0 10px rgba(100, 255, 218, 0.8);
     animation: scan 2s linear infinite; pointer-events: none;
 }
 @keyframes scan { 0% { top: 0; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-
-/* =========================================
-   📱 11. 響應式佈局校正 (Responsive Adjustments)
-   ========================================= */
-@media (max-width: 1400px) {
-    .content-wrapper { flex-wrap: wrap !important; }
-    .main-content { flex: 1 1 500px !important; }
-    .steps-panel { flex: 1 1 100% !important; max-height: none !important; margin-top: 10px !important; }
-}
-@media (max-width: 992px) {
-    .tool-layout { flex-direction: column; }
-    .sidebar, .steps-panel { width: 100%; position: relative; max-height: none; box-sizing: border-box; }
-    .content-wrapper { flex-direction: column !important; }
-    .panel-header { flex-direction: column; gap: 15px; position: relative !important; }
-    .panel-header h2 { position: static !important; transform: none !important; }
-}
-@media screen and (max-width: 768px) {
-    .panel-header h2 { font-size: 1.2rem; }
-    .content-wrapper { gap: 15px !important; }
-    .sidebar, .steps-panel, .main-content { width: 100% !important; flex: none !important; padding: 15px !important; box-sizing: border-box; }
-    .btn-text, .submit-btn, .tech-select, input[type="file"] { padding: 12px 15px !important; font-size: 16px !important; }
-    .comparison-grid { grid-template-columns: 1fr !important; }
-    .tool-panel { width: 100vw; max-height: 100vh; border-radius: 0; padding: 15px; border: none; box-sizing: border-box; }
-}
