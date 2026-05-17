@@ -1,55 +1,58 @@
 <!-- 處理模組選擇清單 (Processing Module List) -->
-<!-- 此檔案定義了「單步模式」下所有可用的影像處理功能算子。 -->
+<!-- 此檔案定義了「單步模式」下所有可用的影像處理功能算子，名稱已根據教學簡報優化。 -->
 <div class="form-group" id="sidebarModuleList">
     <label>02 // 選擇處理模組 (PROCESSING MODULE)</label>
     <div class="module-list">
         
-        <!-- A. 點處理與強度變換 (Point Processing) -->
-        <div class="module-group">[ 基本強度轉換 ]</div>
-        <label class="module-item"><input type="radio" name="process_type" value="negative" checked><span>負轉換 (Negative)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="linear"><span>線性轉換 (亮度/對比)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="binarize"><span>二值化 (Binarization)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="log"><span>對數轉換 (Log Transform)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="power_law"><span>指數轉換 (Power-Law / Gamma)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="equalization"><span>直方圖等化 (Equalization)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="clahe"><span>限制對比自適應直方圖 (CLAHE)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="adaptive_threshold"><span>自適應門檻化 (Adaptive)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="moving_average"><span>動態門檻化 (Moving Avg)</span></label>
+        <!-- A. 門檻化基礎 (Thresholding Fundamentals) -->
+        <div class="module-group">[ 門檻化處理 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="binarize" checked><span>整體門檻化 (Global TH)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="adaptive_threshold"><span>局部門檻化 (Local TH)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="moving_average"><span>動態門檻化 (Dynamic TH)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="edge_improved_threshold"><span>邊緣輔助門檻化 (Edge-Improved)</span></label>
 
-        <!-- B. 形態學處理 (Morphological Operations) -->
+        <!-- B. 強度轉換 (Intensity Transformations) -->
+        <div class="module-group">[ 強度與點處理 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="equalization"><span>直方圖均衡化 (Equalization)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="clahe"><span>自適應直方圖均衡 (CLAHE)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="negative"><span>負轉換 (Negative)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="linear"><span>線性轉換 (Linear Map)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="log"><span>對數轉換 (Log Transform)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="power_law"><span>指數轉換 (Gamma Map)</span></label>
+
+        <!-- C. 形態學運算 (Mathematical Morphology) -->
         <div class="module-group">[ 形態學運算 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="erosion"><span>侵蝕 (Erosion)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="dilation"><span>膨脹 (Dilation)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="opening"><span>斷開 (Opening)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="closing"><span>閉合 (Closing)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="opening"><span>斷開 (Opening / 去凸)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="closing"><span>閉合 (Closing / 補凹)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="tophat"><span>頂帽轉換 (Top-Hat)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="blackhat"><span>底帽轉換 (Black-Hat)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="morph_gradient"><span>形態學梯度 (Gradient)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="hole_filling"><span>空洞填補 (Hole Filling)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="hit_or_miss"><span>交離轉換 (Hit-or-Miss)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="boundary_extraction"><span>形態學邊界抽取 (Boundary)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="morph_smoothing"><span>複合平滑濾波 (Smoothing)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="boundary_extraction"><span>邊界抽取 (Boundary)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="morph_smoothing"><span>形態學平滑 (Smoothing)</span></label>
 
-        <!-- C. 分割與量測 (Segmentation & Analysis) -->
-        <div class="module-group">[ 進階分析與分割 ]</div>
+        <!-- D. 影像分割與特徵擷取 (Segmentation & Feature Extraction) -->
+        <div class="module-group">[ 影像分割與特徵擷取 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="connected_components"><span>連通區域分析 (CCL)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="region_growing"><span>區域成長 (Region Growing)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="region_split_merge"><span>區域分裂合併 (Quadtree)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="subpixel_contours"><span>次像素輪廓 (Subpixel Contour)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="fuzzy_measurement"><span>模糊次像素測量 (FMV)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="advanced_features"><span>進階幾何與灰階特徵</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="subpixel_corners"><span>次像素角點偵測 (Subpixel)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="subpixel_contours"><span>次像素輪廓 (Interpolation)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="region_growing"><span>區域成長 (Region Growing)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="region_split_merge"><span>區域分裂與合併 (Quadtree)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="fuzzy_measurement"><span>模糊次像素測量 (FMV)</span></label>
 
-        <!-- D. 空間域濾波 (Spatial Filtering) -->
+        <!-- E. 空間域濾波 (Spatial Domain) -->
         <div class="module-group">[ 空間域濾波 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="mean"><span>均值濾波 (Mean Filter)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="gaussian"><span>高斯濾波 (Gaussian Filter)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="median"><span>中值濾波 (Median Filter)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="bilateral"><span>雙邊濾波 (Bilateral / 保邊)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="sharpen"><span>影像銳化 (Sharpening)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="bilateral"><span>雙邊濾波 (Bilateral)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="sharpen"><span>影像銳化增強 (Sharpening)</span></label>
 
-        <!-- E. 邊緣偵測 (Edge Detection) -->
+        <!-- F. 邊緣偵測 (Edge Detection) -->
         <div class="module-group">[ 邊緣偵測 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="roberts"><span>Roberts 算子</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="prewitt"><span>Prewitt 算子</span></label>
@@ -59,26 +62,23 @@
         <label class="module-item"><input type="radio" name="process_type" value="canny"><span>Canny 邊緣偵測 (OpenCV)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="canny_custom"><span>手刻版 Canny (Teaching)</span></label>
 
-        <!-- F. 頻率域處理 (Frequency Domain) -->
-        <div class="module-group">[ 頻率域濾波 - 低通/高通 ]</div>
+        <!-- G. 頻率域與特徵檢測 (Frequency & Hough) -->
+        <div class="module-group">[ 頻率域濾波 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="freq_ideal_low"><span>理想低通 (Ideal LP)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_low"><span>巴特沃斯低通 (BW LP)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_gaussian_low"><span>高斯低通 (Gaussian LP)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_ideal_high"><span>理想高通 (Ideal HP)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_high"><span>巴特沃斯高通 (BW HP)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_gaussian_high"><span>高斯高通 (Gaussian HP)</span></label>
-
-        <div class="module-group">[ 頻率域濾波 - 進階 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_bandreject"><span>帶阻濾波 (Bandreject)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_bandpass"><span>帶通濾波 (Bandpass)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="freq_butterworth_emphasis"><span>高頻強調 (Emphasis)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="notch_reject"><span>陷波濾波 (Notch Filter)</span></label>
 
-        <!-- G. 形狀特徵檢測 (Hough Transform) -->
-        <div class="module-group">[ 特徵檢測 (Hough) ]</div>
+        <div class="module-group">[ 幾何特測檢測 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="hough_lines_standard"><span>標準霍夫線 (Infinite)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="hough_lines_p"><span>機率霍夫線 (Segments)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="hough_circles"><span>霍夫圓檢測 (Circles)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="hough_circles"><span>霍夫圓偵測 (Circles)</span></label>
         
     </div>
 </div>

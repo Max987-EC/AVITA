@@ -20,12 +20,18 @@ class MorphologyMixin:
             return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ksize, ksize))
         return np.ones((ksize, ksize), np.uint8)
 
-    def _apply_morphology(self, step_name, cv_op, shape, ksize, iterations=1):
+    def _apply_morphology(self, step_name, cv_op, shape, ksize, iterations=1, custom_kernel=None):
         """通用形態學執行函數：處理灰階轉換、Kernel 建立與運算執行"""
         gray = self._get_gray()
         self.steps.append(("Step 1: 轉換為灰階 (Grayscale)", gray))
         
-        kernel = self._get_structuring_element(shape, ksize)
+        # 判斷是否為使用者自訂的 Kernel
+        if shape == 'custom' and custom_kernel is not None:
+            kernel = np.array(custom_kernel, dtype=np.uint8)
+            kernel_info = f"自訂 {kernel.shape[0]}x{kernel.shape[1]}"
+        else:
+            kernel = self._get_structuring_element(shape, ksize)
+            kernel_info = f"{ksize}x{ksize} {shape}"
         
         # 執行指定的 OpenCV 形態學運算
         if cv_op == 'erode':
@@ -35,39 +41,39 @@ class MorphologyMixin:
         else:
             result = cv2.morphologyEx(gray, cv_op, kernel, iterations=iterations)
             
-        self.steps.append((f"Step 2: {step_name} (Kernel: {ksize}x{ksize} {shape})", result))
+        self.steps.append((f"Step 2: {step_name} (Kernel: {kernel_info})", result))
         return result
 
     # ==========================================
     # 🌟 基礎形態學算子 (Basic Operators)
     # ==========================================
-    def erosion(self, shape='rect', ksize=3, iterations=1):
+    def erosion(self, shape='rect', ksize=3, iterations=1, custom_kernel=None):
         """侵蝕 (Erosion): 縮小物體，消除細小雜訊。"""
-        return self._apply_morphology("侵蝕 (Erosion)", 'erode', shape, ksize, iterations)
+        return self._apply_morphology("侵蝕 (Erosion)", 'erode', shape, ksize, iterations, custom_kernel)
 
-    def dilation(self, shape='rect', ksize=3, iterations=1):
+    def dilation(self, shape='rect', ksize=3, iterations=1, custom_kernel=None):
         """膨脹 (Dilation): 擴大物體，填補細小空隙。"""
-        return self._apply_morphology("膨脹 (Dilation)", 'dilate', shape, ksize, iterations)
+        return self._apply_morphology("膨脹 (Dilation)", 'dilate', shape, ksize, iterations, custom_kernel)
 
-    def opening(self, shape='rect', ksize=3, iterations=1):
+    def opening(self, shape='rect', ksize=3, iterations=1, custom_kernel=None):
         """斷開 (Opening): 先侵蝕再膨脹。消除亮色雜訊，平滑輪廓。"""
-        return self._apply_morphology("斷開 (Opening)", cv2.MORPH_OPEN, shape, ksize, iterations)
+        return self._apply_morphology("斷開 (Opening)", cv2.MORPH_OPEN, shape, ksize, iterations, custom_kernel)
 
-    def closing(self, shape='rect', ksize=3, iterations=1):
+    def closing(self, shape='rect', ksize=3, iterations=1, custom_kernel=None):
         """閉合 (Closing): 先膨脹再侵蝕。填補暗色空隙，連接鄰近物件。"""
-        return self._apply_morphology("閉合 (Closing)", cv2.MORPH_CLOSE, shape, ksize, iterations)
+        return self._apply_morphology("閉合 (Closing)", cv2.MORPH_CLOSE, shape, ksize, iterations, custom_kernel)
 
-    def tophat(self, shape='rect', ksize=15):
+    def tophat(self, shape='rect', ksize=15, custom_kernel=None):
         """頂帽轉換 (Top-Hat): 原圖 - 斷開圖。擷取比鄰域更亮的區域。"""
-        return self._apply_morphology("頂帽轉換 (Top-Hat)", cv2.MORPH_TOPHAT, shape, ksize)
+        return self._apply_morphology("頂帽轉換 (Top-Hat)", cv2.MORPH_TOPHAT, shape, ksize, 1, custom_kernel)
 
-    def blackhat(self, shape='rect', ksize=15):
+    def blackhat(self, shape='rect', ksize=15, custom_kernel=None):
         """底帽轉換 (Black-Hat): 閉合圖 - 原圖。擷取比鄰域更暗的區域。"""
-        return self._apply_morphology("底帽轉換 (Black-Hat)", cv2.MORPH_BLACKHAT, shape, ksize)
+        return self._apply_morphology("底帽轉換 (Black-Hat)", cv2.MORPH_BLACKHAT, shape, ksize, 1, custom_kernel)
 
-    def morph_gradient(self, shape='rect', ksize=3):
+    def morph_gradient(self, shape='rect', ksize=3, custom_kernel=None):
         """形態學梯度 (Morphological Gradient): 膨脹圖 - 侵蝕圖。擷取物件邊界。"""
-        return self._apply_morphology("形態學梯度 (Gradient)", cv2.MORPH_GRADIENT, shape, ksize)
+        return self._apply_morphology("形態學梯度 (Gradient)", cv2.MORPH_GRADIENT, shape, ksize, 1, custom_kernel)
 
     # ==========================================
     # 🚀 進階應用 (Advanced Applications)
@@ -119,7 +125,7 @@ class MorphologyMixin:
         self.steps.append(("Step 2: Hit-or-Miss 偵測結果 (紅點即為特徵)", output))
         return output
     
-    def boundary_extraction(self, shape='rect', ksize=3):
+    def boundary_extraction(self, shape='rect', ksize=3, custom_kernel=None):
         """
         形態學邊界擷取 (Boundary Extraction):
         公式：B(A) = A - (A ⊖ B)。將原圖減去其侵蝕後的結果。
@@ -129,7 +135,11 @@ class MorphologyMixin:
         self.steps.append(("Step 1: 自動二值化 (Auto-Threshold)", binary))
         
         # 執行侵蝕
-        kernel = self._get_structuring_element(shape, ksize)
+        if shape == 'custom' and custom_kernel is not None:
+            kernel = np.array(custom_kernel, dtype=np.uint8)
+        else:
+            kernel = self._get_structuring_element(shape, ksize)
+            
         eroded = cv2.erode(binary, kernel, iterations=1)
         
         # 原圖減去侵蝕圖即為邊界
@@ -138,7 +148,7 @@ class MorphologyMixin:
         self.steps.append((f"Step 2: 邊界擷取結果 (原圖 - 侵蝕)", boundary))
         return boundary
 
-    def morph_smoothing(self, shape='ellipse', ksize=5, mode='open_close'):
+    def morph_smoothing(self, shape='ellipse', ksize=5, mode='open_close', custom_kernel=None):
         """
         形態學複合平滑 (Morphological Smoothing):
         組合使用斷開與閉合運算。有效去除亮色與暗色雜訊而不影響整體輪廓。
@@ -146,7 +156,10 @@ class MorphologyMixin:
         gray = self._get_gray()
         self.steps.append(("Step 1: 原始影像", gray))
         
-        kernel = self._get_structuring_element(shape, ksize)
+        if shape == 'custom' and custom_kernel is not None:
+            kernel = np.array(custom_kernel, dtype=np.uint8)
+        else:
+            kernel = self._get_structuring_element(shape, ksize)
         
         if mode == 'open_close':
             # 先 Open (去亮雜訊) 再 Close (填暗孔洞)

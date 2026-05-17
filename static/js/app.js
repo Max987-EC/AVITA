@@ -223,8 +223,8 @@ const debouncedProcessImage = debounce(processImage, 500);
 // 4. 事件監聽 (Event Listeners)
 // ==========================================
 
-// A. 參數變動監聽：滑桿、選單、勾選框
-document.querySelectorAll('input[type="range"], select, input[type="checkbox"]').forEach(el => {
+// A. 參數變動監聽：滑桿、選單、勾選框、隱藏欄位
+document.querySelectorAll('input[type="range"], select, input[type="checkbox"], input[type="hidden"]').forEach(el => {
     el.addEventListener('input', debouncedProcessImage);
     el.addEventListener('change', debouncedProcessImage);
 });
@@ -244,6 +244,13 @@ document.getElementById('resetParamsBtn').addEventListener('click', () => {
         select.value = defaultOption ? defaultOption.value : select.options[0].value;
         select.dispatchEvent(new Event('change'));
     });
+    
+    // 🌟 新增：重置自訂矩陣
+    const customKernelInput = document.getElementById('customKernelInput');
+    if (customKernelInput) {
+        customKernelInput.value = customKernelInput.defaultValue;
+        customKernelInput.dispatchEvent(new Event('change'));
+    }
 });
 
 // C. 圖片檔案上傳監聽
@@ -341,3 +348,139 @@ function toggleDrawer() {
     const drawer = document.getElementById('modeDrawer');
     if(drawer) drawer.classList.toggle('open');
 }
+
+// ==========================================
+// 🌟 G. 自訂矩陣按鈕互動邏輯 (動態適應 Kernel Size)
+// ==========================================
+
+/**
+ * 動態生成自訂矩陣的 UI 按鈕
+ * @param {number} size - 矩陣大小 (如 3, 5, 7)
+ * @param {Array} existingMatrix - 既有的矩陣資料 (可選)
+ */
+function renderCustomKernelGrid(size, existingMatrix = null) {
+    const grid = document.getElementById('customKernelGrid');
+    const hiddenInput = document.getElementById('customKernelInput');
+    if (!grid || !hiddenInput) return;
+
+    // 動態設定 CSS Grid 的欄數
+    grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+    grid.innerHTML = '';
+
+    let matrix = [];
+    for (let i = 0; i < size; i++) {
+        let row = [];
+        for (let j = 0; j < size; j++) {
+            // 若有既有資料則帶入，否則預設為 1
+            let val = (existingMatrix && existingMatrix[i] && existingMatrix[i][j] !== undefined) ? existingMatrix[i][j] : 1;
+            row.push(val);
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'kernel-btn';
+            btn.innerText = val;
+            btn.style.background = val === 1 ? 'rgba(100, 255, 218, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+            btn.style.border = '1px solid rgba(100, 255, 218, 0.5)';
+            btn.style.color = val === 1 ? '#64ffda' : '#888';
+            btn.style.cursor = 'pointer';
+            
+            // 根據大小動態調整 padding 與字體，避免格子太大擠破版面
+            btn.style.padding = size > 7 ? '2px 0' : '8px 0';
+            btn.style.fontSize = size > 7 ? '0.7rem' : '1rem';
+            btn.style.borderRadius = '4px';
+            btn.style.fontWeight = 'bold';
+            btn.style.transition = 'all 0.2s';
+
+            grid.appendChild(btn);
+        }
+        matrix.push(row);
+    }
+    // 更新隱藏欄位 (這裡不觸發 change，避免無窮迴圈)
+    hiddenInput.value = JSON.stringify(matrix);
+}
+
+// 1. 網頁載入時，初始化預設 3x3 矩陣
+document.addEventListener("DOMContentLoaded", () => {
+    renderCustomKernelGrid(3);
+});
+
+// 2. 監聽 Kernel Size 滑桿變動，動態重繪矩陣
+const ksizeInput = document.querySelector('input[name="ksize"]');
+if (ksizeInput) {
+    ksizeInput.addEventListener('input', function(e) {
+        const newSize = parseInt(e.target.value);
+        const hiddenInput = document.getElementById('customKernelInput');
+        if (hiddenInput) {
+            const currentMatrix = JSON.parse(hiddenInput.value);
+            // 只有當大小真的改變時才重繪
+            if (currentMatrix.length !== newSize) {
+                renderCustomKernelGrid(newSize);
+                // 觸發 API 更新
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+    });
+}
+
+// 3. 監聽隱藏欄位的變化 (例如從管線模式載入舊參數時，還原矩陣畫面)
+const customKernelInput = document.getElementById('customKernelInput');
+if (customKernelInput) {
+    customKernelInput.addEventListener('change', function(e) {
+        try {
+            const matrix = JSON.parse(e.target.value);
+            const currentSize = matrix.length;
+            const grid = document.getElementById('customKernelGrid');
+            
+            // 檢查目前的按鈕數量是否與 matrix 大小相符
+            if (grid && grid.children.length !== currentSize * currentSize) {
+                renderCustomKernelGrid(currentSize, matrix);
+            } else {
+                // 數量相符，只更新顏色
+                const btns = grid.querySelectorAll('.kernel-btn');
+                btns.forEach((btn, idx) => {
+                    let r = Math.floor(idx / currentSize);
+                    let c = idx % currentSize;
+                    let val = matrix[r][c];
+                    btn.innerText = val.toString();
+                    btn.style.background = val === 1 ? 'rgba(100, 255, 218, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+                    btn.style.color = val === 1 ? '#64ffda' : '#888';
+                });
+            }
+        } catch(err) {
+            console.error("解析自訂矩陣失敗", err);
+        }
+    });
+}
+
+// 4. 監聽矩陣按鈕點擊事件 (使用事件委派)
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('kernel-btn')) {
+        const btn = e.target;
+        
+        // 切換 0 與 1 的狀態與樣式
+        btn.innerText = btn.innerText === '1' ? '0' : '1';
+        btn.style.background = btn.innerText === '1' ? 'rgba(100, 255, 218, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+        btn.style.color = btn.innerText === '1' ? '#64ffda' : '#888';
+        
+        // 重新計算並更新隱藏的 input 值
+        const wrapper = btn.closest('#customKernelWrapper');
+        const btns = wrapper.querySelectorAll('.kernel-btn');
+        
+        // 動態取得目前的矩陣維度
+        const size = Math.sqrt(btns.length);
+        let matrix = Array.from({length: size}, () => Array(size).fill(0));
+        
+        btns.forEach((b, idx) => {
+            let r = Math.floor(idx / size);
+            let c = idx % size;
+            matrix[r][c] = parseInt(b.innerText);
+        });
+        
+        // 更新隱藏欄位，並手動觸發 change 事件讓系統發送 API 請求
+        const hiddenInput = document.getElementById('customKernelInput');
+        if (hiddenInput) {
+            hiddenInput.value = JSON.stringify(matrix);
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+});

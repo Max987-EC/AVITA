@@ -60,27 +60,40 @@ def _apply_operation(processor, op, params):
         return processor.histogram_equalization()
         
     # --- 2. 形態學運算 (基礎與邊界) ---
-    elif op == 'erosion':
-        return processor.erosion(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)))
+    # 解析前端傳來的自訂 Kernel (可能是 JSON 字串)
+    custom_kernel_raw = params.get('custom_kernel')
+    custom_kernel = None
+    if custom_kernel_raw:
+        if isinstance(custom_kernel_raw, str):
+            try:
+                custom_kernel = json.loads(custom_kernel_raw)
+            except json.JSONDecodeError:
+                custom_kernel = None
+        else:
+            custom_kernel = custom_kernel_raw
+
+    if op == 'erosion':
+        return processor.erosion(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)), custom_kernel)
     elif op == 'dilation':
-        return processor.dilation(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)))
+        return processor.dilation(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)), custom_kernel)
     elif op == 'opening':
-        return processor.opening(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)))
+        return processor.opening(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)), custom_kernel)
     elif op == 'closing':
-        return processor.closing(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)))
+        return processor.closing(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)), custom_kernel)
     elif op == 'tophat':
-        return processor.tophat(params.get('shape', 'rect'), int(params.get('ksize', 15)))
+        return processor.tophat(params.get('shape', 'rect'), int(params.get('ksize', 15)), custom_kernel)
     elif op == 'blackhat':
-        return processor.blackhat(params.get('shape', 'rect'), int(params.get('ksize', 15)))
+        return processor.blackhat(params.get('shape', 'rect'), int(params.get('ksize', 15)), custom_kernel)
     elif op == 'morph_gradient':
-        return processor.morph_gradient(params.get('shape', 'rect'), int(params.get('ksize', 3)))
+        return processor.morph_gradient(params.get('shape', 'rect'), int(params.get('ksize', 3)), custom_kernel)
     elif op == 'boundary_extraction':
-        return processor.boundary_extraction(params.get('shape', 'rect'), int(params.get('ksize', 3)))
+        return processor.boundary_extraction(params.get('shape', 'rect'), int(params.get('ksize', 3)), custom_kernel)
     elif op == 'morph_smoothing':
         return processor.morph_smoothing(
             shape=params.get('shape', 'ellipse'),
             ksize=int(params.get('ksize', 5)),
-            mode=params.get('smooth_mode', 'open_close')
+            mode=params.get('smooth_mode', 'open_close'),
+            custom_kernel=custom_kernel
         )
         
     # --- 3. 進階形態學與分析量測 ---
