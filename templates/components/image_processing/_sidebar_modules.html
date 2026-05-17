@@ -11,6 +11,31 @@
         <label class="module-item"><input type="radio" name="process_type" value="power_law"><span>指數轉換 (Power-Law / Gamma)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="equalization"><span>直方圖等化 (Histogram Equalization)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="clahe"><span>限制對比自適應直方圖 (CLAHE)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="adaptive_threshold"><span>自適應門檻化 (Adaptive)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="moving_average"><span>動態門檻化 (Moving Avg)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="edge_improved_threshold"><span>邊緣輔助門檻化 (Edge-Improved)</span></label>
+
+        <div class="module-group">[ 形態學運算 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="erosion"><span>侵蝕 (Erosion)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="dilation"><span>膨脹 (Dilation)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="opening"><span>斷開 (Opening)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="closing"><span>閉合 (Closing)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="tophat"><span>頂帽轉換 (Top-Hat)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="blackhat"><span>底帽轉換 (Black-Hat)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="morph_gradient"><span>形態學梯度 (Gradient)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="hole_filling"><span>空洞填補 (Hole Filling)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="hit_or_miss"><span>交離轉換 (Hit-or-Miss)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="boundary_extraction"><span>形態學邊界抽取</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="morph_smoothing"><span>複合平滑濾波 (Open-Close)</span></label>
+
+        <div class="module-group">[ 進階分析與分割 ]</div>
+        <label class="module-item"><input type="radio" name="process_type" value="connected_components"><span>連通區域分析 (基礎測量)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="advanced_features"><span>進階幾何與灰階特徵</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="subpixel_corners"><span>次像素角點偵測 (Subpixel)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="subpixel_contours"><span>次像素輪廓 (Subpixel Contour)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="region_growing"><span>區域成長 (Region Growing)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="region_split_merge"><span>區域分裂與合併 (Quadtree)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="fuzzy_measurement"><span>模糊次像素測量 (FMV)</span></label>
 
         <div class="module-group">[ 空間域濾波 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="mean"><span>均值濾波 (Mean Filter)</span></label>
@@ -26,7 +51,7 @@
         <label class="module-item"><input type="radio" name="process_type" value="laplacian"><span>Laplacian 算子</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="log_edge"><span>LoG (高斯拉普拉斯)</span></label>
         <label class="module-item"><input type="radio" name="process_type" value="canny"><span>Canny 邊緣偵測 (OpenCV)</span></label>
-        <label class="module-item"><input type="radio" name="process_type" value="canny_custom"><span style="color:#64ffda;">手刻版 Canny (From Scratch)</span></label>
+        <label class="module-item"><input type="radio" name="process_type" value="canny_custom"><span>手刻版 Canny (From Scratch)</span></label>
 
         <div class="module-group">[ 頻率域濾波 - 低通/高通 ]</div>
         <label class="module-item"><input type="radio" name="process_type" value="freq_ideal_low"><span>理想低通 (Ideal Lowpass)</span></label>

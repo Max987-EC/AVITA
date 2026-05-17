@@ -60,6 +60,30 @@ class IntensityMixin:
         _, lut = cv2.threshold(x, actual_thresh, 255, base_cv_type) 
         
         self._draw_transfer_curve(lut, f"Step 2: 二值化轉換曲線 (Thresh={int(actual_thresh)})")
+        self.steps.append(("Step 3: 二值化結果", result))
+        
+        return result
+
+    def adaptive_threshold(self, max_value=255, adaptive_method='gaussian', thresh_type='binary', block_size=11, C=2):
+        """自適應門檻化 (解決光照不均問題)"""
+        gray = self._get_gray()
+        self.steps.append(("Step 1: 轉換為灰階 (Grayscale)", gray))
+        
+        # 確保 block_size 是大於 1 的奇數
+        if block_size % 2 == 0:
+            block_size += 1
+        if block_size < 3:
+            block_size = 3
+            
+        cv_adaptive_method = cv2.ADAPTIVE_THRESH_GAUSSIAN_C if adaptive_method == 'gaussian' else cv2.ADAPTIVE_THRESH_MEAN_C
+        cv_thresh_type = cv2.THRESH_BINARY_INV if thresh_type == 'binary_inv' else cv2.THRESH_BINARY
+        
+        result = cv2.adaptiveThreshold(
+            gray, max_value, cv_adaptive_method, cv_thresh_type, block_size, C
+        )
+        
+        method_name = "高斯加權 (Gaussian)" if adaptive_method == 'gaussian' else "鄰域平均 (Mean)"
+        self.steps.append((f"Step 2: 自適應二值化 ({method_name}, Block={block_size}, C={C})", result))
         
         return result
 
@@ -67,17 +91,21 @@ class IntensityMixin:
         # 畫出線性轉換曲線
         x = np.arange(256, dtype=np.float32)
         lut = np.clip(alpha * x + beta, 0, 255).astype(np.uint8)
-        self._draw_transfer_curve(lut, f"線性轉換曲線 (Alpha={alpha}, Beta={beta})")
+        self._draw_transfer_curve(lut, f"Step 1: 線性轉換曲線 (Alpha={alpha}, Beta={beta})")
         
-        return cv2.convertScaleAbs(self.img, alpha=alpha, beta=beta)
+        result = cv2.convertScaleAbs(self.img, alpha=alpha, beta=beta)
+        self.steps.append(("Step 2: 線性轉換結果", result))
+        return result
 
     def negative_transform(self):
         # 畫出負轉換曲線
         x = np.arange(256, dtype=np.uint8)
         lut = 255 - x
-        self._draw_transfer_curve(lut, "負轉換曲線 (Negative Mapping)")
+        self._draw_transfer_curve(lut, "Step 1: 負轉換曲線 (Negative Mapping)")
         
-        return 255 - self.img
+        result = 255 - self.img
+        self.steps.append(("Step 2: 負轉換結果", result))
+        return result
 
     def log_transform(self, c=1.0):
         # 1. 計算基準常數：確保當 c=1.0 時，輸入 255 剛好對應輸出 255
@@ -88,21 +116,27 @@ class IntensityMixin:
         x = np.arange(256, dtype=np.float32)
         lut = c * base_c * np.log(1 + x)
         lut = np.uint8(np.clip(lut, 0, 255))
-        self._draw_transfer_curve(lut, f"對數轉換曲線 (Log Curve, c={c})")
+        self._draw_transfer_curve(lut, f"Step 1: 對數轉換曲線 (Log Curve, c={c})")
         
         # 3. 處理實際影像 (移除 normalize，改用 clip)
         result = c * base_c * np.log(1 + np.float32(self.img))
-        return np.uint8(np.clip(result, 0, 255))
+        result = np.uint8(np.clip(result, 0, 255))
+        
+        self.steps.append((f"Step 2: 對數轉換結果 (c={c})", result))
+        return result
 
     def power_law_transform(self, gamma=1.0, c=1.0):
         # 畫出 Gamma 轉換曲線
         x = np.arange(256, dtype=np.float32)
         lut = c * np.power(x / 255.0, gamma)
         lut = np.uint8(np.clip(lut * 255.0, 0, 255))
-        self._draw_transfer_curve(lut, f"指數轉換曲線 (Gamma={gamma})")
+        self._draw_transfer_curve(lut, f"Step 1: 指數轉換曲線 (Gamma={gamma})")
         
         result = c * np.power(np.float32(self.img) / 255.0, gamma)
-        return np.uint8(np.clip(result * 255.0, 0, 255))
+        result = np.uint8(np.clip(result * 255.0, 0, 255))
+        
+        self.steps.append((f"Step 2: 指數轉換結果 (Gamma={gamma})", result))
+        return result
 
     def histogram_equalization(self):
         # 擷取等化前的直方圖來計算 CDF
@@ -110,18 +144,110 @@ class IntensityMixin:
         hist, _ = np.histogram(gray.flatten(), 256, [0, 256])
         cdf = hist.cumsum()
         cdf_normalized = cdf * 255 / cdf.max()
-        self._draw_transfer_curve(cdf_normalized, "累積分布函數 (CDF Mapping)")
+        self._draw_transfer_curve(cdf_normalized, "Step 1: 累積分布函數 (CDF Mapping)")
 
         if self.is_color:
             hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
             hsv[:, :, 2] = cv2.equalizeHist(hsv[:, :, 2])
-            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-        return cv2.equalizeHist(self.img)
+            result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        else:
+            result = cv2.equalizeHist(self.img)
+            
+        self.steps.append(("Step 2: 直方圖等化結果", result))
+        return result
 
     def clahe_equalization(self, clip_limit=2.0, tile_grid_size=8):
         clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_size, tile_grid_size))
+        
         if self.is_color:
             hsv = cv2.cvtColor(self.img, cv2.COLOR_BGR2HSV)
-            hsv[:, :, 2] = clahe.apply(hsv[:, :, 2])
-            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-        return clahe.apply(self.img)
+            v_channel = hsv[:, :, 2]
+            self.steps.append(("Step 1: 擷取亮度通道 (V Channel)", v_channel.copy()))
+            
+            processed_channel = clahe.apply(v_channel)
+            hsv[:, :, 2] = processed_channel
+            final_result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        else:
+            gray = self.img.copy()
+            self.steps.append(("Step 1: 原始灰階影像", gray.copy()))
+            
+            processed_channel = clahe.apply(gray)
+            final_result = processed_channel
+
+        self.steps.append((f"Step 2: 局部等化 (Clip={clip_limit}, Grid={tile_grid_size})", processed_channel.copy()))
+        
+        # 統一計算並畫出 CDF
+        hist, _ = np.histogram(processed_channel.flatten(), 256, [0, 256])
+        cdf = hist.cumsum()
+        cdf_normalized = cdf * 255 / cdf.max()
+        self._draw_transfer_curve(cdf_normalized, "Step 3: 處理後整體 CDF (Global CDF after CLAHE)")
+        
+        # [新增] 將最終的彩色/灰階結果加入最後一步
+        self.steps.append(("Step 4: CLAHE 最終結果", final_result))
+        
+        return final_result
+
+    def moving_average_threshold(self, n=20, k=0.5):
+        """動態門檻化 (Moving Average Thresholding) - 針對光照不均或漸層背景"""
+        gray = self._get_gray()
+        self.steps.append(("Step 1: 轉換為灰階 (Grayscale)", gray))
+        
+        # 建立 1D 水平移動平均濾波器 (模擬掃描線的 moving average)
+        # 根據簡報 P.110: N=20, k=0.5 (*average of 20 previous)
+        kernel = np.ones((1, n), np.float32) / n
+        # 將 anchor 設在最右側 (n-1, 0)，確保只計算「過去 (左側)」的 N 個像素
+        moving_avg = cv2.filter2D(gray.astype(np.float32), -1, kernel, anchor=(n-1, 0))
+        
+        # 門檻判斷：像素值 > k * 移動平均值
+        binary = np.where(gray > k * moving_avg, 255, 0).astype(np.uint8)
+        
+        self.steps.append((f"Step 2: 動態門檻化 (N={n}, k={k})", binary))
+        return binary
+
+    def edge_improved_threshold(self):
+        """邊緣輔助整體門檻化 (Edge-Improved Global Thresholding)"""
+        gray = self._get_gray()
+        self.steps.append(("Step 1: 原始灰階影像", gray))
+        
+        # 1. 計算 Sobel 邊緣梯度
+        grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+        magnitude = cv2.magnitude(grad_x, grad_y)
+        magnitude = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        self.steps.append(("Step 2: 邊緣梯度強度圖", magnitude))
+        
+        # 2. 擷取強邊緣像素 (固定門檻 50)
+        _, edge_mask = cv2.threshold(magnitude, 50, 255, cv2.THRESH_BINARY)
+        self.steps.append(("Step 3: 邊緣遮罩 (僅保留邊界像素)", edge_mask))
+        
+        # 3. 僅針對邊緣像素計算直方圖與 Otsu 門檻
+        hist = cv2.calcHist([gray], [0], edge_mask, [256], [0, 256])
+        hist_norm = hist.ravel() / (hist.sum() + 1e-7)
+        Q = hist_norm.cumsum()
+        bins = np.arange(256)
+        fn_min = np.inf
+        thresh = 0
+        
+        for i in range(1, 256):
+            p1, p2 = np.hsplit(hist_norm, [i])
+            q1, q2 = Q[i], Q[255] - Q[i]
+            if q1 == 0 or q2 == 0:
+                continue
+            b1, b2 = np.hsplit(bins, [i])
+            m1, m2 = np.sum(p1 * b1) / q1, np.sum(p2 * b2) / q2
+            v1, v2 = np.sum(((b1 - m1) ** 2) * p1) / q1, np.sum(((b2 - m2) ** 2) * p2) / q2
+            fn = v1 * q1 + v2 * q2
+            if fn < fn_min:
+                fn_min = fn
+                thresh = i
+                
+        # 4. 套用計算出的優化門檻至「整張原始影像」
+        _, result = cv2.threshold(gray, thresh, 255, cv2.THRESH_BINARY)
+        
+        # 畫出轉換曲線
+        x = np.arange(256, dtype=np.uint8)
+        _, lut = cv2.threshold(x, thresh, 255, cv2.THRESH_BINARY) 
+        self._draw_transfer_curve(lut, f"Step 4: 邊緣輔助二值化轉換曲線 (Thresh={thresh})")
+        
+        self.steps.append((f"Step 5: 邊緣輔助二值化 (優化門檻 T={thresh})", result))
+        return result

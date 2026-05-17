@@ -58,6 +58,16 @@
         <input type="range" name="tile_grid_size" min="2" max="16" step="2" value="8" oninput="document.getElementById('val_tile').innerText=this.value">
     </div>
 
+    <!-- 動態門檻化 (Moving Average) -->
+    <div class="param-group" data-types="moving_average">
+        <label>移動視窗大小 (N): <span id="val_ma_n">20</span></label>
+        <input type="range" name="ma_n" min="5" max="100" step="1" value="20" oninput="document.getElementById('val_ma_n').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="moving_average">
+        <label>乘數常數 (k): <span id="val_ma_k">0.5</span></label>
+        <input type="range" name="ma_k" min="0.1" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val_ma_k').innerText=this.value">
+    </div>
+
     <!-- 卷積核與標準差 -->
     <div class="param-group" data-types="mean,gaussian,median,log_edge,sobel,laplacian">
         <label>卷積核大小 (Kernel Size): <span id="val_kernel">3</span></label>
@@ -227,5 +237,152 @@
     <div class="param-group" data-types="hough_circles">
         <label>最大半徑 (Max Radius): <span id="val_hough_max_r">0</span></label>
         <input type="range" name="hough_max_radius" min="0" max="300" step="10" value="0" oninput="document.getElementById('val_hough_max_r').innerText=this.value">
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🌟 自適應門檻化參數 -->
+    <!-- ========================================== -->
+    <div class="param-group" data-types="adaptive_threshold">
+        <label>計算方法 (Method):</label>
+        <select name="adaptive_method" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+            <option value="gaussian">高斯加權 (Gaussian)</option>
+            <option value="mean">鄰域平均 (Mean)</option>
+        </select>
+    </div>
+    <div class="param-group" data-types="adaptive_threshold">
+        <label>區塊大小 (Block Size): <span id="val_adapt_block">11</span></label>
+        <input type="range" name="block_size" min="3" max="51" step="2" value="11" oninput="document.getElementById('val_adapt_block').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="adaptive_threshold">
+        <label>常數偏移量 (C): <span id="val_adapt_c">2</span></label>
+        <input type="range" name="C" min="-10" max="20" step="1" value="2" oninput="document.getElementById('val_adapt_c').innerText=this.value">
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🌟 形態學運算參數 -->
+    <!-- ========================================== -->
+    <div class="param-group" data-types="erosion,dilation,opening,closing,tophat,blackhat,morph_gradient,boundary_extraction,morph_smoothing">
+        <label>結構元素形狀 (Shape):</label>
+        <select name="shape" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+            <option value="rect">方形 (Rectangle)</option>
+            <option value="ellipse">圓形 (Ellipse)</option>
+            <option value="cross">十字 (Cross)</option>
+        </select>
+    </div>
+    <div class="param-group" data-types="erosion,dilation,opening,closing,tophat,blackhat,morph_gradient,boundary_extraction,morph_smoothing">
+        <label>核大小 (Kernel Size): <span id="val_morph_k">3</span></label>
+        <input type="range" name="ksize" min="3" max="31" step="2" value="3" oninput="document.getElementById('val_morph_k').innerText=this.value">
+    </div>
+    
+    <!-- 執行次數 (僅適用於基礎形態學) -->
+    <div class="param-group" data-types="erosion,dilation,opening,closing">
+        <label>執行次數 (Iterations): <span id="val_morph_iter">1</span></label>
+        <input type="range" name="iterations" min="1" max="10" step="1" value="1" oninput="document.getElementById('val_morph_iter').innerText=this.value">
+    </div>
+
+    <!-- 複合平滑專屬 -->
+    <div class="param-group" data-types="morph_smoothing">
+        <label>複合模式 (Mode):</label>
+        <select name="smooth_mode" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+            <option value="open_close">先斷開後閉合 (Open-Close)</option>
+            <option value="close_open">先閉合後斷開 (Close-Open)</option>
+        </select>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🌟 進階分析與分割參數 -->
+    <!-- ========================================== -->
+    
+    <!-- 連通區域分析 (Connected Components) -->
+    <div class="param-group" data-types="connected_components">
+        <label>連通性定義 (Connectivity):</label>
+        <select name="connectivity" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+            <option value="8">8-連通 (8-Neighbor)</option>
+            <option value="4">4-連通 (4-Neighbor)</option>
+        </select>
+    </div>
+    <div class="param-group" data-types="connected_components">
+        <label>最小面積 (Min Area): <span id="val_min_area">100</span></label>
+        <input type="range" name="min_area" min="0" max="5000" step="10" value="100" oninput="document.getElementById('val_min_area').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="connected_components">
+        <label>最大面積 (Max Area): <span id="val_max_area">999999</span></label>
+        <input type="range" name="max_area" min="1000" max="999999" step="1000" value="999999" oninput="document.getElementById('val_max_area').innerText=this.value">
+    </div>
+
+    <!-- 進階幾何與灰階特徵 (Advanced Features) -->
+    <div class="param-group" data-types="advanced_features">
+        <label>最小面積過濾 (Min Area): <span id="val_adv_min_area">100</span></label>
+        <input type="range" name="adv_min_area" min="0" max="5000" step="10" value="100" oninput="document.getElementById('val_adv_min_area').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="advanced_features">
+        <label style="display: flex; flex-direction: column; gap: 8px;">
+            <label><input type="checkbox" name="draw_bounding_rect" value="true" checked> 繪製正交包圍盒 (綠)</label>
+            <label><input type="checkbox" name="draw_min_rect" value="true" checked> 繪製最小旋轉盒 (藍)</label>
+            <label><input type="checkbox" name="draw_circle" value="true"> 繪製最小包圍圓 (黃)</label>
+            <label><input type="checkbox" name="draw_ellipse" value="true" checked> 繪製橢圓擬合 (橘)</label>
+            <label><input type="checkbox" name="draw_hull" value="true"> 繪製凸包邊界 (紫)</label>
+            <label><input type="checkbox" name="calc_gray" value="true" checked> 計算區域灰階 (Mean/Std)</label>
+            <label><input type="checkbox" name="calc_perimeter" value="true" checked> 計算輪廓周長 (Perimeter)</label>
+            <label><input type="checkbox" name="calc_shape" value="true" checked> 計算圓度與長短軸比 (C / AR)</label>
+        </label>
+    </div>
+
+    <!-- 次像素角點偵測 (Subpixel Corners) -->
+    <div class="param-group" data-types="subpixel_corners">
+        <label>最大角點數量 (Max Corners): <span id="val_max_corners">100</span></label>
+        <input type="range" name="max_corners" min="10" max="500" step="10" value="100" oninput="document.getElementById('val_max_corners').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="subpixel_corners">
+        <label>品質門檻 (Quality): <span id="val_quality">0.01</span></label>
+        <input type="range" name="quality" min="0.01" max="0.5" step="0.01" value="0.01" oninput="document.getElementById('val_quality').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="subpixel_corners">
+        <label>最小距離 (Min Distance): <span id="val_min_dist">10</span></label>
+        <input type="range" name="min_dist" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_min_dist').innerText=this.value">
+    </div>
+
+    <!-- 次像素輪廓 (Subpixel Contours) -->
+    <div class="param-group" data-types="subpixel_contours">
+        <label>二值化門檻 (Threshold): <span id="val_sub_th">127</span></label>
+        <input type="range" name="sub_threshold" min="0" max="255" step="1" value="127" oninput="document.getElementById('val_sub_th').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="subpixel_contours">
+        <label>雙線性內插放大倍率: <span id="val_upscale">4</span></label>
+        <input type="range" name="upscale_factor" min="2" max="16" step="2" value="4" oninput="document.getElementById('val_upscale').innerText=this.value">
+    </div>
+
+    <!-- 區域分裂與合併 (Quadtree) -->
+    <div class="param-group" data-types="region_split_merge">
+        <label>分裂標準差門檻 (Std TH): <span id="val_std_th">15.0</span></label>
+        <input type="range" name="std_threshold" min="1.0" max="50.0" step="1.0" value="15.0" oninput="document.getElementById('val_std_th').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="region_split_merge">
+        <label>最小區塊限制 (Min Size): <span id="val_min_size">8</span></label>
+        <input type="range" name="min_size" min="4" max="64" step="2" value="8" oninput="document.getElementById('val_min_size').innerText=this.value">
+    </div>
+
+    <!-- 模糊次像素測量 (FMV) -->
+    <div class="param-group" data-types="fuzzy_measurement">
+        <label>模糊下限 (Min Value): <span id="val_fmv_min">40</span></label>
+        <input type="range" name="fmv_min" min="0" max="255" step="1" value="40" oninput="document.getElementById('val_fmv_min').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="fuzzy_measurement">
+        <label>模糊上限 (Max Value): <span id="val_fmv_max">120</span></label>
+        <input type="range" name="fmv_max" min="0" max="255" step="1" value="120" oninput="document.getElementById('val_fmv_max').innerText=this.value">
+    </div>
+
+    <!-- 區域成長 (Region Growing) -->
+    <div class="param-group" data-types="region_growing">
+        <label>色彩容差 (Tolerance): <span id="val_tolerance">20</span></label>
+        <input type="range" name="tolerance" min="1" max="100" step="1" value="20" oninput="document.getElementById('val_tolerance').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="region_growing">
+        <label>種子點 X 座標 (0為自動置中): <span id="val_seed_x">0</span></label>
+        <input type="range" name="seed_x" min="0" max="2000" step="1" value="0" oninput="document.getElementById('val_seed_x').innerText=this.value">
+    </div>
+    <div class="param-group" data-types="region_growing">
+        <label>種子點 Y 座標 (0為自動置中): <span id="val_seed_y">0</span></label>
+        <input type="range" name="seed_y" min="0" max="2000" step="1" value="0" oninput="document.getElementById('val_seed_y').innerText=this.value">
     </div>
 </div>

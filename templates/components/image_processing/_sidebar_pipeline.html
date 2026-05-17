@@ -25,6 +25,33 @@
                 <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
                 <option value="equalization">直方圖等化 (Equalization)</option>
                 <option value="clahe">自適應直方圖 (CLAHE)</option>
+                <option value="adaptive_threshold">自適應門檻化 (Adaptive)</option>
+                <option value="moving_average">動態門檻化 (Moving Avg)</option>
+                <option value="edge_improved_threshold">邊緣輔助門檻化 (Edge-Improved)</option>
+            </optgroup>
+            
+            <optgroup label="[ 形態學運算 ]">
+                <option value="erosion">侵蝕 (Erosion)</option>
+                <option value="dilation">膨脹 (Dilation)</option>
+                <option value="opening">斷開 (Opening)</option>
+                <option value="closing">閉合 (Closing)</option>
+                <option value="tophat">頂帽轉換 (Top-Hat)</option>
+                <option value="blackhat">底帽轉換 (Black-Hat)</option>
+                <option value="morph_gradient">形態學梯度 (Gradient)</option>
+                <option value="hole_filling">空洞填補 (Hole Filling)</option>
+                <option value="hit_or_miss">交離轉換 (Hit-or-Miss)</option>
+                <option value="boundary_extraction">形態學邊界抽取</option>
+                <option value="morph_smoothing">複合平滑濾波 (Open-Close)</option>
+            </optgroup>
+            
+            <optgroup label="[ 進階分析與分割 ]">
+                <option value="connected_components">連通區域分析 (基礎測量)</option>
+                <option value="advanced_features">進階幾何與灰階特徵</option>
+                <option value="subpixel_corners">次像素角點偵測 (Subpixel)</option>
+                <option value="subpixel_contours">次像素輪廓 (Subpixel Contour)</option>
+                <option value="region_growing">區域成長 (Region Growing)</option>
+                <option value="region_split_merge">區域分裂與合併 (Quadtree)</option>
+                <option value="fuzzy_measurement">模糊次像素測量 (FMV)</option>
             </optgroup>
             
             <optgroup label="[ 空間域濾波 ]">

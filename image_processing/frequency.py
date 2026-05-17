@@ -83,10 +83,14 @@ class FrequencyMixin:
 
         if self.is_color:
             # 彩色影像不顯示單通道的頻譜步驟，以免畫面太雜亂
-            return cv2.merge([self._apply_frequency_filter(c, mask, is_gray=False) for c in cv2.split(self.img)])
+            result = cv2.merge([self._apply_frequency_filter(c, mask, is_gray=False) for c in cv2.split(self.img)])
+            self.steps.append(("Step 2: 頻率域濾波最終結果", result))
+            return result
         
         # 灰階影像則顯示完整的頻譜與卷積核步驟
-        return self._apply_frequency_filter(self.img, mask, is_gray=True)
+        result = self._apply_frequency_filter(self.img, mask, is_gray=True)
+        self.steps.append(("Step 4: 頻率域濾波最終結果", result))
+        return result
 
     def notch_reject_filter(self, D0_u=30, D0_v=30, u0=50, v0=50, n=2, notch_type='reject'):
         rows, cols = self.img.shape[:2]
@@ -107,5 +111,10 @@ class FrequencyMixin:
         self.steps.append(("Step 1: Notch 遮罩 (Notch Mask)", mask_vis))
         
         if self.is_color:
-            return cv2.merge([self._apply_frequency_filter(c, mask, is_gray=False) for c in cv2.split(self.img)])
-        return self._apply_frequency_filter(self.img, mask, is_gray=True)
+            result = cv2.merge([self._apply_frequency_filter(c, mask, is_gray=False) for c in cv2.split(self.img)])
+            self.steps.append(("Step 2: 頻率域濾波最終結果", result))
+            return result
+            
+        result = self._apply_frequency_filter(self.img, mask, is_gray=True)
+        self.steps.append(("Step 4: 頻率域濾波最終結果", result))
+        return result

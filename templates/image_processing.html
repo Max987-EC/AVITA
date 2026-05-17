@@ -52,8 +52,10 @@
         </div> 
     </div> 
 
-    <!-- 引入前端互動邏輯 -->
-    {% include 'components/image_processing/_scripts.html' %}
+    <!-- 引入模組化的 JavaScript 檔案 -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ui_components.js') }}"></script>
 
     <!-- 🔍 圖片放大模態框 (Image Lightbox Modal) -->
     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
