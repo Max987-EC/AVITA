@@ -1,51 +1,63 @@
-<!-- 左側：圖片與直方圖區塊 (會自動佔滿剩餘空間) -->
+<!-- 核心內容顯示區 (Main Visual Content Area) -->
+<!-- 此區塊包含原始影像、處理結果、頻譜圖與直方圖的視覺化顯示。 -->
 <div class="main-content">
+    
+    <!-- 1. 影像對比區 (Image Comparison Grid) -->
     <div class="comparison-grid" id="imageGrid">
+        <!-- 原始影像預覽 -->
         <div class="image-box">
-            <h4>[ SPATIAL: ORIGINAL ]</h4>
+            <h4>[ 原始影像：空間域 ] (SPATIAL: ORIGINAL)</h4>
             <img id="originalImage" src="" alt="原圖預覽">
         </div>
         
+        <!-- 處理結果預覽 (含載入指示器) -->
         <div class="image-box" style="position: relative;">
-            <div class="loading" id="loadingIndicator">[ PROCESSING DATA... ]</div>
-            <h4>[ SPATIAL: PROCESSED ]</h4>
+            <div class="loading" id="loadingIndicator">[ 正在處理數據... ] (PROCESSING DATA...)</div>
+            <h4>[ 處理結果：空間域 ] (SPATIAL: PROCESSED)</h4>
             <img id="processedImage" src="" alt="處理結果">
         </div>
     </div>
     
+    <!-- 2. 頻譜分析區 (Frequency Spectrum Section) -->
     <div class="histogram-section" id="spectrumSection">
-        <h3 style="color: #82aaff; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// FREQUENCY SPECTRUM //</h3>
+        <h3 style="color: #82aaff; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// 頻率域分析 (FREQUENCY SPECTRUM) //</h3>
         <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+            <!-- 原始頻譜 -->
             <div class="image-box" style="border-color: rgba(130, 170, 255, 0.3);">
-                <h4 style="color: #82aaff;">[ SPECTRUM: ORIGINAL ]</h4>
+                <h4 style="color: #82aaff;">[ 原始頻譜 ] (SPECTRUM: ORIGINAL)</h4>
                 <img id="originalSpectrum" src="" alt="原圖頻譜">
             </div>
+            <!-- 處理後頻譜 -->
             <div class="image-box" style="border-color: rgba(130, 170, 255, 0.3);">
-                <h4 style="color: #82aaff;">[ SPECTRUM: PROCESSED ]</h4>
+                <h4 style="color: #82aaff;">[ 處理後頻譜 ] (SPECTRUM: PROCESSED)</h4>
                 <img id="processedSpectrum" src="" alt="處理後頻譜">
             </div>
         </div>
     </div>
 
+    <!-- 3. 強度直方圖區 (Intensity Histogram Section) -->
     <div class="histogram-section" id="histogramSection">
-        <h3 style="color: #ff79c6; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// INTENSITY HISTOGRAM //</h3>
+        <h3 style="color: #ff79c6; text-align: center; font-family: 'Orbitron'; margin-top: 0;">// 強度直方圖 (INTENSITY HISTOGRAM) //</h3>
         <div class="comparison-grid" style="display: grid; margin-top: 10px;">
+            <!-- 原始直方圖 -->
             <div class="image-box" style="border-color: rgba(255, 121, 198, 0.3);">
-                <h4 style="color: #ff79c6;">[ HISTOGRAM: ORIGINAL ]</h4>
+                <h4 style="color: #ff79c6;">[ 原始直方圖 ] (HISTOGRAM: ORIGINAL)</h4>
                 <img id="originalHistogram" src="" alt="原圖直方圖">
             </div>
+            <!-- 處理後直方圖 -->
             <div class="image-box" style="border-color: rgba(255, 121, 198, 0.3);">
-                <h4 style="color: #ff79c6;">[ HISTOGRAM: PROCESSED ]</h4>
+                <h4 style="color: #ff79c6;">[ 處理後直方圖 ] (HISTOGRAM: PROCESSED)</h4>
                 <img id="processedHistogram" src="" alt="處理後直方圖">
             </div>
         </div>
     </div>
 </div> 
 
-<!-- 右側：執行步驟面板 (固定寬度 280px) -->
+<!-- 執行步驟側面板 (Execution Steps Panel) -->
+<!-- 顯示演算法內部的中間處理步驟，預設隱藏，僅在有數據時顯示。 -->
 <div id="stepsContainer" class="steps-panel" style="display: none;">
-    <h3 style="color: #64ffda; text-align: center; font-family: 'Orbitron'; margin-top: 0; font-size: 1rem;">// STEPS //</h3>
+    <h3 style="color: #64ffda; text-align: center; font-family: 'Orbitron'; margin-top: 0; font-size: 1rem;">// 處理步驟 (STEPS) //</h3>
     <div class="steps-grid" id="stepsGrid">
-        <!-- 步驟卡片會動態插入這裡 -->
+        <!-- 步驟卡片 (Step Cards) 會透過 JavaScript 動態插入至此 -->
     </div>
 </div>

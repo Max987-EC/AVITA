@@ -1,11 +1,13 @@
-<!-- 動態參數設定面板 -->
+<!-- 動態參數設定面板 (Dynamic Parameter Panel) -->
+<!-- 根據當前選擇的處理模組，透過 JavaScript (app.js) 動態切換顯示對應的調節控制項。 -->
 <div class="param-panel" id="paramPanel">
     <div class="param-header">
         <h4>[ 參數設定 PARAMETERS ]</h4>
+        <!-- 全局參數重置按鈕 -->
         <button type="button" id="resetParamsBtn" class="btn-reset">↺ 重置 (RESET)</button>
     </div>
     
-    <!-- 線性轉換 (亮度與對比度) -->
+    <!-- 1. 線性轉換參數 (亮度與對比度) -->
     <div class="param-group" data-types="linear">
         <label>對比度 Alpha (Contrast): <span id="val_alpha">1.0</span></label>
         <input type="range" name="alpha" min="0.1" max="3.0" step="0.1" value="1.0" oninput="document.getElementById('val_alpha').innerText=this.value">
@@ -15,10 +17,11 @@
         <input type="range" name="beta" min="-100" max="100" step="1" value="0" oninput="document.getElementById('val_beta').innerText=this.value">
     </div>
 
-    <!-- 二值化門檻 -->
+    <!-- 2. 二值化門檻與模式 -->
     <div class="param-group" data-types="binarize">
         <label style="display: flex; justify-content: space-between; align-items: center;">
             <span>門檻值 (Threshold): <span id="val_threshold">127</span></span>
+            <!-- Otsu 自動門檻開關 -->
             <label style="font-size: 0.8rem; color: #64ffda; cursor: pointer;">
                 <input type="checkbox" name="use_otsu" value="true" id="otsuCheckbox"> Otsu 自動計算
             </label>
@@ -27,7 +30,7 @@
     </div>
     <div class="param-group" data-types="binarize">
         <label>二值化模式 (Type):</label>
-        <select name="thresh_type" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="thresh_type" class="tech-select-small">
             <option value="binary">標準 (Binary)</option>
             <option value="binary_inv">反轉 (Binary Inv)</option>
             <option value="trunc">截斷 (Truncate)</option>
@@ -36,19 +39,19 @@
         </select>
     </div>
 
-    <!-- 對數/指數常數 -->
+    <!-- 3. 非線性轉換常數 (C) -->
     <div class="param-group" data-types="log,power_law">
         <label>常數 C (Constant): <span id="val_c">1.0</span></label>
         <input type="range" name="c" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_c').innerText=this.value">
     </div>
 
-    <!-- Gamma 值 -->
+    <!-- 4. Gamma 校正參數 -->
     <div class="param-group" data-types="power_law">
         <label>Gamma (γ): <span id="val_gamma">1.0</span></label>
         <input type="range" name="gamma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_gamma').innerText=this.value">
     </div>
 
-    <!-- CLAHE 參數 -->
+    <!-- 5. CLAHE (限制對比度自適應直方圖均衡) 參數 -->
     <div class="param-group" data-types="clahe">
         <label>對比限制 (Clip Limit): <span id="val_clip">2.0</span></label>
         <input type="range" name="clip_limit" min="1.0" max="10.0" step="0.1" value="2.0" oninput="document.getElementById('val_clip').innerText=this.value">
@@ -58,7 +61,7 @@
         <input type="range" name="tile_grid_size" min="2" max="16" step="2" value="8" oninput="document.getElementById('val_tile').innerText=this.value">
     </div>
 
-    <!-- 動態門檻化 (Moving Average) -->
+    <!-- 6. 動態門檻化 (Moving Average) 參數 -->
     <div class="param-group" data-types="moving_average">
         <label>移動視窗大小 (N): <span id="val_ma_n">20</span></label>
         <input type="range" name="ma_n" min="5" max="100" step="1" value="20" oninput="document.getElementById('val_ma_n').innerText=this.value">
@@ -68,7 +71,7 @@
         <input type="range" name="ma_k" min="0.1" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val_ma_k').innerText=this.value">
     </div>
 
-    <!-- 卷積核與標準差 -->
+    <!-- 7. 通用空間域濾波參數 (Kernel & Sigma) -->
     <div class="param-group" data-types="mean,gaussian,median,log_edge,sobel,laplacian">
         <label>卷積核大小 (Kernel Size): <span id="val_kernel">3</span></label>
         <input type="range" name="kernel_size" min="3" max="15" step="2" value="3" oninput="document.getElementById('val_kernel').innerText=this.value">
@@ -78,7 +81,7 @@
         <input type="range" name="sigma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sigma').innerText=this.value">
     </div>
 
-    <!-- 雙邊濾波參數 -->
+    <!-- 8. 雙邊濾波 (Bilateral) 專屬參數 -->
     <div class="param-group" data-types="bilateral">
         <label>鄰域直徑 (d): <span id="val_bi_d">9</span></label>
         <input type="range" name="bilateral_d" min="3" max="25" step="2" value="9" oninput="document.getElementById('val_bi_d').innerText=this.value">
@@ -92,23 +95,23 @@
         <input type="range" name="bilateral_sigma_space" min="10" max="150" step="5" value="75.0" oninput="document.getElementById('val_bi_ss').innerText=this.value">
     </div>
 
-    <!-- 銳化參數 -->
+    <!-- 9. 影像銳化 (Sharpening) 強度 -->
     <div class="param-group" data-types="sharpen">
         <label>銳化強度 (Amount): <span id="val_sharp">1.0</span></label>
         <input type="range" name="sharpen_amount" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sharp').innerText=this.value">
     </div>
 
-    <!-- 邊緣偵測方向 -->
+    <!-- 10. 邊緣偵測方向選擇 -->
     <div class="param-group" data-types="sobel,prewitt,roberts">
         <label>偵測方向 (Direction):</label>
-        <select name="edge_direction" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="edge_direction" class="tech-select-small">
             <option value="both">綜合邊緣 (Magnitude)</option>
             <option value="x">垂直邊緣 (X 軸)</option>
             <option value="y">水平邊緣 (Y 軸)</option>
         </select>
     </div>
 
-    <!-- Canny 邊緣偵測雙門檻與模糊參數 -->
+    <!-- 11. Canny 邊緣偵測參數 (雙門檻與模糊) -->
     <div class="param-group" data-types="canny,canny_custom">
         <label>低門檻值 (Threshold 1): <span id="val_th1">50</span></label>
         <input type="range" name="threshold1" min="0" max="255" value="50" oninput="document.getElementById('val_th1').innerText=this.value">
@@ -126,23 +129,24 @@
         <input type="range" name="canny_blur_sigma" min="0.1" max="5.0" step="0.1" value="1.4" oninput="document.getElementById('val_canny_sig').innerText=this.value">
     </div>
 
-    <!-- 頻率域濾波參數 -->
+    <!-- 12. 頻率域濾波截斷頻率 (D0) -->
     <div class="param-group" data-types="freq_ideal_low,freq_ideal_high,freq_butterworth_low,freq_gaussian_low,freq_butterworth_high,freq_gaussian_high,freq_butterworth_bandreject,freq_butterworth_bandpass,freq_butterworth_emphasis">
         <label>截斷/阻帶頻率半徑 (D0): <span id="val_d0">30</span></label>
         <input type="range" name="D0" min="5" max="200" step="5" value="30" oninput="document.getElementById('val_d0').innerText=this.value">
     </div>
+    <!-- 巴特沃斯濾波器階數 (n) -->
     <div class="param-group" data-types="freq_butterworth_low,freq_butterworth_high,freq_butterworth_bandreject,freq_butterworth_bandpass,freq_butterworth_emphasis,notch_reject">
-        <label>階數 (n): <span id="val_n">2</span></label>
+        <label>濾波器階數 (n): <span id="val_n">2</span></label>
         <input type="range" name="n" min="1" max="5" step="1" value="2" oninput="document.getElementById('val_n').innerText=this.value">
     </div>
 
-    <!-- 帶通/帶阻 專用 -->
+    <!-- 13. 頻帶寬度 (W) - 帶通/帶阻專用 -->
     <div class="param-group" data-types="freq_butterworth_bandreject,freq_butterworth_bandpass">
         <label>頻帶寬度 (W): <span id="val_freq_w">10</span></label>
         <input type="range" name="freq_W" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_freq_w').innerText=this.value">
     </div>
 
-    <!-- 高頻強調 專用 -->
+    <!-- 14. 高頻強調參數 (a, b) -->
     <div class="param-group" data-types="freq_butterworth_emphasis">
         <label>常數偏移量 (a): <span id="val_freq_a">0.5</span></label>
         <input type="range" name="freq_a" min="0.0" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val_freq_a').innerText=this.value">
@@ -152,12 +156,12 @@
         <input type="range" name="freq_b" min="0.5" max="3.0" step="0.1" value="1.5" oninput="document.getElementById('val_freq_b').innerText=this.value">
     </div>
 
-    <!-- Notch Filter 專用 -->
+    <!-- 15. 陷波濾波器 (Notch Filter) 專屬參數 -->
     <div class="param-group" data-types="notch_reject">
         <label>濾波模式 (Type):</label>
-        <select name="notch_type" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
-            <option value="reject">帶阻 (消除雜訊)</option>
-            <option value="pass">帶通 (提取雜訊)</option>
+        <select name="notch_type" class="tech-select-small">
+            <option value="reject">帶阻 (消除特定頻率雜訊)</option>
+            <option value="pass">帶通 (僅保留特定頻率內容)</option>
         </select>
     </div>
     <div class="param-group" data-types="notch_reject">
@@ -168,6 +172,7 @@
         <label>垂直阻帶半徑 (Height): <span id="val_notch_v">30</span></label>
         <input type="range" name="notch_d0_v" min="1" max="200" step="1" value="30" oninput="document.getElementById('val_notch_v').innerText=this.value">
     </div>
+    <!-- 陷波點座標 (相對於頻譜中心) -->
     <div class="param-group" data-types="notch_reject">
         <label>垂直頻率中心 (u0): <span id="val_u0">50</span></label>
         <input type="range" name="u0" min="-200" max="200" step="1" value="50" oninput="document.getElementById('val_u0').innerText=this.value">
@@ -177,13 +182,13 @@
         <input type="range" name="v0" min="-200" max="200" step="1" value="50" oninput="document.getElementById('val_v0').innerText=this.value">
     </div>
 
-    <!-- Hough Lines 共用參數 -->
+    <!-- 16. 霍夫變換 (Hough Transform) 共用參數 -->
     <div class="param-group" data-types="hough_lines_standard,hough_lines_p">
-        <label>線檢測靈敏度 (Threshold): <span id="val_hough_th">100</span></label>
+        <label>線偵測靈敏度 (Threshold): <span id="val_hough_th">100</span></label>
         <input type="range" name="hough_threshold" min="10" max="300" step="5" value="100" oninput="document.getElementById('val_hough_th').innerText=this.value">
     </div>
     <div class="param-group" data-types="hough_lines_standard,hough_lines_p">
-        <label>距離解析度 Rho: <span id="val_hough_rho">1.0</span></label>
+        <label>距離解析度 Rho (像素): <span id="val_hough_rho">1.0</span></label>
         <input type="range" name="hough_rho" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_hough_rho').innerText=this.value">
     </div>
     <div class="param-group" data-types="hough_lines_standard,hough_lines_p">
@@ -199,7 +204,7 @@
         <input type="range" name="hough_canny_th2" min="0" max="255" value="150" oninput="document.getElementById('val_hl_th2').innerText=this.value">
     </div>
 
-    <!-- 機率霍夫線 (Hough Lines P) 專用 -->
+    <!-- 17. 機率霍夫線 (Hough Lines P) 專用 -->
     <div class="param-group" data-types="hough_lines_p">
         <label>最小線段長度 (Min Length): <span id="val_hough_min_l">50</span></label>
         <input type="range" name="hough_min_line_length" min="1" max="200" step="1" value="50" oninput="document.getElementById('val_hough_min_l').innerText=this.value">
@@ -209,7 +214,7 @@
         <input type="range" name="hough_max_line_gap" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_hough_max_g').innerText=this.value">
     </div>
 
-    <!-- Hough Circles 專用 -->
+    <!-- 18. 霍夫圓偵測 (Hough Circles) 專用參數 -->
     <div class="param-group" data-types="hough_circles">
         <label>累加器解析度比例 (dp): <span id="val_hough_dp">1.0</span></label>
         <input type="range" name="hough_dp" min="1.0" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_hough_dp').innerText=this.value">
@@ -222,12 +227,13 @@
         <label>邊緣檢測高門檻 (Param1): <span id="val_hc_p1">50</span></label>
         <input type="range" name="hough_param1" min="10" max="255" step="1" value="50" oninput="document.getElementById('val_hc_p1').innerText=this.value">
     </div>
+    <!-- Hough 共用前處理參數 -->
     <div class="param-group" data-types="hough_circles,hough_lines_standard,hough_lines_p">
         <label>前處理模糊核大小 (Blur Kernel): <span id="val_hc_k">5</span></label>
         <input type="range" name="hough_blur_ksize" min="1" max="15" step="2" value="5" oninput="document.getElementById('val_hc_k').innerText=this.value">
     </div>
     <div class="param-group" data-types="hough_circles">
-        <label>圓檢測靈敏度 (Param2): <span id="val_hough_p2">30</span></label>
+        <label>圓偵測靈敏度 (Param2): <span id="val_hough_p2">30</span></label>
         <input type="range" name="hough_param2" min="10" max="100" step="2" value="30" oninput="document.getElementById('val_hough_p2').innerText=this.value">
     </div>
     <div class="param-group" data-types="hough_circles">
@@ -239,12 +245,10 @@
         <input type="range" name="hough_max_radius" min="0" max="300" step="10" value="0" oninput="document.getElementById('val_hough_max_r').innerText=this.value">
     </div>
 
-    <!-- ========================================== -->
-    <!-- 🌟 自適應門檻化參數 -->
-    <!-- ========================================== -->
+    <!-- 19. 自適應門檻化 (Adaptive Threshold) 計算方法 -->
     <div class="param-group" data-types="adaptive_threshold">
         <label>計算方法 (Method):</label>
-        <select name="adaptive_method" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="adaptive_method" class="tech-select-small">
             <option value="gaussian">高斯加權 (Gaussian)</option>
             <option value="mean">鄰域平均 (Mean)</option>
         </select>
@@ -258,12 +262,10 @@
         <input type="range" name="C" min="-10" max="20" step="1" value="2" oninput="document.getElementById('val_adapt_c').innerText=this.value">
     </div>
 
-    <!-- ========================================== -->
-    <!-- 🌟 形態學運算參數 -->
-    <!-- ========================================== -->
+    <!-- 20. 形態學運算參數 (Morphology) -->
     <div class="param-group" data-types="erosion,dilation,opening,closing,tophat,blackhat,morph_gradient,boundary_extraction,morph_smoothing">
         <label>結構元素形狀 (Shape):</label>
-        <select name="shape" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="shape" class="tech-select-small">
             <option value="rect">方形 (Rectangle)</option>
             <option value="ellipse">圓形 (Ellipse)</option>
             <option value="cross">十字 (Cross)</option>
@@ -274,29 +276,25 @@
         <input type="range" name="ksize" min="3" max="31" step="2" value="3" oninput="document.getElementById('val_morph_k').innerText=this.value">
     </div>
     
-    <!-- 執行次數 (僅適用於基礎形態學) -->
+    <!-- 執行疊代次數 (僅限基礎運算) -->
     <div class="param-group" data-types="erosion,dilation,opening,closing">
         <label>執行次數 (Iterations): <span id="val_morph_iter">1</span></label>
         <input type="range" name="iterations" min="1" max="10" step="1" value="1" oninput="document.getElementById('val_morph_iter').innerText=this.value">
     </div>
 
-    <!-- 複合平滑專屬 -->
+    <!-- 形態學複合平滑模式 -->
     <div class="param-group" data-types="morph_smoothing">
         <label>複合模式 (Mode):</label>
-        <select name="smooth_mode" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="smooth_mode" class="tech-select-small">
             <option value="open_close">先斷開後閉合 (Open-Close)</option>
             <option value="close_open">先閉合後斷開 (Close-Open)</option>
         </select>
     </div>
 
-    <!-- ========================================== -->
-    <!-- 🌟 進階分析與分割參數 -->
-    <!-- ========================================== -->
-    
-    <!-- 連通區域分析 (Connected Components) -->
+    <!-- 21. 連通區域分析 (Connected Components) 面積篩選 -->
     <div class="param-group" data-types="connected_components">
         <label>連通性定義 (Connectivity):</label>
-        <select name="connectivity" style="width: 100%; padding: 5px; background: rgba(0,0,0,0.5); color: #fff; border: 1px solid #1e2d3d; border-radius: 4px;">
+        <select name="connectivity" class="tech-select-small">
             <option value="8">8-連通 (8-Neighbor)</option>
             <option value="4">4-連通 (4-Neighbor)</option>
         </select>
@@ -310,7 +308,7 @@
         <input type="range" name="max_area" min="1000" max="999999" step="1000" value="999999" oninput="document.getElementById('val_max_area').innerText=this.value">
     </div>
 
-    <!-- 進階幾何與灰階特徵 (Advanced Features) -->
+    <!-- 22. 進階特徵擷取複選框 -->
     <div class="param-group" data-types="advanced_features">
         <label>最小面積過濾 (Min Area): <span id="val_adv_min_area">100</span></label>
         <input type="range" name="adv_min_area" min="0" max="5000" step="10" value="100" oninput="document.getElementById('val_adv_min_area').innerText=this.value">
@@ -328,7 +326,7 @@
         </label>
     </div>
 
-    <!-- 次像素角點偵測 (Subpixel Corners) -->
+    <!-- 23. 次像素角點偵測 (Subpixel Corners) -->
     <div class="param-group" data-types="subpixel_corners">
         <label>最大角點數量 (Max Corners): <span id="val_max_corners">100</span></label>
         <input type="range" name="max_corners" min="10" max="500" step="10" value="100" oninput="document.getElementById('val_max_corners').innerText=this.value">
@@ -342,7 +340,7 @@
         <input type="range" name="min_dist" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_min_dist').innerText=this.value">
     </div>
 
-    <!-- 次像素輪廓 (Subpixel Contours) -->
+    <!-- 24. 次像素輪廓內插參數 -->
     <div class="param-group" data-types="subpixel_contours">
         <label>二值化門檻 (Threshold): <span id="val_sub_th">127</span></label>
         <input type="range" name="sub_threshold" min="0" max="255" step="1" value="127" oninput="document.getElementById('val_sub_th').innerText=this.value">
@@ -352,7 +350,7 @@
         <input type="range" name="upscale_factor" min="2" max="16" step="2" value="4" oninput="document.getElementById('val_upscale').innerText=this.value">
     </div>
 
-    <!-- 區域分裂與合併 (Quadtree) -->
+    <!-- 25. 區域分裂與合併 (Quadtree) 門檻 -->
     <div class="param-group" data-types="region_split_merge">
         <label>分裂標準差門檻 (Std TH): <span id="val_std_th">15.0</span></label>
         <input type="range" name="std_threshold" min="1.0" max="50.0" step="1.0" value="15.0" oninput="document.getElementById('val_std_th').innerText=this.value">
@@ -362,7 +360,7 @@
         <input type="range" name="min_size" min="4" max="64" step="2" value="8" oninput="document.getElementById('val_min_size').innerText=this.value">
     </div>
 
-    <!-- 模糊次像素測量 (FMV) -->
+    <!-- 26. 模糊次像素測量 (FMV) 下限與上限 -->
     <div class="param-group" data-types="fuzzy_measurement">
         <label>模糊下限 (Min Value): <span id="val_fmv_min">40</span></label>
         <input type="range" name="fmv_min" min="0" max="255" step="1" value="40" oninput="document.getElementById('val_fmv_min').innerText=this.value">
@@ -372,7 +370,7 @@
         <input type="range" name="fmv_max" min="0" max="255" step="1" value="120" oninput="document.getElementById('val_fmv_max').innerText=this.value">
     </div>
 
-    <!-- 區域成長 (Region Growing) -->
+    <!-- 27. 區域成長 (Region Growing) 色彩容差與種子點 -->
     <div class="param-group" data-types="region_growing">
         <label>色彩容差 (Tolerance): <span id="val_tolerance">20</span></label>
         <input type="range" name="tolerance" min="1" max="100" step="1" value="20" oninput="document.getElementById('val_tolerance').innerText=this.value">

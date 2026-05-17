@@ -1,4 +1,5 @@
-# 負責影像處理路由與算子映射
+# 影像處理路由與算子映射 (Image Processing Routes & Operation Mapping)
+# 此模組負責接收前端影像處理請求，並將其映射至對應的 ImageProcessor 方法。
 
 import cv2
 import numpy as np
@@ -10,12 +11,20 @@ from image_processing import ImageProcessor
 image_bp = Blueprint('image', __name__)
 
 # ==========================================
-# 🛠️ 核心重構：統一的算子執行器 (Operation Mapper)
-# 將原本重複的 if-elif 集中管理，無論是單步還是管線模式都呼叫這裡
+# 🛠️ 核心工具：統一算子執行器 (Unified Operation Executor)
 # ==========================================
 def _apply_operation(processor, op, params):
-    """根據算子名稱與參數字典，執行對應的影像處理器方法"""
+    """
+    根據算子名稱與參數字典，執行對應的影像處理器方法。
+    這是一個中央映射器，確保「單步模式」與「管線模式」共用同一套邏輯。
     
+    參數:
+    - processor: ImageProcessor 實例
+    - op: 算子識別字串 (如 'binarize')
+    - params: 字典格式的參數集 (如 {'threshold': 127})
+    """
+    
+    # --- 1. 基本強度轉換與點處理 ---
     if op == 'binarize':
         return processor.binarize(
             int(params.get('threshold', 127)), 
@@ -50,7 +59,7 @@ def _apply_operation(processor, op, params):
     elif op == 'equalization':
         return processor.histogram_equalization()
         
-    # --- 形態學 (拆分成 7 個獨立算子) ---
+    # --- 2. 形態學運算 (基礎與邊界) ---
     elif op == 'erosion':
         return processor.erosion(params.get('shape', 'rect'), int(params.get('ksize', 3)), int(params.get('iterations', 1)))
     elif op == 'dilation':
@@ -74,23 +83,18 @@ def _apply_operation(processor, op, params):
             mode=params.get('smooth_mode', 'open_close')
         )
         
-    # ==========================================
-    # 🌟 新增：進階形態學、分析測量與區域成長
-    # ==========================================
+    # --- 3. 進階形態學與分析量測 ---
     elif op == 'hole_filling':
         return processor.hole_filling()
     elif op == 'hit_or_miss':
         return processor.hit_or_miss()
-        
     elif op == 'connected_components':
         min_area = int(params.get('min_area')) if params.get('min_area') else 0
         max_area = int(params.get('max_area')) if params.get('max_area') else 9999999
         connectivity = int(params.get('connectivity', 8))
         return processor.connected_components(min_area=min_area, max_area=max_area, connectivity=connectivity)
         
-    # ==========================================
-    # 🌟 新增：進階特徵、次像素與四分樹分割
-    # ==========================================
+    # --- 4. 進階幾何特徵與次像素量測 ---
     elif op == 'advanced_features':
         return processor.advanced_features(
             min_area=int(params.get('adv_min_area', 100)),
@@ -103,45 +107,38 @@ def _apply_operation(processor, op, params):
             calc_perimeter=str(params.get('calc_perimeter', 'false')).lower() == 'true',
             calc_shape=str(params.get('calc_shape', 'false')).lower() == 'true'
         )
-        
     elif op == 'subpixel_corners':
         return processor.subpixel_corners(
             max_corners=int(params.get('max_corners', 100)),
             quality=float(params.get('quality', 0.01)),
             min_dist=int(params.get('min_dist', 10))
         )
-        
     elif op == 'subpixel_contours':
         return processor.subpixel_contours(
             threshold=int(params.get('sub_threshold', 127)),
             upscale_factor=int(params.get('upscale_factor', 4))
         )
-        
-    elif op == 'region_split_merge':
-        return processor.region_split_merge(
-            std_threshold=float(params.get('std_threshold', 15.0)),
-            min_size=int(params.get('min_size', 8))
-        )
-        
     elif op == 'fuzzy_measurement':
         return processor.fuzzy_measurement(
             min_val=int(params.get('fmv_min', 40)),
             max_val=int(params.get('fmv_max', 120))
         )
-    # ==========================================
 
+    # --- 5. 影像分割演算法 ---
     elif op == 'region_growing':
-        # 安全轉型：若前端沒有傳入座標，則設為 None 讓後端自動取中心點
         seed_x_val = params.get('seed_x')
         seed_y_val = params.get('seed_y')
         seed_x = int(seed_x_val) if seed_x_val else None
         seed_y = int(seed_y_val) if seed_y_val else None
         tolerance = int(params.get('tolerance')) if params.get('tolerance') else 20
-        
         return processor.region_growing(seed_x=seed_x, seed_y=seed_y, tolerance=tolerance)
-    # ==========================================
+    elif op == 'region_split_merge':
+        return processor.region_split_merge(
+            std_threshold=float(params.get('std_threshold', 15.0)),
+            min_size=int(params.get('min_size', 8))
+        )
 
-    # --- 空間域濾波 ---
+    # --- 6. 空間域濾波器 ---
     elif op == 'mean':
         return processor.mean_filter(int(params.get('kernel_size', 3)))
     elif op == 'gaussian':
@@ -157,7 +154,7 @@ def _apply_operation(processor, op, params):
     elif op == 'sharpen':
         return processor.sharpen_filter(float(params.get('sharpen_amount', 1.0)))
         
-    # --- 邊緣偵測 ---
+    # --- 7. 邊緣偵測 ---
     elif op == 'roberts':
         return processor.roberts_filter(params.get('edge_direction', 'both'))
     elif op == 'prewitt':
@@ -179,7 +176,7 @@ def _apply_operation(processor, op, params):
             int(params.get('canny_blur_ksize', 5)), float(params.get('canny_blur_sigma', 1.4))
         )
         
-    # --- 頻率域 ---
+    # --- 8. 頻率域濾波 ---
     elif op == 'notch_reject':
         return processor.notch_reject_filter(
             float(params.get('notch_d0_u', 30.0)), float(params.get('notch_d0_v', 30.0)), 
@@ -193,7 +190,7 @@ def _apply_operation(processor, op, params):
             float(params.get('freq_W', 10.0)), float(params.get('freq_a', 0.5)), float(params.get('freq_b', 1.5))
         )
         
-    # --- 特徵檢測 ---
+    # --- 9. 特徵檢測 (Hough Transform) ---
     elif op == 'hough_lines_standard':
         return processor.hough_lines_standard(
             int(params.get('hough_threshold', 100)), float(params.get('hough_rho', 1.0)), float(params.get('hough_theta', 1.0)), 
@@ -216,54 +213,63 @@ def _apply_operation(processor, op, params):
 
 
 # ==========================================
-# 🌐 API 路由處理
+# 🌐 API 路由主入口 (API Route Entry Point)
 # ==========================================
 @image_bp.route('/tool/image-processing', methods=['GET', 'POST'])
 def image_processing():
+    """主路由處理器：負責渲染頁面或處理影像計算請求"""
     if request.method == 'GET':
         return render_template('image_processing.html')
 
     if request.method == 'POST':
+        # 1. 驗證圖片上傳狀態
         if 'image' not in request.files:
-            return jsonify({"error": "沒有上傳圖片"}), 400
+            return jsonify({"error": "未偵測到上傳圖片"}), 400
             
         file = request.files['image']
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img_array = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
         if img_array is None:
-            return jsonify({"error": "圖片讀取失敗"}), 400
+            return jsonify({"error": "影像格式解析失敗"}), 400
 
+        # 2. 根據 pipeline_sequence 判斷執行模式
         pipeline_str = request.form.get('pipeline_sequence')
         
         if pipeline_str:
             # ------------------------------------------
-            # 🌟 管線模式 (Pipeline Mode)
+            # 🌟 [模式 A] 管線堆疊 (Pipeline Mode)
             # ------------------------------------------
             pipeline = json.loads(pipeline_str)
             pipeline_results = []
             current_img = img_array.copy()
             
+            # 編碼全局原圖
             success_orig, encoded_orig = cv2.imencode('.jpg', current_img)
             global_input_b64 = base64.b64encode(encoded_orig).decode('utf-8') if success_orig else ""
             
+            # 依序執行堆疊中的算子
             for i, node in enumerate(pipeline):
                 op = node['type']
                 params = node.get('params', {})
                 
+                # 紀錄該節點的輸入影像
                 success_in, encoded_in = cv2.imencode('.jpg', current_img)
                 node_input_b64 = base64.b64encode(encoded_in).decode('utf-8') if success_in else ""
                 
                 processor = ImageProcessor(current_img)
                 
-                # 呼叫統一執行器
+                # 呼叫映射器執行算子
                 result_img = _apply_operation(processor, op, params)
                 
+                # 紀錄該節點的輸出影像
                 success_out, encoded_out = cv2.imencode('.jpg', result_img)
                 node_output_b64 = base64.b64encode(encoded_out).decode('utf-8') if success_out else ""
                 
+                # 收集該算子產生的所有中間步驟
                 steps_b64 = [{"name": name, "image": base64.b64encode(cv2.imencode('.jpg', step_img)[1]).decode('utf-8')} for name, step_img in processor.steps]
                 
+                # 打包節點數據
                 pipeline_results.append({
                     'node_idx': i,
                     'operation_name': node['name'],
@@ -276,8 +282,10 @@ def image_processing():
                     'processed_spectrum': ImageProcessor.generate_spectrum_base64(result_img)
                 })
                 
+                # 更新目前影像，傳遞給下一層
                 current_img = result_img
             
+            # 編碼全局最終輸出
             success_final, encoded_final = cv2.imencode('.jpg', current_img)
             global_output_b64 = base64.b64encode(encoded_final).decode('utf-8') if success_final else ""
             
@@ -294,16 +302,16 @@ def image_processing():
 
         else:
             # ------------------------------------------
-            # 🌟 單步模式 (Single Mode)
+            # 🌟 [模式 B] 單步分析 (Single Mode)
             # ------------------------------------------
             process_type = request.form.get('process_type', 'negative') 
             
             processor = ImageProcessor(img_array)
             
-            # 將 request.form 視為參數字典，直接傳給統一執行器！
-            # 這樣就不用手動寫幾十行的 request.form.get(...) 了
+            # 直接將表單內容視為參數傳入執行器
             result_img = _apply_operation(processor, process_type, request.form)
 
+            # 編碼原圖與結果圖
             success_orig, encoded_orig = cv2.imencode('.jpg', img_array)
             orig_b64 = base64.b64encode(encoded_orig).decode('utf-8') if success_orig else ""
 
@@ -312,6 +320,7 @@ def image_processing():
                 return jsonify({"error": "影像編碼失敗"}), 500
             processed_b64 = base64.b64encode(encoded_img).decode('utf-8')
 
+            # 收集步驟紀錄
             steps_b64 = [{"name": name, "image": base64.b64encode(cv2.imencode('.jpg', img)[1]).decode('utf-8')} for name, img in processor.steps]
 
             return jsonify({

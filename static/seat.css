@@ -1,40 +1,51 @@
 /* =========================================
-   🎓 學生座位排列系統專屬樣式 (Seat Arranger)
+   🎓 學生座位排列系統 (Seat Arranger)
+   此樣式表負責座位排列、排版邏輯與實驗室視圖渲染。
    ========================================= */
+
 :root {
-    --seat-w: 72px; --seat-h: 62px; --seat-font: 0.78rem; --seat-gap: 6px;
+    /* 座位基礎幾何參數 */
+    --seat-w: 72px; 
+    --seat-h: 62px; 
+    --seat-font: 0.78rem; 
+    --seat-gap: 6px;
 }
 
+/* 1. 功能卡片容器 (Action Cards) */
 .seat-card { 
-    background: rgba(10, 15, 25, 0.85); /* 🌟 加深 */
+    background: rgba(10, 15, 25, 0.85); 
     border: 1px solid rgba(100, 255, 218, 0.15); border-radius: 8px; padding: 15px; margin-bottom: 20px; 
 }
 .seat-card-title { color: #ff79c6; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; margin-bottom: 12px; letter-spacing: 1px; }
 
+/* 2. 名單與設定控制項 (Input & Controls) */
 textarea { 
     width: 100%; padding: 10px; 
-    background: rgba(0, 0, 0, 0.7); /* 🌟 加深輸入框 */
+    background: rgba(0, 0, 0, 0.7); 
     border: 1px solid #334155; border-radius: 6px; color: #f8fafc; font-family: monospace; resize: vertical; min-height: 80px; outline: none; transition: border 0.2s; 
 }
 textarea:focus { border-color: #64ffda; }
 
+/* 選項項目 (如：教室選擇) */
 .opt-item { 
     display: flex; align-items: center; gap: 10px; padding: 10px 15px; 
-    background: rgba(0, 0, 0, 0.6); /* 🌟 加深 */
+    background: rgba(0, 0, 0, 0.6); 
     border: 1px solid #334155; border-radius: 4px; margin-bottom: 5px; cursor: pointer; transition: all 0.2s ease; color: #cbd5e1; font-size: 0.9rem; 
 }
 .opt-item:hover { border-color: rgba(100, 255, 218, 0.3); background: rgba(100, 255, 218, 0.05); color: #f8fafc; }
 .opt-item.selected { background: rgba(100, 255, 218, 0.1); border-color: rgba(100, 255, 218, 0.4); color: #64ffda; box-shadow: inset 0 0 10px rgba(100, 255, 218, 0.1); }
 .opt-item input { accent-color: #64ffda; cursor: pointer; }
 
+/* 3. 科技感開關 (Modern Toggle Switch) */
 .toggle-row { 
     display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; 
-    background: rgba(0, 0, 0, 0.5); /* 🌟 加深 */
+    background: rgba(0, 0, 0, 0.5); 
     border: 1px solid #334155; margin-top: 10px; 
 }
 .toggle-row.active { border-color: #ff79c6; background: rgba(255, 121, 198, 0.1); }
 .toggle-label { font-size: 0.85rem; color: #cbd5e1; }
 .toggle-row.active .toggle-label { color: #ff79c6; font-weight: bold; }
+
 .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
 .toggle input { opacity: 0; width: 0; height: 0; }
 .toggle-slider { position: absolute; inset: 0; background: #334155; border-radius: 22px; cursor: pointer; transition: .3s; }
@@ -51,6 +62,7 @@ input:checked + .toggle-slider:before { transform: translateX(18px); background:
 .cap-fill.over { background: #ff79c6; box-shadow: 0 0 8px #ff79c6; }
 .cap-text { font-size: 0.75rem; color: #cbd5e1; margin-top: 5px; }
 
+/* 4. 分頁標籤 (Tabs) */
 .tabs { display: flex; gap: 10px; border-bottom: 1px solid #334155; margin-bottom: 20px; }
 .tab { padding: 10px 20px; font-size: 0.9rem; font-weight: 600; color: #cbd5e1; cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; font-family: 'Orbitron'; }
 .tab.active { color: #64ffda; border-bottom-color: #64ffda; background: rgba(100, 255, 218, 0.05); }
@@ -62,26 +74,39 @@ input:checked + .toggle-slider:before { transform: translateX(18px); background:
 .alert-warning { background: rgba(241, 250, 140, 0.1); color: #f1fa8c; border-color: rgba(241, 250, 140, 0.25); }
 .alert-error { background: rgba(255, 121, 198, 0.1); color: #ff79c6; border-color: rgba(255, 121, 198, 0.25); }
 
+/* 5. 教室俯視圖 (Classroom Visualizer) */
 .cls-view { 
-    background: rgba(10, 15, 25, 0.85); /* 🌟 加深 */
+    background: rgba(10, 15, 25, 0.85); 
     border-radius: 10px; padding: 20px; border: 1px dashed rgba(100, 255, 218, 0.2); margin-bottom: 20px; overflow-x: auto; overflow-y: hidden; 
 }
 .cls-title { text-align: center; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .cls-badge { font-size: 1rem; font-weight: 700; color: #64ffda; font-family: 'Orbitron'; padding: 5px 15px; border: 1px solid #64ffda; border-radius: 4px; background: rgba(100, 255, 218, 0.1); }
 .cls-stat { font-size: 0.8rem; color: #cbd5e1; background: rgba(0, 0, 0, 0.6); padding: 5px 12px; border-radius: 4px; border: 1px solid #334155; }
+
+/* 講台標示 */
 .stage { background: rgba(100, 255, 218, 0.1); color: #64ffda; text-align: center; padding: 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; margin-bottom: 20px; letter-spacing: 2px; border: 1px solid rgba(100, 255, 218, 0.25); }
 .cls-center { display: flex; flex-direction: column; align-items: center; min-width: max-content; margin: 0 auto; transform-origin: top center; transform: scale(var(--zoom, 1)); transition: transform 0.2s ease-out; }
 
-.seat { width: var(--seat-w); min-width: var(--seat-w); height: var(--seat-h); padding: 5px 4px; border-radius: 7px; border: 1px solid #334155; background: rgba(0, 0, 0, 0.6); cursor: pointer; transition: all .2s; text-align: center; font-size: var(--seat-font); line-height: 1.35; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+/* 6. 座位單元樣式 (Seat Component) */
+.seat { 
+    width: var(--seat-w); min-width: var(--seat-w); height: var(--seat-h); 
+    padding: 5px 4px; border-radius: 7px; border: 1px solid #334155; 
+    background: rgba(0, 0, 0, 0.6); cursor: pointer; transition: all .2s; 
+    text-align: center; font-size: var(--seat-font); line-height: 1.35; 
+    flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; 
+}
 .seat:hover { border-color: #64ffda; box-shadow: 0 0 10px rgba(100, 255, 218, 0.3); transform: translateY(-2px); }
-.seat.occupied { background: rgba(100, 255, 218, 0.1); border-color: #64ffda; }
-.seat.quincunx { background: rgba(255, 121, 198, 0.1); border-color: #ff79c6; }
-.seat.empty { background: rgba(255, 255, 255, 0.02); border-color: #333; color: #666; }
+
+/* 各種座位狀態 */
+.seat.occupied { background: rgba(100, 255, 218, 0.1); border-color: #64ffda; } /* 有人 */
+.seat.quincunx { background: rgba(255, 121, 198, 0.1); border-color: #ff79c6; } /* 梅花座 */
+.seat.empty { background: rgba(255, 255, 255, 0.02); border-color: #333; color: #666; } /* 空位 */
+
 .seat-num { font-size: .58rem; color: #94a3b8; line-height: 1; margin-bottom: 1px; }
 .seat-name { font-weight: 700; color: #64ffda; font-size: var(--seat-font); word-break: break-all; line-height: 1.3; }
 .seat-id { font-size: .62rem; color: #cbd5e1; line-height: 1.2; }
 
-.teacher-pc { background: #334155; color: #64ffda; border-radius: 7px; padding: 6px 4px; font-size: .65rem; font-weight: 700; text-align: center; width: var(--seat-w); min-width: var(--seat-w); height: var(--seat-h); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 1px solid #64ffda; }
+.teacher-pc { background: #334155; color: #64ffda; border-radius: 7px; padding: 6px 4px; font-size: .65rem; font-weight: 700; text-align: center; width: var(--seat-w); height: var(--seat-h); display: flex; flex-direction: column; align-items: center; justify-content: center; border: 1px solid #64ffda; }
 
 .el310-outer { display: inline-flex; flex-direction: column; align-items: flex-start; }
 .el310-headers { display: flex; gap: var(--seat-gap); margin-bottom: 5px; align-items: flex-end; }
@@ -97,13 +122,26 @@ input:checked + .toggle-slider:before { transform: translateX(18px); background:
 
 .no-result { text-align: center; padding: 40px 20px; color: #94a3b8; font-size: 0.9rem; }
 .no-result .icon { font-size: 3rem; margin-bottom: 15px; opacity: 0.5; }
+
+/* 7. 匯出表格樣式 (Export Table) */
 .exp-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #f8fafc; }
 .exp-table th { background: rgba(100, 255, 218, 0.1); color: #64ffda; padding: 10px; text-align: left; border-bottom: 1px solid #64ffda; font-family: 'Orbitron'; }
 .exp-table td { padding: 10px; border-bottom: 1px solid #334155; }
 .exp-table tr:hover td { background: rgba(255, 255, 255, 0.05); }
 
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 200; justify-content: center; align-items: center; padding: 16px; backdrop-filter: blur(5px); }
+/* 8. 模態框樣式 (Modal & Overlay) */
+.modal-overlay { 
+    display: none; position: fixed; inset: 0; 
+    background: rgba(0, 0, 0, 0.8); z-index: 200; 
+    justify-content: center; align-items: center; padding: 16px; 
+    backdrop-filter: blur(5px); 
+}
 .modal-overlay.show { display: flex; }
-.modal { background: #0a0f19; border-radius: 12px; padding: 25px; max-width: 460px; width: 100%; border: 1px solid #64ffda; box-shadow: 0 0 30px rgba(100, 255, 218, 0.15); }
+
+.modal { 
+    background: #0a0f19; border-radius: 12px; padding: 25px; 
+    max-width: 460px; width: 100%; border: 1px solid #64ffda; 
+    box-shadow: 0 0 30px rgba(100, 255, 218, 0.15); 
+}
 .modal h3 { font-size: 1.2rem; font-family: 'Orbitron'; color: #64ffda; margin-top: 0; margin-bottom: 15px; }
 .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }

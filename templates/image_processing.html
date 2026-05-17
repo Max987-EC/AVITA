@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AOI 視覺檢測工作站 | AVITA</title>
     
+    <!-- 引入系統字體與全站樣式 -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
@@ -12,38 +13,41 @@
 </head>
 <body>
 
+    <!-- 主面板容器 (Main Tool Panel) -->
     <div class="tool-panel wide">
+        
+        <!-- 頁面頂部列 (Panel Header) -->
         <div class="panel-header" style="position: relative; display: flex; justify-content: space-between; align-items: center;">
-            <!-- 左側：返回按鈕 -->
+            <!-- 1. 返回首頁按鈕 -->
             <a href="/" class="btn btn-back" style="z-index: 2;">◀ 返回大廳</a>
             
-            <!-- 中間：絕對置中的標題 -->
+            <!-- 2. 主標題 (絕對置中) -->
             <h2 style="position: absolute; left: 50%; transform: translateX(-50%); margin: 0; width: 100%; text-align: center; pointer-events: none;">
                 👁️‍🗨️ AOI 視覺檢測工作站
             </h2>
             
-            <!-- 右側：模式切換開關 -->
+            <!-- 3. 運行模式切換器 (App Mode Toggle) -->
             <div class="mode-toggle-group header-toggle" style="z-index: 2; margin: 0;">
                 <label class="mode-btn">
                     <input type="radio" name="app_mode" value="single" checked>
-                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">單步分析</span>
+                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">單步分析 (Single)</span>
                 </label>
                 <label class="mode-btn">
                     <input type="radio" name="app_mode" value="stack">
-                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">檢測管線</span>
+                    <span class="btn-text" style="padding: 6px 15px; font-size: 0.85rem;">檢測管線 (Pipeline)</span>
                 </label>
             </div>
         </div>
 
-        
+        <!-- 核心佈局區域 (Tool Layout) -->
         <div class="tool-layout">
-            <!-- 1. 引入左側控制面板 -->
+            <!-- [左側] 控制側邊欄 (引入 Sidebar 組件) -->
             {% include 'components/image_processing/_sidebar.html' %}
 
-            <!-- 右側主要區域 -->
+            <!-- [右側] 主要工作區 (Main Workspace) -->
             <div class="main-workspace" style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
                 
-                <!-- 2. 引入中間視覺化內容與步驟面板 -->
+                <!-- 視覺化內容與執行步驟 (引入 Content 組件) -->
                 <div class="content-wrapper" style="display: flex; flex-direction: row; gap: 30px; align-items: flex-start; width: 100%;">
                     {% include 'components/image_processing/_content.html' %}
                 </div>
@@ -52,42 +56,43 @@
         </div> 
     </div> 
 
-    <!-- 引入模組化的 JavaScript 檔案 -->
+    <!-- 模組化前端邏輯腳本 (Scripts) -->
+    <!-- app.js: 單步分析主邏輯 | pipeline.js: 管線管理與堆疊邏輯 | ui_components.js: 共用 UI 交互 -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pipeline.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ui_components.js') }}"></script>
 
-    <!-- 🔍 圖片放大模態框 (Image Lightbox Modal) -->
+    <!-- 🔍 圖片放大燈箱 (Image Lightbox Modal) -->
     <div id="imageModal" class="image-modal" onclick="closeImageModal()">
         <span class="close-modal" onclick="closeImageModal()">&times;</span>
         <img class="modal-content" id="modalImage">
         <div id="modalCaption"></div>
     </div>
 
-    <!-- 📷 相機擷取模態框 (Camera Modal) -->
+    <!-- 📷 實時相機擷取模態框 (Camera Modal) -->
     <div id="cameraModal" class="image-modal">
         <div class="camera-container">
             <div class="camera-header">
-                <h3 style="margin: 0; color: #64ffda; font-family: 'Orbitron', sans-serif;">📷 實時影像擷取</h3>
+                <h3 style="margin: 0; color: #64ffda; font-family: 'Orbitron', sans-serif;">📷 實時影像擷取 (Live Capture)</h3>
                 <span class="close-camera" onclick="closeCamera()">&times;</span>
             </div>
             
-            <!-- 鏡頭選擇下拉選單 -->
+            <!-- 多鏡頭選擇 -->
             <select id="cameraSelect" class="tech-select" style="margin-bottom: 15px;"></select>
             
-            <!-- 攝影機預覽畫面 -->
+            <!-- 影片預覽區 -->
             <div class="video-wrapper">
                 <video id="cameraVideo" autoplay playsinline></video>
-                <!-- 掃描線動畫 (增加科技感) -->
+                <!-- 模擬科技感掃描線動畫 -->
                 <div class="scan-line"></div>
             </div>
             
-            <!-- 拍照按鈕 -->
+            <!-- 擷取按鈕 -->
             <button id="captureBtn" class="btn submit-btn" style="margin-top: 15px; background: rgba(100, 255, 218, 0.2); border-color: #64ffda; color: #f8fafc;">
                 📸 擷取畫面 (Capture)
             </button>
             
-            <!-- 隱藏的 Canvas 用來轉換圖片 -->
+            <!-- 隱藏畫布 (用於捕捉幀並轉換為 Blob) -->
             <canvas id="cameraCanvas" style="display: none;"></canvas>
         </div>
     </div>

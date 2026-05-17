@@ -1,16 +1,18 @@
-// 負責核心狀態、API 請求與參數管理
+// 影像處理應用主邏輯 (Core Application Logic)
+// 負責核心狀態管理、API 請求發送以及動態參數面板的調度。
 
 // ==========================================
-// 1. 全域變數與 DOM 元素 (Global State & DOM)
+// 1. 全域狀態與 DOM 引用 (Global State & DOM)
 // ==========================================
 const paramPanel = document.getElementById('paramPanel');
 const paramGroups = document.querySelectorAll('.param-group');
 const sidebarModuleList = document.getElementById('sidebarModuleList'); 
 
-let currentMode = 'single'; 
-let layerStack = [];        
-let activeLayerId = null;
+let currentMode = 'single'; // 運行模式：'single' (單步) 或 'stack' (管線)
+let layerStack = [];        // 儲存管線模式下的算子堆疊
+let activeLayerId = null;   // 目前正在編輯參數的圖層 ID
 
+// 儲存從伺服器回傳的管線處理中間數據
 let currentPipelineData = []; 
 let globalInputUrl = '';
 let globalOutputUrl = '';
@@ -20,8 +22,12 @@ let globalOriginalSpectrum = '';
 let globalProcessedSpectrum = '';
 
 // ==========================================
-// 2. 參數儲存與讀取 (Parameter Management)
+// 2. 參數管理系統 (Parameter Management)
 // ==========================================
+
+/**
+ * 將 UI 面板上的參數值同步回 layerStack 中對應的圖層物件。
+ */
 function saveCurrentParamsToLayer() {
     if (!activeLayerId) return;
     const layer = layerStack.find(l => l.id === activeLayerId);
@@ -33,6 +39,7 @@ function saveCurrentParamsToLayer() {
             const inputs = group.querySelectorAll('input, select');
             inputs.forEach(input => {
                 if (!input.name) return; 
+                // 根據輸入類型儲存值 (Checkbox 儲存布林值)
                 if (input.type === 'checkbox' || input.type === 'radio') {
                     layer.params[input.name] = input.checked;
                 } else {
@@ -43,6 +50,10 @@ function saveCurrentParamsToLayer() {
     });
 }
 
+/**
+ * 將指定圖層的參數載入到 UI 面板的 DOM 元素中。
+ * @param {Object} layer - 圖層物件
+ */
 function loadParamsIntoDOM(layer) {
     paramGroups.forEach(group => {
         const types = group.getAttribute('data-types').split(',');
@@ -51,6 +62,7 @@ function loadParamsIntoDOM(layer) {
             inputs.forEach(input => {
                 if (!input.name) return;
                 
+                // 若圖層已有儲存的參數，則還原；否則使用預設值
                 if (layer.params[input.name] !== undefined) {
                     if (input.type === 'checkbox' || input.type === 'radio') {
                         input.checked = layer.params[input.name];
@@ -58,6 +70,7 @@ function loadParamsIntoDOM(layer) {
                         input.value = layer.params[input.name];
                     }
                 } else {
+                    // 備援方案：從 HTML 預設屬性中提取初始值
                     if (input.type === 'checkbox' || input.type === 'radio') {
                         input.checked = input.defaultChecked;
                         layer.params[input.name] = input.defaultChecked;
@@ -71,6 +84,7 @@ function loadParamsIntoDOM(layer) {
                         layer.params[input.name] = input.defaultValue;
                     }
                 }
+                // 手動觸發事件以更新 UI 數值顯示
                 input.dispatchEvent(new Event('input', { bubbles: true }));
                 input.dispatchEvent(new Event('change', { bubbles: true }));
             });
@@ -78,6 +92,10 @@ function loadParamsIntoDOM(layer) {
     });
 }
 
+/**
+ * 根據處理類型切換顯示對應的參數組。
+ * @param {string} type - 影像處理算子名稱 (如 'binarize')
+ */
 function showParamGroupForType(type) {
     let hasVisibleParams = false;
     paramGroups.forEach(group => {
@@ -89,26 +107,34 @@ function showParamGroupForType(type) {
             group.style.display = 'none';
         }
     });
+    // 若無可用參數則隱藏整個面板
     paramPanel.style.display = hasVisibleParams ? 'block' : 'none';
 }
 
+/**
+ * 單步模式專用：更新目前選中算子的參數面板。
+ */
 function updateParamsForSingleMode() {
     const checkedRadio = document.querySelector('input[name="process_type"]:checked');
     if (checkedRadio) showParamGroupForType(checkedRadio.value);
 }
 
 // ==========================================
-// 3. API 請求與防抖 (API & Debounce)
+// 3. API 請求與後端互動 (API & Network)
 // ==========================================
 const form = document.getElementById('processForm');
 const loading = document.getElementById('loadingIndicator');
 
+/**
+ * 主處理函數：打包數據、發送 POST 請求並渲染結果。
+ */
 async function processImage() {
     const fileInput = document.getElementById('imageInput');
     if (!fileInput.files || fileInput.files.length === 0) return; 
 
     const formData = new FormData(form);
     
+    // 管線模式下，需將整串 layerStack 序列化後發送
     if (currentMode === 'stack') {
         saveCurrentParamsToLayer();
         formData.append('pipeline_sequence', JSON.stringify(layerStack));
@@ -118,9 +144,10 @@ async function processImage() {
     try {
         const response = await fetch('/tool/image-processing', { method: 'POST', body: formData });
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "伺服器錯誤");
+        if (!response.ok) throw new Error(data.error || "伺服器傳回錯誤");
 
         if (data.mode === 'stack') {
+            // [管線模式] 儲存全局與中間節點數據
             currentPipelineData = data.nodes_data;
             globalInputUrl = "data:image/jpeg;base64," + data.global_input;
             globalOutputUrl = "data:image/jpeg;base64," + data.global_output;
@@ -129,6 +156,7 @@ async function processImage() {
             globalOriginalSpectrum = data.original_spectrum;
             globalProcessedSpectrum = data.processed_spectrum;
             
+            // 根據目前選中的圖層決定顯示全局還是節點視圖
             if (activeLayerId) {
                 const activeIndex = layerStack.findIndex(l => l.id === activeLayerId);
                 if (activeIndex !== -1 && currentPipelineData[activeIndex]) {
@@ -140,6 +168,7 @@ async function processImage() {
                 renderGlobalView();
             }
         } else {
+            // [單步模式] 直接更新主預覽區
             if (data.original_image) document.getElementById('originalImage').src = "data:image/jpeg;base64," + data.original_image;
             document.getElementById('processedImage').src = "data:image/jpeg;base64," + data.processed_image;
             document.getElementById('originalHistogram').src = "data:image/png;base64," + data.original_histogram;
@@ -150,6 +179,7 @@ async function processImage() {
             document.getElementById('histogramSection').style.display = 'block';
             document.getElementById('spectrumSection').style.display = 'block'; 
 
+            // 動態生成並顯示中間處理步驟 (Steps)
             const stepsContainer = document.getElementById('stepsContainer');
             const stepsGrid = document.getElementById('stepsGrid');
             stepsGrid.innerHTML = ''; 
@@ -176,6 +206,9 @@ async function processImage() {
     }
 }
 
+/**
+ * 防抖函數 (Debounce)：避免頻繁拖動滑桿導致 API 請求過載。
+ */
 function debounce(func, wait) {
     let timeout;
     return function(...args) {
@@ -187,13 +220,16 @@ function debounce(func, wait) {
 const debouncedProcessImage = debounce(processImage, 500);
 
 // ==========================================
-// 4. 事件監聽綁定 (Event Listeners)
+// 4. 事件監聽 (Event Listeners)
 // ==========================================
+
+// A. 參數變動監聽：滑桿、選單、勾選框
 document.querySelectorAll('input[type="range"], select, input[type="checkbox"]').forEach(el => {
     el.addEventListener('input', debouncedProcessImage);
     el.addEventListener('change', debouncedProcessImage);
 });
 
+// B. 參數重置功能
 document.getElementById('resetParamsBtn').addEventListener('click', () => {
     document.querySelectorAll('#paramPanel input[type="range"]').forEach(range => {
         range.value = range.defaultValue;
@@ -210,6 +246,7 @@ document.getElementById('resetParamsBtn').addEventListener('click', () => {
     });
 });
 
+// C. 圖片檔案上傳監聽
 document.getElementById('imageInput').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -217,6 +254,7 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
         const origImgTag = document.getElementById('originalImage');
 
         if (isTiff) {
+            // TIFF 特別處理：不支援瀏覽器即時預覽，顯示處理中提示
             origImgTag.src = "";
             origImgTag.alt = "[ TIFF 格式無法即時預覽，處理中... ]";
             document.getElementById('imageGrid').style.display = 'grid';
@@ -230,6 +268,7 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
             reader.readAsDataURL(file);
         }
 
+        // 清空舊結果
         document.getElementById('processedImage').src = "";
         document.getElementById('originalHistogram').src = "";
         document.getElementById('processedHistogram').src = "";
@@ -243,6 +282,7 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
     }
 });
 
+// D. Otsu 自動門檻與滑桿鎖定
 const otsuCheckbox = document.getElementById('otsuCheckbox');
 if (otsuCheckbox) {
     otsuCheckbox.addEventListener('change', function(e) {
@@ -258,6 +298,7 @@ if (otsuCheckbox) {
     });
 }
 
+// E. 模式切換監聽 (單步 vs 管線)
 document.querySelectorAll('input[name="app_mode"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
         currentMode = e.target.value;
@@ -283,6 +324,7 @@ document.querySelectorAll('input[name="app_mode"]').forEach(radio => {
     });
 });
 
+// F. 單步模式算子切換
 document.querySelectorAll('input[name="process_type"]').forEach(radio => {
     radio.addEventListener('change', (e) => {
         if (currentMode === 'single') {
@@ -292,6 +334,9 @@ document.querySelectorAll('input[name="process_type"]').forEach(radio => {
     });
 });
 
+/**
+ * 側邊欄抽屜開關 (僅適用於特定佈局)
+ */
 function toggleDrawer() {
     const drawer = document.getElementById('modeDrawer');
     if(drawer) drawer.classList.toggle('open');

@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AVITA | 視覺影像工具</title>
+    <title>AVITA | 視覺影像工具 (Visual Tools Hub)</title>
+    
+    <!-- 引入全站共用樣式與字體 -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
     
-    <!-- 🌟 新增：專屬貓咪印章的樣式 (直接寫在這裡覆蓋舊設定，確保不會消失) -->
+    <!-- 🌟 專屬貓咪印章 (Mini-Cat Stamps) 樣式 -->
+    <!-- 這是首頁專屬的趣味互動元件，不移入外部 CSS 以確保即時渲染與覆蓋效果。 -->
     <style>
         .mini-cat {
             position: fixed;
             width: 45px;
             height: 45px;
-            /* 讓滑鼠可以穿透貓咪，確保不會擋住底下的按鈕 */
+            /* pointer-events: none 確保印章不會遮擋按鈕點擊 */
             pointer-events: none; 
             z-index: 0; 
-            /* 彈出動畫，且停留在最終狀態 (forwards) */
+            /* 彈出效果：使用貝茲曲線營造彈跳感，動畫結束後停留在 scale(1) */
             animation: cat-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            /* 設定微透明，讓畫面點滿貓咪時依然有質感 */
             opacity: 0.6; 
         }
 
@@ -30,26 +32,29 @@
     </style>
 </head>
 <body>
+    
+    <!-- 主內容區：Logo 與 副標題 -->
     <div class="container">
         <h1 class="logo">AVITA</h1>
-        <p class="subtitle">全用途視覺影像工具應用</p>
+        <p class="subtitle">全用途視覺影像工具應用 (Visual Image Station)</p>
     </div>
 
-    <!-- 底部上拉抽屜 -->
+    <!-- 底部功能抽屜 (Bottom Tool Drawer) -->
     <div class="bottom-drawer">
-        <div class="drawer-handle"></div>
+        <div class="drawer-handle"></div> <!-- 裝飾用的抽屜拉環 -->
         <div class="button-group">
+            <!-- 連結至各個工具模組 -->
             <a href="/tool/seat-arranger" class="btn">🎓 學生座位排列系統</a>
-            <a href="/tool/lane-detection" class="btn">🚗 車道線偵測</a>
+            <a href="/tool/lane-detection" class="btn">🚗 車道線偵測 (Lane Detect)</a>
             <a href="/tool/image-processing" class="btn">👁️‍🗨️ AOI 視覺檢測工作站</a>
             <a href="#" class="btn disabled">🚀 更多功能開發中...</a>
         </div>
     </div>
 
-    <!-- 🐾 點擊空白處蓋上「貓咪印章」的腳本 -->
+    <!-- 🐾 互動腳本：點擊空白處蓋上「貓咪印章」 -->
     <script>
         document.addEventListener('click', function(e) {
-            // 避免點擊按鈕或抽屜時也觸發
+            // 避免點擊按鈕或功能區時也蓋章，維持介面整潔
             if (e.target.closest('.btn') || e.target.closest('.bottom-drawer')) {
                 return;
             }
@@ -57,34 +62,34 @@
             const cat = document.createElement('div');
             cat.className = 'mini-cat';
             
-            // 讓貓咪的中心點精準對齊滑鼠點擊位置 (扣除寬高的一半)
+            // 計算偏移量，讓印章中心點與滑鼠點擊座標重合
             cat.style.left = (e.clientX - 22.5) + 'px';
             cat.style.top = (e.clientY - 22.5) + 'px';
 
-            // 隨機抽取系統主題色
+            // 隨機選取品牌主題色
             const colors = ['#64ffda', '#82aaff', '#ff79c6'];
             cat.style.color = colors[Math.floor(Math.random() * colors.length)];
 
-            // ^ - ^ 顏文字貓咪圖像
+            // 使用 SVG 繪製貓咪圖案 (顏文字風格)
             cat.innerHTML = `
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                     <g stroke="currentColor" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M 25 40 L 35 25 L 45 40" />
-                        <path d="M 55 40 L 65 25 L 75 40" />
-                        <line x1="46" y1="45" x2="54" y2="45" />
-                        <path d="M 15 45 L 25 48 M 10 55 L 25 55 M 15 65 L 25 62" />
-                        <path d="M 85 45 L 75 48 M 90 55 L 75 55 M 85 65 L 75 62" />
+                        <path d="M 25 40 L 35 25 L 45 40" /> <!-- 左耳 -->
+                        <path d="M 55 40 L 65 25 L 75 40" /> <!-- 右耳 -->
+                        <line x1="46" y1="45" x2="54" y2="45" /> <!-- 額頭連線 -->
+                        <path d="M 15 45 L 25 48 M 10 55 L 25 55 M 15 65 L 25 62" /> <!-- 左鬍鬚 -->
+                        <path d="M 85 45 L 75 48 M 90 55 L 75 55 M 85 65 L 75 62" /> <!-- 右鬍鬚 -->
                     </g>
                     <g fill="currentColor">
-                        <rect x="41" y="52" width="4" height="8" rx="2" />
-                        <rect x="55" y="52" width="4" height="8" rx="2" />
+                        <rect x="41" y="52" width="4" height="8" rx="2" /> <!-- 左眼 -->
+                        <rect x="55" y="52" width="4" height="8" rx="2" /> <!-- 右眼 -->
                     </g>
                 </svg>
             `;
 
             document.body.appendChild(cat);
             
-            // 💡 已經移除了 setTimeout，貓咪現在會永遠留在畫面上！
+            // 💡 貓咪會永遠留在畫面上，直到頁面重新載入。
         });
     </script>
 </body>

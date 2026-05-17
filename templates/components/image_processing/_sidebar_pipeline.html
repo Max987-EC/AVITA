@@ -1,33 +1,32 @@
-<!-- =========================================
-     管線模式專屬：算子管理器 (預設隱藏)
-     ========================================= -->
+<!-- 檢測管線算子管理器 (Pipeline Operator Manager) -->
+<!-- 此檔案定義了「管線模式」下的層級管理介面，允許使用者堆疊多個算子。 -->
 <div class="form-group" id="layerManager" style="display: none; flex-direction: column; gap: 10px;">
     
-    <label>02 // 檢測管線 (PIPELINE NODES)</label>
+    <label>02 // 檢測管線算子 (PIPELINE NODES)</label>
     
     <div style="background: rgba(10, 15, 25, 0.6); border: 1px solid rgba(100, 255, 218, 0.3); border-radius: 8px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
         
-        <!-- 🌟 全局總覽按鈕 -->
+        <!-- 1. 全局檢視與流程圖按鈕 -->
         <button type="button" class="btn" onclick="renderGlobalView()" 
                 style="width: 100%; padding: 8px; background: rgba(130, 170, 255, 0.1); border: 1px dashed #82aaff; color: #82aaff; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s; margin-bottom: 5px;"
                 onmouseover="this.style.background='rgba(130, 170, 255, 0.2)'" 
                 onmouseout="this.style.background='rgba(130, 170, 255, 0.1)'">
-            👁️ 檢視全局結果與流程
+            👁️ 檢視全局結果與流程 (Global View)
         </button>
 
-        <!-- 🌟 完整版下拉選單 (已補齊所有功能) -->
+        <!-- 2. 新增算子選擇選單 (整合所有可用功能) -->
         <select id="newLayerSelect" class="tech-select">
             <optgroup label="[ 基本強度轉換 ]">
                 <option value="negative">負轉換 (Negative)</option>
                 <option value="linear">線性轉換 (亮度/對比)</option>
                 <option value="binarize">二值化 (Binarization)</option>
                 <option value="log">對數轉換 (Log Transform)</option>
-                <option value="power_law">指數轉換 (Power-Law / Gamma)</option>
-                <option value="equalization">直方圖等化 (Equalization)</option>
-                <option value="clahe">自適應直方圖 (CLAHE)</option>
-                <option value="adaptive_threshold">自適應門檻化 (Adaptive)</option>
-                <option value="moving_average">動態門檻化 (Moving Avg)</option>
-                <option value="edge_improved_threshold">邊緣輔助門檻化 (Edge-Improved)</option>
+                <option value="power_law">指數轉換 (Gamma)</option>
+                <option value="equalization">直方圖均衡化</option>
+                <option value="clahe">自適應均衡 (CLAHE)</option>
+                <option value="adaptive_threshold">自適應門檻化</option>
+                <option value="moving_average">動態門檻化</option>
+                <option value="edge_improved_threshold">邊緣輔助門檻</option>
             </optgroup>
             
             <optgroup label="[ 形態學運算 ]">
@@ -37,29 +36,29 @@
                 <option value="closing">閉合 (Closing)</option>
                 <option value="tophat">頂帽轉換 (Top-Hat)</option>
                 <option value="blackhat">底帽轉換 (Black-Hat)</option>
-                <option value="morph_gradient">形態學梯度 (Gradient)</option>
-                <option value="hole_filling">空洞填補 (Hole Filling)</option>
-                <option value="hit_or_miss">交離轉換 (Hit-or-Miss)</option>
+                <option value="morph_gradient">形態學梯度</option>
+                <option value="hole_filling">空洞填補</option>
+                <option value="hit_or_miss">交離轉換 (HMT)</option>
                 <option value="boundary_extraction">形態學邊界抽取</option>
-                <option value="morph_smoothing">複合平滑濾波 (Open-Close)</option>
+                <option value="morph_smoothing">複合平滑 (O-C)</option>
             </optgroup>
             
             <optgroup label="[ 進階分析與分割 ]">
-                <option value="connected_components">連通區域分析 (基礎測量)</option>
-                <option value="advanced_features">進階幾何與灰階特徵</option>
-                <option value="subpixel_corners">次像素角點偵測 (Subpixel)</option>
-                <option value="subpixel_contours">次像素輪廓 (Subpixel Contour)</option>
-                <option value="region_growing">區域成長 (Region Growing)</option>
-                <option value="region_split_merge">區域分裂與合併 (Quadtree)</option>
-                <option value="fuzzy_measurement">模糊次像素測量 (FMV)</option>
+                <option value="connected_components">連通區域分析 (CCL)</option>
+                <option value="advanced_features">進階幾何特徵</option>
+                <option value="subpixel_corners">次像素角點偵測</option>
+                <option value="subpixel_contours">次像素輪廓</option>
+                <option value="region_growing">區域成長</option>
+                <option value="region_split_merge">分裂合併 (Quadtree)</option>
+                <option value="fuzzy_measurement">模糊測量 (FMV)</option>
             </optgroup>
             
             <optgroup label="[ 空間域濾波 ]">
-                <option value="mean">均值濾波 (Mean Filter)</option>
-                <option value="gaussian">高斯濾波 (Gaussian Filter)</option>
-                <option value="median">中值濾波 (Median Filter)</option>
+                <option value="mean">均值濾波 (Mean)</option>
+                <option value="gaussian">高斯濾波 (Gaussian)</option>
+                <option value="median">中值濾波 (Median)</option>
                 <option value="bilateral">雙邊濾波 (Bilateral)</option>
-                <option value="sharpen">影像銳化 (Sharpening)</option>
+                <option value="sharpen">影像銳化 (Sharpen)</option>
             </optgroup>
             
             <optgroup label="[ 邊緣偵測 ]">
@@ -68,41 +67,41 @@
                 <option value="sobel">Sobel 算子</option>
                 <option value="laplacian">Laplacian 算子</option>
                 <option value="log_edge">LoG (高斯拉普拉斯)</option>
-                <option value="canny">Canny 邊緣偵測 (OpenCV)</option>
-                <option value="canny_custom">手刻版 Canny (From Scratch)</option>
+                <option value="canny">Canny 邊緣檢測 (CV)</option>
+                <option value="canny_custom">手刻版 Canny</option>
             </optgroup>
             
             <optgroup label="[ 頻率域濾波 - 低通/高通 ]">
-                <option value="freq_ideal_low">理想低通 (Ideal Lowpass)</option>
-                <option value="freq_butterworth_low">巴特沃斯低通 (Butterworth Low)</option>
-                <option value="freq_gaussian_low">高斯低通 (Gaussian Lowpass)</option>
-                <option value="freq_ideal_high">理想高通 (Ideal Highpass)</option>
-                <option value="freq_butterworth_high">巴特沃斯高通 (Butterworth High)</option>
-                <option value="freq_gaussian_high">高斯高通 (Gaussian Highpass)</option>
+                <option value="freq_ideal_low">理想低通 (Ideal LP)</option>
+                <option value="freq_butterworth_low">巴特沃斯低通 (BW LP)</option>
+                <option value="freq_gaussian_low">高斯低通 (G LP)</option>
+                <option value="freq_ideal_high">理想高通 (Ideal HP)</option>
+                <option value="freq_butterworth_high">巴特沃斯高通 (BW HP)</option>
+                <option value="freq_gaussian_high">高斯高通 (G HP)</option>
             </optgroup>
 
             <optgroup label="[ 頻率域濾波 - 進階 ]">
                 <option value="freq_butterworth_bandreject">帶阻濾波 (Bandreject)</option>
                 <option value="freq_butterworth_bandpass">帶通濾波 (Bandpass)</option>
-                <option value="freq_butterworth_emphasis">高頻強調 (High-Freq Emphasis)</option>
+                <option value="freq_butterworth_emphasis">高頻強調 (Emphasis)</option>
                 <option value="notch_reject">陷波濾波 (Notch Filter)</option>
             </optgroup>
 
             <optgroup label="[ 特徵檢測 (Hough) ]">
-                <option value="hough_lines_standard">標準霍夫線 (無限長直線)</option>
-                <option value="hough_lines_p">機率霍夫線 (有限線段)</option>
-                <option value="hough_circles">霍夫圓檢測 (Hough Circles)</option>
+                <option value="hough_lines_standard">標準霍夫線 (Infinite)</option>
+                <option value="hough_lines_p">機率霍夫線 (Segments)</option>
+                <option value="hough_circles">霍夫圓檢測 (Circles)</option>
             </optgroup>
         </select>
         
-        <!-- 加入按鈕 -->
+        <!-- 3. 加入按鈕 -->
         <button type="button" class="btn" style="width: 100%; padding: 8px; background: rgba(100, 255, 218, 0.1); border: 1px solid #64ffda; color: #64ffda; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.3s;" onmouseover="this.style.background='rgba(100, 255, 218, 0.2)'" onmouseout="this.style.background='rgba(100, 255, 218, 0.1)'" onclick="addNewLayerFromSelect()">
-            ➕ 加入管線
+            ➕ 加入檢測管線 (Add to Pipeline)
         </button>
         
-        <!-- 垂直排列的管線流程 -->
+        <!-- 4. 垂直排列的算子清單 (Pipeline Flow) -->
         <div id="topLayerList" class="top-layer-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
-            <!-- 算子項目會動態產生在這裡 -->
+            <!-- 算子項目項目卡片會透過 JavaScript (pipeline.js) 動態產生在這裡 -->
         </div>
     </div>
 </div>
