@@ -10,23 +10,18 @@ class AnalysisMixin:
     def connected_components(self, min_area=0, max_area=9999999, connectivity=8):
         """
         連通區域分析 (Connected Components Labeling):
-        標記二值影像中的獨立物件，並根據面積進行篩選。
-        
-        參數:
-        - min_area: 最小面積門檻，過濾雜訊。
-        - max_area: 最大面積門檻。
-        - connectivity: 連通性 (4 或 8 鄰域)。
+        標記二值影像中的獨立物件，根據面積進行篩選，以色塊呈現並標註編號與面積。
         """
         gray = self._get_gray()
         # 1. 執行自動二值化 (使用 Otsu 門檻)
         _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         self.steps.append(("Step 1: 自動二值化 (Auto-Threshold)", binary))
         
-        # 2. 執行連通區域標記並取得統計數據
+        # 2. 執行連通區域標記
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=connectivity)
         
-        # 建立彩色畫布用於標記結果
-        output_img = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
+        # 建立一個全黑的彩色畫布
+        output_img = np.zeros((binary.shape[0], binary.shape[1], 3), dtype=np.uint8)
         
         valid_count = 0
         for i in range(1, num_labels): # 從 1 開始跳過背景 (label 0)
@@ -35,17 +30,22 @@ class AnalysisMixin:
             # 面積篩選邏輯
             if min_area <= area <= max_area:
                 valid_count += 1
+                
+                # 為這個物件隨機生成一個明亮的顏色 (B, G, R)
+                color = np.random.randint(50, 255, size=3).tolist()
+                
+                # 將該物件的像素範圍塗上專屬顏色
+                output_img[labels == i] = color
+                
+                # 取得物件的左上角座標，用來定位文字
                 x = stats[i, cv2.CC_STAT_LEFT]
                 y = stats[i, cv2.CC_STAT_TOP]
-                w = stats[i, cv2.CC_STAT_WIDTH]
-                h = stats[i, cv2.CC_STAT_HEIGHT]
-                (cx, cy) = centroids[i]
                 
-                # 繪製視覺化元件：綠色包圍盒、紅色重心與面積標註
-                cv2.rectangle(output_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.circle(output_img, (int(cx), int(cy)), 3, (0, 0, 255), -1)
-                cv2.putText(output_img, f"#{valid_count} A:{area}", (x, y - 5), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                # 繪製文字標註：編號與面積
+                # 使用 max(y - 5, 15) 確保如果物件在畫面最頂端，文字不會跑到畫面外被切掉
+                text_y = max(y - 5, 15)
+                cv2.putText(output_img, f"#{valid_count} A:{area}", (x, text_y), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
                             
         self.steps.append((f"Step 2: 標記結果 ({connectivity}-連通, 共找到 {valid_count} 個物件)", output_img))
         return output_img
