@@ -1,0 +1,25 @@
+<!-- 5. [ 空間域濾波 ] 相關參數 -->
+<div class="param-group" data-types="mean,gaussian,median,log_edge,sobel,laplacian">
+    <label>卷積核大小 (Kernel Size): <span id="val_kernel">3</span></label>
+    <input type="range" name="kernel_size" min="3" max="15" step="2" value="3" oninput="document.getElementById('val_kernel').innerText=this.value">
+</div>
+<div class="param-group" data-types="gaussian,log_edge">
+    <label>標準差 (Sigma): <span id="val_sigma">1.0</span></label>
+    <input type="range" name="sigma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sigma').innerText=this.value">
+</div>
+<div class="param-group" data-types="bilateral">
+    <label>鄰域直徑 (d): <span id="val_bi_d">9</span></label>
+    <input type="range" name="bilateral_d" min="3" max="25" step="2" value="9" oninput="document.getElementById('val_bi_d').innerText=this.value">
+</div>
+<div class="param-group" data-types="bilateral">
+    <label>色彩標準差 (Sigma Color): <span id="val_bi_sc">75.0</span></label>
+    <input type="range" name="bilateral_sigma_color" min="10" max="150" step="5" value="75.0" oninput="document.getElementById('val_bi_sc').innerText=this.value">
+</div>
+<div class="param-group" data-types="bilateral">
+    <label>空間標準差 (Sigma Space): <span id="val_bi_ss">75.0</span></label>
+    <input type="range" name="bilateral_sigma_space" min="10" max="150" step="5" value="75.0" oninput="document.getElementById('val_bi_ss').innerText=this.value">
+</div>
+<div class="param-group" data-types="sharpen">
+    <label>銳化強度 (Amount): <span id="val_sharp">1.0</span></label>
+    <input type="range" name="sharpen_amount" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_sharp').innerText=this.value">
+</div>

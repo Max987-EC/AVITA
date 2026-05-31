@@ -1,0 +1,46 @@
+<!-- 1. [ 門檻化處理 ] 相關參數 -->
+<div class="param-group" data-types="binarize">
+    <label style="display: flex; justify-content: space-between; align-items: center;">
+        <span>門檻值 (Threshold): <span id="val_threshold">127</span></span>
+        <label style="font-size: 0.8rem; color: #64ffda; cursor: pointer;">
+            <input type="checkbox" name="use_otsu" value="true" id="otsuCheckbox"> Otsu 自動計算
+        </label>
+    </label>
+    <input type="range" name="threshold" id="thresholdSlider" min="0" max="255" value="127" oninput="document.getElementById('val_threshold').innerText=this.value">
+</div>
+<div class="param-group" data-types="binarize">
+    <label>二值化模式 (Type):</label>
+    <select name="thresh_type" class="tech-select-small">
+        <option value="binary">標準 (Binary)</option>
+        <option value="binary_inv">反轉 (Binary Inv)</option>
+        <option value="trunc">截斷 (Truncate)</option>
+        <option value="tozero">低於門檻歸零 (To Zero)</option>
+        <option value="tozero_inv">高於門檻歸零 (To Zero Inv)</option>
+    </select>
+</div>
+<div class="param-group" data-types="adaptive_threshold">
+    <label>計算方法 (Method):</label>
+    <select name="adaptive_method" class="tech-select-small">
+        <option value="gaussian">高斯加權 (Gaussian)</option>
+        <option value="mean">鄰域平均 (Mean)</option>
+    </select>
+</div>
+<div class="param-group" data-types="adaptive_threshold">
+    <label>區塊大小 (Block Size): <span id="val_adapt_block">11</span></label>
+    <input type="range" name="block_size" min="3" max="51" step="2" value="11" oninput="document.getElementById('val_adapt_block').innerText=this.value">
+</div>
+<div class="param-group" data-types="adaptive_threshold">
+    <label>常數偏移量 (C): <span id="val_adapt_c">2</span></label>
+    <input type="range" name="C" min="-10" max="20" step="1" value="2" oninput="document.getElementById('val_adapt_c').innerText=this.value">
+</div>
+<div class="param-group" data-types="moving_average">
+    <label>移動視窗大小 (N): <span id="val_ma_n">20</span></label>
+    <input type="range" name="ma_n" min="5" max="100" step="1" value="20" oninput="document.getElementById('val_ma_n').innerText=this.value">
+</div>
+<div class="param-group" data-types="moving_average">
+    <label>乘數常數 (k): <span id="val_ma_k">0.5</span></label>
+    <input type="range" name="ma_k" min="0.1" max="2.0" step="0.1" value="0.5" oninput="document.getElementById('val_ma_k').innerText=this.value">
+</div>
+<div class="param-group" data-types="edge_improved_threshold">
+    <label style="color: #ffffff; font-size: 0.9rem;">此算子結合邊緣資訊自動計算，無額外參數。</label>
+</div>

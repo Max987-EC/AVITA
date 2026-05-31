@@ -1,0 +1,17 @@
+<!-- panel_params_base.html (負責組合所有參數子模組) -->
+<div class="param-panel" id="paramPanel">
+    <div class="param-header">
+        <h4>[ 參數設定 PARAMETERS ]</h4>
+        <button type="button" id="resetParamsBtn" class="btn-reset">↺ 重置 (RESET)</button>
+    </div>
+    
+    <!-- 引入拆分後的各類別參數面板 -->
+    {% include 'components/image_processing/_param_01_threshold.html' %}
+    {% include 'components/image_processing/_param_02_intensity.html' %}
+    {% include 'components/image_processing/_param_03_morphology.html' %}
+    {% include 'components/image_processing/_param_04_segmentation.html' %}
+    {% include 'components/image_processing/_param_05_spatial.html' %}
+    {% include 'components/image_processing/_param_06_edge.html' %}
+    {% include 'components/image_processing/_param_07_frequency.html' %}
+    {% include 'components/image_processing/_param_08_geometric.html' %}
+</div>

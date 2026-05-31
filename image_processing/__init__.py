@@ -1,6 +1,7 @@
 # 影像處理模組彙整 (Image Processing Module Aggregation)
 # 此檔案負責將各個功能模組 (Mixins) 整合進主處理器 ImageProcessor。
 
+from .operation_mapper import apply_operation #將映射器也暴露給外部使用
 from .core import BaseProcessor
 from .intensity import IntensityMixin
 from .spatial import SpatialMixin

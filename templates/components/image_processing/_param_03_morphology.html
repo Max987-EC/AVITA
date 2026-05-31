@@ -1,0 +1,33 @@
+<!-- 3. [ 形態學運算 ] 相關參數 -->
+<div class="param-group" data-types="erosion,dilation,opening,closing,tophat,blackhat,morph_gradient,boundary_extraction,morph_smoothing,hit_or_miss">
+    <label>結構元素形狀 (Shape):</label>
+    <select name="shape" class="tech-select-small" onchange="document.getElementById('customKernelWrapper').style.display = (this.value === 'custom') ? 'block' : 'none';">
+        <option value="rect">方形 (Rectangle)</option>
+        <option value="ellipse">圓形 (Ellipse)</option>
+        <option value="cross">十字 (Cross)</option>
+        <option value="custom">自訂矩陣 (Custom)</option>
+    </select>
+    <div id="customKernelWrapper" style="display: none; margin-top: 12px; width: 100%;">
+        <label style="font-size: 0.8rem; color: #82aaff; margin-bottom: 8px; display: block;">自訂矩陣 (點擊切換 0/1):</label>
+        <div id="customKernelGrid" style="display: grid; gap: 4px;"></div>
+        <input type="hidden" name="custom_kernel" id="customKernelInput" value="[[1,1,1],[1,1,1],[1,1,1]]">
+    </div>
+</div>
+<div class="param-group" data-types="erosion,dilation,opening,closing,tophat,blackhat,morph_gradient,boundary_extraction,morph_smoothing,hit_or_miss">
+    <label>核大小 (Kernel Size): <span id="val_morph_k">3</span></label>
+    <input type="range" name="ksize" min="3" max="31" step="2" value="3" oninput="document.getElementById('val_morph_k').innerText=this.value">
+</div>
+<div class="param-group" data-types="erosion,dilation,opening,closing">
+    <label>執行次數 (Iterations): <span id="val_morph_iter">1</span></label>
+    <input type="range" name="iterations" min="1" max="10" step="1" value="1" oninput="document.getElementById('val_morph_iter').innerText=this.value">
+</div>
+<div class="param-group" data-types="morph_smoothing">
+    <label>複合模式 (Mode):</label>
+    <select name="smooth_mode" class="tech-select-small">
+        <option value="open_close">先斷開後閉合 (Open-Close)</option>
+        <option value="close_open">先閉合後斷開 (Close-Open)</option>
+    </select>
+</div>
+<div class="param-group" data-types="hole_filling">
+    <label style="color: #ffffff; font-size: 0.9rem;">此算子利用輪廓分析自動填滿物件孔洞，無額外參數。</label>
+</div>

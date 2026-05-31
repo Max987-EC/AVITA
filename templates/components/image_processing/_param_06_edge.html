@@ -1,0 +1,25 @@
+<!-- 6. [ 邊緣偵測 ] 相關參數 -->
+<div class="param-group" data-types="sobel,prewitt,roberts">
+    <label>偵測方向 (Direction):</label>
+    <select name="edge_direction" class="tech-select-small">
+        <option value="both">綜合邊緣 (Magnitude)</option>
+        <option value="x">垂直邊緣 (X 軸)</option>
+        <option value="y">水平邊緣 (Y 軸)</option>
+    </select>
+</div>
+<div class="param-group" data-types="canny,canny_custom">
+    <label>低門檻值 (Threshold 1): <span id="val_th1">50</span></label>
+    <input type="range" name="threshold1" min="0" max="255" value="50" oninput="document.getElementById('val_th1').innerText=this.value">
+</div>
+<div class="param-group" data-types="canny,canny_custom">
+    <label>高門檻值 (Threshold 2): <span id="val_th2">150</span></label>
+    <input type="range" name="threshold2" min="0" max="255" value="150" oninput="document.getElementById('val_th2').innerText=this.value">
+</div>
+<div class="param-group" data-types="canny,canny_custom">
+    <label>高斯模糊核大小 (Blur Kernel): <span id="val_canny_k">5</span></label>
+    <input type="range" name="canny_blur_ksize" min="3" max="15" step="2" value="5" oninput="document.getElementById('val_canny_k').innerText=this.value">
+</div>
+<div class="param-group" data-types="canny,canny_custom">
+    <label>高斯模糊標準差 (Blur Sigma): <span id="val_canny_sig">1.4</span></label>
+    <input type="range" name="canny_blur_sigma" min="0.1" max="5.0" step="0.1" value="1.4" oninput="document.getElementById('val_canny_sig').innerText=this.value">
+</div>

@@ -98,31 +98,37 @@ class MorphologyMixin:
         self.steps.append(("Step 2: 填補空洞完成 (Filled)", filled_img))
         return filled_img
 
-    def hit_or_miss(self):
+    def hit_or_miss(self, shape='rect', ksize=3, custom_kernel=None):
         """
         擊中或擊不中轉換 (Hit-or-Miss Transform):
-        用於偵測影像中特定的形狀或結構模式。在此預設尋找「十字型」特徵。
+        根據選擇的結構元素形狀與大小，嚴格偵測影像中完全吻合的特徵。
         """
         gray = self._get_gray()
         _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
         self.steps.append(("Step 1: 自動二值化 (Auto-Threshold)", binary))
         
-        # 定義尋找十字結構的 Kernel: 1 表示前景, -1 表示背景
-        kernel = np.array([
-            [-1,  1, -1],
-            [ 1,  1,  1],
-            [-1,  1, -1]
-        ], dtype=np.int8)
+        # 1. 取得基礎結構元素 (此時只有 0 與 1)
+        if shape == 'custom' and custom_kernel is not None:
+            base_kernel = np.array(custom_kernel, dtype=np.int8)
+            kernel_info = f"自訂 {base_kernel.shape[0]}x{base_kernel.shape[1]}"
+        else:
+            base_kernel = self._get_structuring_element(shape, ksize)
+            kernel_info = f"{ksize}x{ksize} {shape}"
+            
+        # 2. 轉換為 Hit-or-Miss 專用格式
+        # OpenCV 的 Hit-or-Miss 需要：1 (Hit 前景), -1 (Miss 背景), 0 (Don't care)
+        # 我們將基礎 kernel 中的 0 轉換為 -1，代表「嚴格匹配該形狀，周圍必須是背景」
+        kernel = np.where(base_kernel == 1, 1, -1).astype(np.int8)
         
-        # 執行轉換
+        # 3. 執行轉換
         result = cv2.morphologyEx(binary, cv2.MORPH_HITMISS, kernel)
         
-        # 視覺化增強：將找到的點膨脹後標記在畫面上
+        # 4. 視覺化增強：將找到的點膨脹後，以紅點標記在原圖上
         dilated_result = cv2.dilate(result, np.ones((5,5), np.uint8))
         output = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
-        output[dilated_result == 255] = [0, 0, 255] # 以紅色標記特徵位置
+        output[dilated_result == 255] = [0, 0, 255] 
         
-        self.steps.append(("Step 2: Hit-or-Miss 偵測結果 (紅點即為特徵)", output))
+        self.steps.append((f"Step 2: Hit-or-Miss 偵測結果 (Kernel: {kernel_info})", output))
         return output
     
     def boundary_extraction(self, shape='rect', ksize=3, custom_kernel=None):

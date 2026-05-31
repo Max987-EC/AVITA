@@ -1,0 +1,91 @@
+<!-- 4. [ 影像分割與特徵擷取 ] 相關參數 -->
+<div class="param-group" data-types="connected_components">
+    <label>連通性定義 (Connectivity):</label>
+    <select name="connectivity" class="tech-select-small">
+        <option value="8">8-連通 (8-Neighbor)</option>
+        <option value="4">4-連通 (4-Neighbor)</option>
+    </select>
+</div>
+<div class="param-group" data-types="connected_components">
+    <label>最小面積 (Min Area): <span id="val_min_area">100</span></label>
+    <input type="range" name="min_area" min="0" max="5000" step="10" value="100" oninput="document.getElementById('val_min_area').innerText=this.value">
+</div>
+<div class="param-group" data-types="connected_components">
+    <label>最大面積 (Max Area): <span id="val_max_area">999999</span></label>
+    <input type="range" name="max_area" min="1000" max="999999" step="1000" value="999999" oninput="document.getElementById('val_max_area').innerText=this.value">
+</div>
+<div class="param-group" data-types="connected_components">
+    <label style="display: flex; flex-direction: column; gap: 8px;">
+        <label><input type="checkbox" name="ccl_show_text" value="true" checked> 顯示文字標註 (Show Text)</label>
+    </label>
+</div>
+<div class="param-group" data-types="region_growing">
+    <label>色彩容差 (Tolerance): <span id="val_tolerance">20</span></label>
+    <input type="range" name="tolerance" min="1" max="100" step="1" value="20" oninput="document.getElementById('val_tolerance').innerText=this.value">
+</div>
+<div class="param-group" data-types="region_growing">
+    <label>種子點 X 座標 (0為自動置中): <span id="val_seed_x">0</span></label>
+    <input type="range" name="seed_x" min="0" max="2000" step="1" value="0" oninput="document.getElementById('val_seed_x').innerText=this.value">
+</div>
+<div class="param-group" data-types="region_growing">
+    <label>種子點 Y 座標 (0為自動置中): <span id="val_seed_y">0</span></label>
+    <input type="range" name="seed_y" min="0" max="2000" step="1" value="0" oninput="document.getElementById('val_seed_y').innerText=this.value">
+</div>
+<div class="param-group" data-types="region_split_merge">
+    <label>分裂標準差門檻 (Std TH): <span id="val_std_th">15.0</span></label>
+    <input type="range" name="std_threshold" min="1.0" max="50.0" step="1.0" value="15.0" oninput="document.getElementById('val_std_th').innerText=this.value">
+</div>
+<div class="param-group" data-types="region_split_merge">
+    <label>最小區塊限制 (Min Size): <span id="val_min_size">8</span></label>
+    <input type="range" name="min_size" min="4" max="64" step="2" value="8" oninput="document.getElementById('val_min_size').innerText=this.value">
+</div>
+<div class="param-group" data-types="subpixel_contours">
+    <label>二值化門檻 (Threshold): <span id="val_sub_th">127</span></label>
+    <input type="range" name="sub_threshold" min="0" max="255" step="1" value="127" oninput="document.getElementById('val_sub_th').innerText=this.value">
+</div>
+<div class="param-group" data-types="subpixel_contours">
+    <label>雙線性內插放大倍率: <span id="val_upscale">4</span></label>
+    <input type="range" name="upscale_factor" min="2" max="16" step="2" value="4" oninput="document.getElementById('val_upscale').innerText=this.value">
+</div>
+<div class="param-group" data-types="fuzzy_measurement">
+    <label>模糊下限 (Min Value): <span id="val_fmv_min">40</span></label>
+    <input type="range" name="fmv_min" min="0" max="255" step="1" value="40" oninput="document.getElementById('val_fmv_min').innerText=this.value">
+</div>
+<div class="param-group" data-types="fuzzy_measurement">
+    <label>模糊上限 (Max Value): <span id="val_fmv_max">120</span></label>
+    <input type="range" name="fmv_max" min="0" max="255" step="1" value="120" oninput="document.getElementById('val_fmv_max').innerText=this.value">
+</div>
+<div class="param-group" data-types="fuzzy_measurement">
+    <label style="display: flex; flex-direction: column; gap: 8px;">
+        <label><input type="checkbox" name="fmv_show_text" value="true" checked> 顯示文字標註 (Show Text)</label>
+    </label>
+</div>
+<div class="param-group" data-types="advanced_features">
+    <label>最小面積過濾 (Min Area): <span id="val_adv_min_area">100</span></label>
+    <input type="range" name="adv_min_area" min="0" max="5000" step="10" value="100" oninput="document.getElementById('val_adv_min_area').innerText=this.value">
+</div>
+<div class="param-group" data-types="advanced_features">
+    <label style="display: flex; flex-direction: column; gap: 8px;">
+        <label><input type="checkbox" name="draw_bounding_rect" value="true" checked> 繪製正交包圍盒 (綠)</label>
+        <label><input type="checkbox" name="draw_min_rect" value="true" checked> 繪製最小旋轉盒 (藍)</label>
+        <label><input type="checkbox" name="draw_circle" value="true"> 繪製最小包圍圓 (黃)</label>
+        <label><input type="checkbox" name="draw_ellipse" value="true" checked> 繪製橢圓擬合 (橘)</label>
+        <label><input type="checkbox" name="draw_hull" value="true"> 繪製凸包邊界 (紫)</label>
+        <label><input type="checkbox" name="calc_gray" value="true" checked> 計算區域灰階 (Mean/Std)</label>
+        <label><input type="checkbox" name="calc_perimeter" value="true" checked> 計算輪廓周長 (Perimeter)</label>
+        <label><input type="checkbox" name="calc_shape" value="true" checked> 計算圓度與長短軸比 (C / AR)</label>
+        <label><input type="checkbox" name="adv_show_text" value="true" checked> 顯示文字標註 (Show Text)</label>
+    </label>
+</div>
+<div class="param-group" data-types="subpixel_corners">
+    <label>最大角點數量 (Max Corners): <span id="val_max_corners">100</span></label>
+    <input type="range" name="max_corners" min="10" max="500" step="10" value="100" oninput="document.getElementById('val_max_corners').innerText=this.value">
+</div>
+<div class="param-group" data-types="subpixel_corners">
+    <label>品質門檻 (Quality): <span id="val_quality">0.01</span></label>
+    <input type="range" name="quality" min="0.01" max="0.5" step="0.01" value="0.01" oninput="document.getElementById('val_quality').innerText=this.value">
+</div>
+<div class="param-group" data-types="subpixel_corners">
+    <label>最小距離 (Min Distance): <span id="val_min_dist">10</span></label>
+    <input type="range" name="min_dist" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_min_dist').innerText=this.value">
+</div>

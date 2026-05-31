@@ -7,7 +7,8 @@ class AnalysisMixin:
     提供連通區域標記、幾何特徵擷取及次像素精度量測。
     """
     
-    def connected_components(self, min_area=0, max_area=9999999, connectivity=8):
+    # 🌟 新增 show_text 參數，預設為 True
+    def connected_components(self, min_area=0, max_area=9999999, connectivity=8, show_text=True):
         """
         連通區域分析 (Connected Components Labeling):
         標記二值影像中的獨立物件，根據面積進行篩選，以色塊呈現並標註編號與面積。
@@ -41,16 +42,18 @@ class AnalysisMixin:
                 x = stats[i, cv2.CC_STAT_LEFT]
                 y = stats[i, cv2.CC_STAT_TOP]
                 
-                # 繪製文字標註：編號與面積
-                # 使用 max(y - 5, 15) 確保如果物件在畫面最頂端，文字不會跑到畫面外被切掉
-                text_y = max(y - 5, 15)
-                cv2.putText(output_img, f"#{valid_count} A:{area}", (x, text_y), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
+                # 🌟 加上 show_text 判斷，有勾選才畫文字
+                if show_text:
+                    # 使用 max(y - 5, 15) 確保如果物件在畫面最頂端，文字不會跑到畫面外被切掉
+                    text_y = max(y - 5, 15)
+                    cv2.putText(output_img, f"#{valid_count} A:{area}", (x, text_y), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1, cv2.LINE_AA)
                             
         self.steps.append((f"Step 2: 標記結果 ({connectivity}-連通, 共找到 {valid_count} 個物件)", output_img))
         return output_img
 
-    def advanced_features(self, min_area=100, draw_bounding_rect=True, draw_min_rect=True, draw_circle=False, draw_ellipse=True, draw_hull=False, calc_gray=True, calc_perimeter=True, calc_shape=True):
+    # 新增 show_text 參數，預設為 True
+    def advanced_features(self, min_area=100, draw_bounding_rect=True, draw_min_rect=True, draw_circle=False, draw_ellipse=True, draw_hull=False, calc_gray=True, calc_perimeter=True, calc_shape=True, show_text=True):
         """
         進階幾何特徵擷取 (Advanced Geometric Features):
         計算物件的各種形狀描述子，包括最小外接矩形、圓度、長短軸比等。
@@ -63,6 +66,10 @@ class AnalysisMixin:
         # 2. 搜尋輪廓
         contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         output_img = self.img.copy()
+        
+        # 如果畫布是單通道 (灰階/二值圖)，將其轉為 3 通道 BGR 以便繪製彩色線條
+        if len(output_img.shape) == 2:
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_GRAY2BGR)
         
         valid_count = 0
         for cnt in contours:
@@ -126,8 +133,8 @@ class AnalysisMixin:
                 mean_val, std_val = cv2.meanStdDev(gray, mask=mask)
                 text_lines.append(f"M:{mean_val[0][0]:.1f} S:{std_val[0][0]:.1f}")
                 
-            # 顯示量測數據於物件旁
-            if text_lines:
+            # 顯示量測數據於物件旁 (加入 show_text 判斷)
+            if show_text and text_lines:
                 text = " | ".join(text_lines)
                 cv2.putText(output_img, text, (int(cnt[0][0][0]), int(cnt[0][0][1]) - 10), 
                             cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
@@ -135,7 +142,8 @@ class AnalysisMixin:
         self.steps.append((f"Step 2: 進階特徵擷取 (共 {valid_count} 個物件)", output_img))
         return output_img
 
-    def fuzzy_measurement(self, min_val=40, max_val=120):
+    # 新增 show_text 參數
+    def fuzzy_measurement(self, min_val=40, max_val=120, show_text=True):
         """
         模糊成員函數測量 (Fuzzy Membership Value, FMV):
         計算物件的模糊面積與模糊重心，解決邊界部分重疊或量化誤差問題。
@@ -165,6 +173,11 @@ class AnalysisMixin:
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
         
         output_img = self.img.copy()
+        
+        # 單通道轉 3 通道
+        if len(output_img.shape) == 2:
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_GRAY2BGR)
+            
         valid_count = 0
         
         for i in range(1, num_labels):
@@ -192,7 +205,10 @@ class AnalysisMixin:
             # 繪製量測結果
             cv2.rectangle(output_img, (x, y), (x+w, y+h), (0, 255, 0), 1)
             cv2.drawMarker(output_img, (int(cx), int(cy)), (0, 0, 255), cv2.MARKER_CROSS, 10, 1)
-            cv2.putText(output_img, f"FArea:{fuzzy_area:.1f}", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
+            
+            # 加入 show_text 判斷
+            if show_text:
+                cv2.putText(output_img, f"FArea:{fuzzy_area:.1f}", (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 0), 1)
             
         self.steps.append((f"Step 3: 模糊測量結果 (共 {valid_count} 個)", output_img))
         return output_img
@@ -209,10 +225,12 @@ class AnalysisMixin:
         corners = cv2.goodFeaturesToTrack(gray, max_corners, quality, min_dist)
         output_img = self.img.copy()
         
+        # 單通道轉 3 通道
+        if len(output_img.shape) == 2:
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_GRAY2BGR)
+        
         if corners is not None:
             # 2. 定義次像素搜尋的終止準則 (criteria)
-            # TERM_CRITERIA_EPS: 精度達到 0.001 時停止
-            # TERM_CRITERIA_MAX_ITER: 迭代次數達到 100 次時停止
             criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001)
             
             # 3. 搜尋附近的精確位置
@@ -235,7 +253,6 @@ class AnalysisMixin:
         self.steps.append(("Step 1: 原始灰階影像", gray))
         
         # 1. 使用雙線性內插 (Bilinear Interpolation) 放大影像
-        # 這能模擬出原始離散像素之間的連續變化。
         h, w = gray.shape
         upscaled = cv2.resize(gray, (w * upscale_factor, h * upscale_factor), interpolation=cv2.INTER_LINEAR)
         self.steps.append((f"Step 2: 雙線性內插放大 ({upscale_factor}x)", upscaled))
@@ -246,6 +263,11 @@ class AnalysisMixin:
         
         # 3. 座標縮放回原尺寸，並利用 OpenCV 的次像素渲染技術 (shift 參數) 繪製
         output_img = self.img.copy()
+        
+        # 單通道轉 3 通道
+        if len(output_img.shape) == 2:
+            output_img = cv2.cvtColor(output_img, cv2.COLOR_GRAY2BGR)
+            
         subpixel_count = 0
         
         for cnt in contours:
@@ -263,7 +285,6 @@ class AnalysisMixin:
             shifted_cnt = np.round(sub_cnt * multiplier).astype(np.int32)
             
             # 使用 OpenCV 的次像素渲染技術繪製
-            # 參數順序：影像, 輪廓清單, 輪廓索引, 顏色, 粗細, 線條類型, 階層, 位移
             cv2.drawContours(output_img, [shifted_cnt], 0, (0, 255, 0), 1, cv2.LINE_AA, None, shift)
             
         self.steps.append((f"Step 3: 次像素輪廓擷取 (共 {subpixel_count} 個)", output_img))

@@ -1,0 +1,57 @@
+<!-- 8. [ 幾何特徵檢測 ] 相關參數 -->
+<div class="param-group" data-types="hough_lines_standard,hough_lines_p">
+    <label>線偵測靈敏度 (Threshold): <span id="val_hough_th">100</span></label>
+    <input type="range" name="hough_threshold" min="10" max="300" step="5" value="100" oninput="document.getElementById('val_hough_th').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_standard,hough_lines_p">
+    <label>距離解析度 Rho (像素): <span id="val_hough_rho">1.0</span></label>
+    <input type="range" name="hough_rho" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_hough_rho').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_standard,hough_lines_p">
+    <label>角度解析度 Theta (度): <span id="val_hough_theta">1.0</span></label>
+    <input type="range" name="hough_theta" min="0.1" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_hough_theta').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_standard,hough_lines_p">
+    <label>底層 Canny 低門檻: <span id="val_hl_th1">50</span></label>
+    <input type="range" name="hough_canny_th1" min="0" max="255" value="50" oninput="document.getElementById('val_hl_th1').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_standard,hough_lines_p">
+    <label>底層 Canny 高門檻: <span id="val_hl_th2">150</span></label>
+    <input type="range" name="hough_canny_th2" min="0" max="255" value="150" oninput="document.getElementById('val_hl_th2').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_p">
+    <label>最小線段長度 (Min Length): <span id="val_hough_min_l">50</span></label>
+    <input type="range" name="hough_min_line_length" min="1" max="200" step="1" value="50" oninput="document.getElementById('val_hough_min_l').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_lines_p">
+    <label>最大斷裂容忍 (Max Gap): <span id="val_hough_max_g">10</span></label>
+    <input type="range" name="hough_max_line_gap" min="1" max="100" step="1" value="10" oninput="document.getElementById('val_hough_max_g').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>累加器解析度比例 (dp): <span id="val_hough_dp">1.0</span></label>
+    <input type="range" name="hough_dp" min="1.0" max="5.0" step="0.1" value="1.0" oninput="document.getElementById('val_hough_dp').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>最小圓心距離 (Min Dist): <span id="val_hough_dist">20</span></label>
+    <input type="range" name="hough_min_dist" min="10" max="200" step="5" value="20" oninput="document.getElementById('val_hough_dist').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>邊緣檢測高門檻 (Param1): <span id="val_hc_p1">50</span></label>
+    <input type="range" name="hough_param1" min="10" max="255" step="1" value="50" oninput="document.getElementById('val_hc_p1').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles,hough_lines_standard,hough_lines_p">
+    <label>前處理模糊核大小 (Blur Kernel): <span id="val_hc_k">5</span></label>
+    <input type="range" name="hough_blur_ksize" min="1" max="15" step="2" value="5" oninput="document.getElementById('val_hc_k').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>圓偵測靈敏度 (Param2): <span id="val_hough_p2">30</span></label>
+    <input type="range" name="hough_param2" min="10" max="100" step="2" value="30" oninput="document.getElementById('val_hough_p2').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>最小半徑 (Min Radius): <span id="val_hough_min_r">0</span></label>
+    <input type="range" name="hough_min_radius" min="0" max="100" step="5" value="0" oninput="document.getElementById('val_hough_min_r').innerText=this.value">
+</div>
+<div class="param-group" data-types="hough_circles">
+    <label>最大半徑 (Max Radius): <span id="val_hough_max_r">0</span></label>
+    <input type="range" name="hough_max_radius" min="0" max="300" step="10" value="0" oninput="document.getElementById('val_hough_max_r').innerText=this.value">
+</div>

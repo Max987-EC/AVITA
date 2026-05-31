@@ -1,34 +1,26 @@
-<!-- 左側控制面板 (Main Sidebar Controller) -->
-<!-- 整合影像輸入、模式選擇、參數調整與管線管理的主要容器。 -->
+<!-- sidebar_main.html (原 _sidebar.html) -->
 <div class="sidebar">
     <form id="processForm">
         
         <!-- 01 // 影像輸入模組 (Image Input Module) -->
         <div class="form-group">
             <label for="imageInput">01 // 選擇目標影像 (IMAGE INPUT)</label>
-            <!-- 檔案上傳控制項 -->
             <input type="file" id="imageInput" name="image" accept="image/*" required>
             
-            <!-- 實時相機擷取按鈕 (啟動相機模態框) -->
             <button type="button" class="btn" onclick="openCamera()" style="width: 100%; margin-top: 10px; border-style: dashed;">
                 📷 開啟相機擷取 (Camera Capture)
             </button>
 
-            <!-- 預設經典測試圖片快速選擇 (Preset Image Selection) -->
             <div class="preset-image-container">
                 <span class="preset-label">[ 快速載入經典測試圖 ]</span>
-                
-                <!-- 選單觸發 loadPresetImage 函數 -->
                 <select id="presetImageSelect" class="tech-select" onchange="if(this.value) { loadPresetImage(this.value); this.selectedIndex = 0; }">
                     <option value="" disabled selected hidden>🔽 點擊選擇測試圖片...</option>
-                    
                     <optgroup label="[ 經典人像與風景 ]">
                         <option value="Lenna.jpeg">👩‍🦰 Lenna (灰階)</option>
                         <option value="Lenna彩色.jpg">🎨 Lenna (彩色)</option>
                         <option value="camera man.jpg">📷 攝影師</option>
                         <option value="Einstein.jpg">🧠 愛因斯坦</option>
                     </optgroup>
-                    
                     <optgroup label="[ 工業與科學測試圖 ]">
                         <option value="blobs.tif">🦠 斑點圖 (Blobs)</option>
                         <option value="dowels.tif">🪵 木栓 (Dowels)</option>
@@ -36,7 +28,6 @@
                         <option value="ripple.tif">🌊 波紋 (Ripple)</option>
                         <option value="rice.tif">🍚 米粒 (Rice)</option>
                     </optgroup>
-
                     <optgroup label="[ 文字、文件與物體 ]">
                         <option value="Piano_Sheet_Music.png">🎼 鋼琴樂譜</option>
                         <option value="shadeText.tif">📝 陰影文字</option>
@@ -47,13 +38,13 @@
         </div>
         
         <!-- 02 // 檢測管線管理器 (僅在「管線模式」顯示) -->
-        {% include 'components/image_processing/_sidebar_pipeline.html' %}
+        {% include 'components/image_processing/_panel_pipeline.html' %}
 
         <!-- 03 // 處理模組清單 (僅在「單步模式」顯示) -->
-        {% include 'components/image_processing/_sidebar_modules.html' %}
+        {% include 'components/image_processing/_panel_modules.html' %}
 
-        <!-- 04 // 參數動態面板 (根據選擇的模組顯示對應參數) -->
-        {% include 'components/image_processing/_sidebar_params.html' %}
+        <!-- 04 // 參數動態面板 (整合拆分後的參數) -->
+        {% include 'components/image_processing/_panel_params_base.html' %}
         
     </form>
 </div>

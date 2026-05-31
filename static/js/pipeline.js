@@ -19,7 +19,8 @@ function addNewLayerFromSelect() {
         id: layerId,
         type: type,
         name: name,
-        params: {}
+        params: {},
+        enabled: true // 預設該節點為啟用狀態
     });
     
     selectLayer(layerId); // 自動選中新圖層
@@ -29,8 +30,6 @@ function addNewLayerFromSelect() {
 
 /**
  * 移除指定 ID 的圖層。
- * @param {string} id - 圖層唯一識別碼
- * @param {Event} event - 點擊事件 (用於防止事件冒泡)
  */
 function removeLayer(id, event) {
     event.stopPropagation();
@@ -50,8 +49,6 @@ function removeLayer(id, event) {
 
 /**
  * 調整圖層在堆疊中的順序 (上移/下移)。
- * @param {number} index - 目前索引
- * @param {number} direction - 位移方向 (-1 上移, 1 下移)
  */
 function moveLayer(index, direction, event) {
     event.stopPropagation();
@@ -66,8 +63,20 @@ function moveLayer(index, direction, event) {
 }
 
 /**
+ * 切換圖層的啟用/停用狀態 (Bypass)
+ */
+function toggleLayerEnable(id, event) {
+    event.stopPropagation();
+    const layer = layerStack.find(l => l.id === id);
+    if (layer) {
+        layer.enabled = layer.enabled === false ? true : false;
+        renderTopLayers();
+        debouncedProcessImage(); // 重新計算管線
+    }
+}
+
+/**
  * 選中特定圖層，並載入其參數至面板。
- * @param {string} id - 圖層 ID
  */
 function selectLayer(id) {
     if (currentMode !== 'stack') return;
@@ -98,15 +107,22 @@ function renderTopLayers() {
     list.innerHTML = '';
 
     layerStack.forEach((layer, index) => {
+        const isEnabled = layer.enabled !== false; // 判斷是否啟用
         const item = document.createElement('div');
         item.className = `top-layer-item ${layer.id === activeLayerId ? 'active' : ''}`;
         
         item.onclick = () => selectLayer(layer.id);
         item.style.cursor = 'pointer';
         
+        // 🌟 修改：換成極簡的幾何圓點 (● / ○)，並加上顏色標示
         item.innerHTML = `
-            <div class="top-layer-name" style="flex:1;">${index + 1}. ${layer.name}</div>
+            <div class="top-layer-name" style="flex:1; ${!isEnabled ? 'text-decoration: line-through; color: #888;' : ''}">
+                ${index + 1}. ${layer.name}
+            </div>
             <div class="top-layer-actions">
+                <button onclick="toggleLayerEnable('${layer.id}', event)" title="啟用/停用" style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding: 0 4px;">
+                    ${isEnabled ? '<span style="color: #64ffda;">●</span>' : '<span style="color: #888;">○</span>'}
+                </button>
                 <button onclick="moveLayer(${index}, -1, event)" ${index === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
                 <button onclick="moveLayer(${index}, 1, event)" ${index === layerStack.length - 1 ? 'disabled style="opacity:0.3"' : ''}>▼</button>
                 <button class="btn-del" onclick="removeLayer('${layer.id}', event)">✖</button>
@@ -147,11 +163,17 @@ function renderGlobalView() {
     if (currentPipelineData.length > 0) {
         stepsContainer.style.display = 'block';
         currentPipelineData.forEach((node, index) => {
+            const isEnabled = layerStack[index].enabled !== false;
             const stepBox = document.createElement('div');
             stepBox.className = 'step-box';
+            
+            // 🌟 修改：縮圖區的標示改為簡潔的文字標籤，停用時加上灰階濾鏡
             stepBox.innerHTML = `
-                <h5>[ Node ${index + 1} ] ${node.operation_name}</h5>
-                <img src="data:image/jpeg;base64,${node.output_img}" alt="Node Output">
+                <h5 style="${!isEnabled ? 'color: #888;' : ''}">
+                    [ Node ${index + 1} ] ${node.operation_name} 
+                    ${!isEnabled ? '<span style="color: #ff5252; font-size: 0.8em; margin-left: 4px;">(Bypassed)</span>' : ''}
+                </h5>
+                <img src="data:image/jpeg;base64,${node.output_img}" alt="Node Output" style="${!isEnabled ? 'opacity: 0.3; filter: grayscale(100%);' : ''}">
             `;
             stepBox.style.cursor = 'pointer';
             stepBox.onclick = () => selectLayer(layerStack[index].id);
@@ -164,13 +186,11 @@ function renderGlobalView() {
 
 /**
  * 節點視圖：詳細觀察管線中特定步驟的「輸入」與「輸出」。
- * @param {number} nodeIndex - 節點索引
  */
 function renderNodeView(nodeIndex) {
     const nodeData = currentPipelineData[nodeIndex];
     if (!nodeData) return;
     
-    // 將該節點的輸入影像設為左側，輸出影像設為右側
     document.getElementById('originalImage').src = "data:image/jpeg;base64," + nodeData.input_img;
     document.getElementById('processedImage').src = "data:image/jpeg;base64," + nodeData.output_img;
     
@@ -180,15 +200,14 @@ function renderNodeView(nodeIndex) {
     document.getElementById('processedSpectrum').src = "data:image/jpeg;base64," + nodeData.processed_spectrum;
     
     document.getElementById('histogramSection').style.display = 'block';
-    document.getElementById('spectrumSection').style.display = 'block';
-    
-    // 在 Steps 區域顯示該算子內部的中間處理步驟 (若有)
+    document.getElementById('spectrumSection').style.display = 'block'; 
+
     const stepsContainer = document.getElementById('stepsContainer');
     const stepsGrid = document.getElementById('stepsGrid');
     stepsGrid.innerHTML = ''; 
     
     if (nodeData.steps && nodeData.steps.length > 0) {
-        stepsContainer.style.display = 'block';
+        stepsContainer.style.display = 'block'; 
         nodeData.steps.forEach(step => {
             const stepBox = document.createElement('div');
             stepBox.className = 'step-box';
@@ -199,6 +218,6 @@ function renderNodeView(nodeIndex) {
             stepsGrid.appendChild(stepBox);
         });
     } else {
-        stepsContainer.style.display = 'none';
+        stepsContainer.style.display = 'none'; 
     }
 }
