@@ -286,6 +286,14 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
         document.getElementById('stepsContainer').style.display = 'none';
 
         processImage();
+
+        // 🌟 新增：確保載入圖片後，參數面板有正確顯示
+        if (currentMode === 'single') {
+            updateParamsForSingleMode();
+        } else if (currentMode === 'stack' && layerStack.length > 0) {
+            // 如果是管線模式，重新聚焦到最後一個圖層的參數
+            selectLayer(layerStack[layerStack.length - 1].id);
+        }
     }
 });
 
@@ -402,6 +410,11 @@ function renderCustomKernelGrid(size, existingMatrix = null) {
 // 1. 網頁載入時，初始化預設 3x3 矩陣
 document.addEventListener("DOMContentLoaded", () => {
     renderCustomKernelGrid(3);
+    
+    // 🌟 新增：網頁初次載入時，自動顯示預設選中算子的參數面板
+    if (currentMode === 'single') {
+        updateParamsForSingleMode();
+    }
 });
 
 // 2. 監聽 Kernel Size 滑桿變動，動態重繪矩陣
